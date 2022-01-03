@@ -2,7 +2,7 @@
 
 `privage` is a terminal based password manager and general file encryption tool that
 relies on [age](https://age-encryption.org/v1) for encryption. Optionally it uses a 
-[yubikey](https://developers.yubico.com/PIV/)) for encryption of the age key.
+[yubikey](https://developers.yubico.com/PIV/) for encryption of the age key.
 
 The main goal of `privage` is to have your secrets (credentials and other
 files) securely backed up in untrusted 3-party repositories whitout revealing
