@@ -1,0 +1,27 @@
+name: Release binaries
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  releases-matrix:
+    name: Release Go Binary
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # build and publish in parallel: linux/amd64
+        goos: [linux]
+        goarch: [amd64]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set APP_TAG env
+        run: echo APP_TAG=$(echo ${GITHUB_REF} | rev | cut -d'/' -f 1 | rev ) >> ${GITHUB_ENV}
+      - uses: wangyoucao577/go-release-action@v1.22
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}    
+          goversion: latest
+          project_path: "./cmd/privage"
+          ldflags: -X "main.BuildCommit=${{ github.sha }}" -X "main.BuildTag=${{ env.APP_TAG}}"
