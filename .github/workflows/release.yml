@@ -19,7 +19,7 @@ jobs:
         run: echo APP_TAG=$(echo ${GITHUB_REF} | rev | cut -d'/' -f 1 | rev ) >> ${GITHUB_ENV}
       - name: Install packages
         run: |
-            sudo apt-get -y install pkg-config libpcsclite-dev libpcsclite1 pcscd 
+            sudo apt-get -y install pkg-config libpcsclite-dev libpcsclite1 pcscd pcsc-tools 
             which pkg-config 
       - uses: wangyoucao577/go-release-action@v1.24
         with:
