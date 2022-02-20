@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Set APP_TAG env
         run: echo APP_TAG=$(echo ${GITHUB_REF} | rev | cut -d'/' -f 1 | rev ) >> ${GITHUB_ENV}
-      - uses: wangyoucao577/go-release-action@v1.22
+      - uses: wangyoucao577/go-release-action@v1.24
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           goos: ${{ matrix.goos }}
