@@ -115,7 +115,7 @@ func ValidateFile(filePath string) error {
 }
 
 // GeneratePassword generates a random password
-func GeneratePassword(template string) (string, error) {
+func GeneratePassword() (string, error) {
 	res, err := password.Generate(passLenght, passNumDigits, passNumSymbols, !passAllowUppercase, passAllowRepetition)
 	if err != nil {
 		return "", err
