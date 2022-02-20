@@ -11,8 +11,6 @@ any secret information (not even the file name) to those 3-party repositories.
 
 **WARNING: The author is not a cryptographer, and the code has not been reviewed. Use at your own risk.**
 
-# Use Case
-
 You may want to use `privage` if:
 
 - You want to have your encrypted credentials and other secrets files in a revision control system repository (ex: git)
@@ -39,8 +37,59 @@ You may want to use `privage` if:
   repository and use your preferred editor to edit credentials files.
 - Powerful command completion. All commands have completion. See [Bash Completion](#markdown-header-bash-completion)   
 
+# Installation
+
+If your system has Go 1.17+:
+
+    go install github.com/revelaction/privage/cmd...@v0.6.0-beta
 
 # Usage
+
+## Initialize a repository for your credentials and other encrypted files
+
+Create a repository to contain your encrypted credentials and other secret
+files. This repository can be pushed to untrusted 3-party services.
+
+    mkdir /home/user/mysecrets
+    cd /home/user/mysecrets
+    git init
+
+
+Now run `privage init`:  
+
+    privage init
+    🔑 Generated age key file `/home/user/mysecrets/privage-key.txt` ✔️
+    📒 Generated `/home/user/mysecrets/.gitignore` file ✔️
+    📑 Generated config file .privage.conf ✔️
+
+    
+The `init` command does three things:
+
+1. it creates a secret key file named `privage-key.txt` (if no one is found in
+   the system). The key is a standard unencrypted `age` key or a [Yubikey](#markdown-header-yubikey)  
+   encrypted age key.
+2. it creates a `.gitignore` file to make sure that only encrypted (.age) files
+   are commited in the repository. The file content is:
+
+        # Ignore everything
+        *
+
+        # But not these files...
+        !.gitignore
+        !*.age
+
+3. it creates a `.privage.conf` file in your home directory. The config file
+   contains references to the secret key and the repository path. These
+   references allows `private` to be used in any directory of your computer.
+
+To create a encrypted age secret key with a
+[yubikey](#markdown-header-yubikey), add the flag `--piv-slot`, `-p` with the
+yubikey slot that will be used to encrypt/decrypt the age key.
+
+    privage init -p 86
+    🔑 Generated encrypted age key file `/home/user/src/privage/privage-key.txt` with PIV slot 86 ✔️
+    📒 Generated `/home/user/src/privage/.gitignore` file ✔️
+    📑 Generated config file .privage.conf ✔️
 
 ## Create a credentials file
 
@@ -157,6 +206,83 @@ To show all the credentials file contents, use the flag `-a`
     remarks = '''
     - xxxx
     '''
+
+## Decrypt a file for manual edition
+
+Use `decrypt` to decrypt the contents of a file:
+    
+    privage decrypt somewebsite.com@loginname
+    The file somewebsite.com@loginname was decrypted in the directory /home/user/mysecrets.
+
+    (Use "privage reencrypt --force" to reencrypt all decrypted files)
+    (Use "privage reencrypt --clean" to reencrypt all decrypted files and after that delete them)
+
+`decrypt` will write a decrypted file in the repository directory. In the case
+of credentials files, the decrypted file is a `.toml` file. You can use now
+your favorite editor to change the password, user, email
+and other predefined fields.
+
+    vim somewebsite.com@loginname
+
+After manually changing the file, you have to reencrypt the file...
+
+## Reencrypt edited files
+
+Use the `reencrypt` command to reencrypt `all` files that were decrypted and are present in
+the repository directory:
+
+    ⤷ privage reencrypt
+    Found the following files to be reencrypted:
+
+    📖 somewebsite.com@me  🔖credential
+
+    (Use "privage reencrypt --force" to reencrypt all files)
+    (Use "privage reencrypt --clean" to reencrypt and also delete the decrypted files)
+
+Without flags, `reencrypt` will only show (dry-run) the files that will be reencrypted.
+Use the flag `-f` or `-c` to force the reencryption. 
+
+## Delete a encrypted file 
+
+the command `delete` deletes a encryted file:
+
+    privage delete somewebsite.com@loginname
+
+## Get information about the configuration
+
+    ⤷ privage status
+
+    🔑 Found age key file privage-key.txt in /home/user/mysecrets/privage-key.txt ✔️
+    📂 The directory of the encripted files is /home/user/mysecrets ✔️
+    📑 Found config file .privage.conf in /home/user/.privage.conf ✔️
+
+         The configuration file /home/user/.privage.conf is up to date
+
+    🔐  Found 13 encrypted files for the age key /home/user/mysecrets/privage-key.txt
+
+
+## Rotate 
+
+The `rotate` command will create a new `age` secret key and reencrypt all files with this new key.
+With the flag `--clean`, it will also delete the encrypted files with the old key, and will rename both old and new keys. 
+
+To generate a new age key and reencrypt all the files:
+
+    privage rotate
+
+You can add the flag `--clean` to delete the old key encrypted files, and swap the secret key file names.
+
+
+    private rotate --clean
+
+To generate a yubikey encrypted age secret key, use the flag `--piv-slot`,
+`-p`, to provide the yubikey slot that holds the key. See [possible
+values](https://developers.yubico.com/PIV/Introduction/Certificate_slots.html). 
+
+
+    # f. ex: use the 0x86 slot of the yubikey 5 
+    private rotate -p 86 --clean
+
 # Design
 
 The content of a `privage` encrypted file is the byte concatenation of two
@@ -171,11 +297,10 @@ The second encrypted payload contains the file contents.
 When listing the encrypted files, `privage` scans all encrypted files, retrieves the
 encrypted header payload and decrypts it, presenting the header.
 
-When writing the encrypted file, `privage` hashes the decrypted header and uses
-the hash as name of the encrypted file. Encrypted `privage` file names look like this:
+When writing the encrypted file, `privage` hashes the header and the public age
+key, and uses the hash as name of the encrypted file. Encrypted
+`privage` file names look like this:
 
     425020f87e753ebe4dba67a872de04b7ce7350a63af9f74c1b7c4d633b41573c.age
     5e107b8e3b57411d5661d05e54f755408dd12c831a6b63e8033885c211da1317.age
-
-
 
