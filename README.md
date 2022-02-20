@@ -30,12 +30,12 @@ You may want to use `privage` if:
 - `privage` uses the golang [age API](https://github.com/FiloSottile/age/blob/main/age.go) for encryption of files.
 - `privage` can use a yubikey (PIV smart card) to encrypt the age secret key. See [Yubikey](#markdown-header-yubikey)   
 - `privage` uses `categories` to allow classification of the encrypted files. 
-- Encrypted files do not reveal any metadata. `privage` encrypted files names are hashes of the file name and the category. See [design](#markdown-header-design)   
+- Encrypted files do not reveal any metadata. `privage` encrypted files names are hashes of the file name and the category. See [design](#design)   
 - `privage` encrypts any kind of file, not only credentials/passwords.
-- `privage` can easily (with one command) change the secret key and reencode all the files with the new key. See [rotate](#markdown-header-rotate)   
+- `privage` can easily (with one command) change the secret key and reencode all the files with the new key. See [rotate](#rotate)   
 - `privage` tries to be simple: it does not wrap `git` or your editor: Use git to control your
   repository and use your preferred editor to edit credentials files.
-- Powerful command completion. All commands have completion. See [Bash Completion](#markdown-header-bash-completion)   
+- Powerful command completion. All commands have completion. See [Bash Completion](#bash-completion)   
 
 # Installation
 
@@ -304,3 +304,12 @@ key, and uses the hash as name of the encrypted file. Encrypted
     425020f87e753ebe4dba67a872de04b7ce7350a63af9f74c1b7c4d633b41573c.age
     5e107b8e3b57411d5661d05e54f755408dd12c831a6b63e8033885c211da1317.age
 
+
+# Bash Completion
+
+`privage` has builtin bash autocompletion. You can enable completion commands by putting the following bash
+snippet in your `.bashrc` file:
+
+    if hash privage; then
+        PROG=privage source <(privage bash)
+    fi
