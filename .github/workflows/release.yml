@@ -25,3 +25,4 @@ jobs:
           goversion: latest
           project_path: "./cmd/privage"
           ldflags: -X "main.BuildCommit=${{ github.sha }}" -X "main.BuildTag=${{ env.APP_TAG}}"
+          pre_command: "apt install pkg-config"
