@@ -29,4 +29,4 @@ jobs:
           goversion: latest
           project_path: "./cmd/privage"
           ldflags: -X "main.BuildCommit=${{ github.sha }}" -X "main.BuildTag=${{ env.APP_TAG}}"
-          pre_command: export CGO_ENABLED=1 
+          pre_command: "apt install build-essential && export CGO_ENABLED=1"
