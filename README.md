@@ -80,7 +80,7 @@ The `init` command does three things:
 
 3. it creates a `.privage.conf` file in your home directory. The config file
    contains references to the secret key and the repository path. These
-   references allows `private` to be used in any directory of your computer.
+   references allows `privage` to be used in any directory of your computer.
 
 To create a encrypted age secret key with a
 [yubikey](#markdown-header-yubikey), add the flag `--piv-slot`, `-p` with the
@@ -93,20 +93,21 @@ yubikey slot that will be used to encrypt/decrypt the age key.
 
 ## Create a credentials file
 
-In `privage`, credentials are structured text (.toml files), that can not only contain passwords, but any other
+In `privage`, credentials are structured text (`.toml` files), that can contain not only passwords, but any other
 data associated with a website, like API keys, 2-factor backup codes, etc. 
 
-To add a barebone credentials file (that you can later edit), use the
-command `add`, specifying a `category` (for credential files it should be
-always `credential`) and a `label` (any string that good describes the website, f.ex.  `somewebsite.com@loginname`). 
-u can use 
+To add a barebone credentials file (that you can later edit), use the command
+`add`, specifying a `category` (for credential files it should always be
+`credential`) and a `label` (any string that good describes the website, f.ex.
+`somewebsite.com@loginname`).
 
 
     privage add credential somewebsite.com@loginname
     An encrypted file was saved for 📖 somewebsite.com@loginname  🔖credential
 
-`privage` will generate a password, put the password (among other fields) in a
-`.toml` file and encrypt that file under the `category` 'credential'.
+`privage` will generate a random password, put the password (among other
+fields) in a `.toml` file and encrypt that file under the `category`
+'credential'.
 
 It is recommended to use some naming convention for the credentials label, like
 `<url>@loginname`
