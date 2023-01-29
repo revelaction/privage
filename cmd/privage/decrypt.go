@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -16,9 +15,9 @@ import (
 func decryptAction(ctx *cli.Context) error {
 	label := ctx.Args().First()
 
-	s, ok := ctx.App.Metadata["setup"].(*setup.Setup)
-	if !ok {
-		return errors.New("Can not cast to Type Setup")
+    s, err := setupEnv(ctx)
+    if err != nil {
+        return fmt.Errorf("Unable to setup environment configuration: %s", err)
 	}
 
 	if s.Id.Id == nil {

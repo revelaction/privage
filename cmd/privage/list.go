@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -9,11 +8,16 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/revelaction/privage/header"
-	"github.com/revelaction/privage/setup"
+    //"github.com/revelaction/privage/setup"
 )
 
 // listAction list encripted files
 func listAction(ctx *cli.Context) error {
+
+    s, err := setupEnv(ctx)
+    if err != nil {
+        return fmt.Errorf("Unable to setup environment configuration: %s", err)
+	}
 
 	filter := "" // no filter
 	if ctx.Args().Len() != 0 {
@@ -21,11 +25,6 @@ func listAction(ctx *cli.Context) error {
 	}
 
 	headers := []*header.Header{}
-
-	s, ok := ctx.App.Metadata["setup"].(*setup.Setup)
-	if !ok {
-		return errors.New("Can not cast to Type Setup")
-	}
 
 	if s.Id.Id == nil {
 		return fmt.Errorf("Found no privage key file: %w", s.Id.Err)

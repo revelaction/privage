@@ -17,12 +17,6 @@ func main() {
 
 	app := &cli.App{}
 
-	// Pass the setup configuration to the cli app.
-	err := setupApp(app)
-	if err != nil {
-		fatal(err)
-	}
-
 	app.Name = "privage"
 	app.Version = BuildTag
 	cli.VersionPrinter = func(c *cli.Context) {
@@ -34,9 +28,9 @@ func main() {
 	app.Usage = "password manager/encryption tool based on age"
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
-			Name:    "identity",
-			Aliases: []string{"i"},
-			Usage:   "Use the identity file at PATH",
+			Name:    "conf",
+			Aliases: []string{"c"},
+			Usage:   "Use file as privage configuration file",
 		},
 	}
 

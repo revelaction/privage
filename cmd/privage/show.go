@@ -21,15 +21,15 @@ func showAction(ctx *cli.Context) error {
 		return errors.New("show command needs one argument")
 	}
 
+    s, err := setupEnv(ctx)
+    if err != nil {
+        return fmt.Errorf("Unable to setup environment configuration: %s", err)
+	}
+
 	// Flag to determine if we dump the file to stout (all) or only selected
 	// parts of the file (for credential files we want only login and password
 	// toml fields).
 	isAll := ctx.Bool("all")
-
-	s, ok := ctx.App.Metadata["setup"].(*setup.Setup)
-	if !ok {
-		return errors.New("Can not cast to Type Setup")
-	}
 
 	if s.Id.Id == nil {
 		return fmt.Errorf("Found no privage key file: %w", s.Id.Err)

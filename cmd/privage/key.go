@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -9,14 +8,13 @@ import (
 	"github.com/urfave/cli/v2"
 
 	id "github.com/revelaction/privage/identity"
-	"github.com/revelaction/privage/setup"
 )
 
 func keyAction(ctx *cli.Context) error {
 
-	s, ok := ctx.App.Metadata["setup"].(*setup.Setup)
-	if !ok {
-		return errors.New("Can not cast to Type Setup")
+    s, err := setupEnv(ctx)
+    if err != nil {
+        return fmt.Errorf("Unable to setup environment configuration: %s", err)
 	}
 
 	// piv functionality requires conf piv slot

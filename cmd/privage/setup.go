@@ -7,27 +7,24 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-// setupApp checks if these exists:
+// setupEnv initializes:
 // - privage configuration file
 // - Identity, using conf file if exists
 // - Secrets repo path, using conf file if exists
-func setupApp(app *cli.App) error {
+func setupEnv(ctx *cli.Context) (*setup.Setup, error) {
 
-	metadata := map[string]interface{}{}
-
+	argConf := ctx.String("conf")
 	// conf Can be empty struct
-	conf, err := config.New()
+	conf, err := config.New(argConf)
 	if err != nil {
-		return err
+		return &setup.Setup{},err
 	}
 
 	// find identity and repository for encrypted files
-	setup, err := setup.New(conf)
+	s, err := setup.New(conf)
 	if err != nil {
-		return err
+		return &setup.Setup{},err
 	}
 
-	metadata["setup"] = setup
-	app.Metadata = metadata
-	return nil
+	return s, nil
 }

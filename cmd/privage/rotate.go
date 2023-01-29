@@ -23,9 +23,9 @@ const (
 // fiels with the new key.
 func rotateAction(ctx *cli.Context) error {
 
-	s, ok := ctx.App.Metadata["setup"].(*setup.Setup)
-	if !ok {
-		return errors.New("Can not cast to Type Setup")
+    s, err := setupEnv(ctx)
+    if err != nil {
+        return fmt.Errorf("Unable to setup environment configuration: %s", err)
 	}
 
 	isClean := ctx.Bool("clean")

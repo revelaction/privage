@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/revelaction/privage/header"
-	"github.com/revelaction/privage/setup"
 )
 
 const complete = `#! /bin/bash
@@ -44,10 +43,9 @@ func bashCompleteLabel(ctx *cli.Context) {
 		return
 	}
 
-	s, ok := ctx.App.Metadata["setup"].(*setup.Setup)
-
-	if !ok {
-		return
+    s, err := setupEnv(ctx)
+    if err != nil {
+        return 
 	}
 
 	if s.Id.Id == nil {
@@ -65,10 +63,9 @@ func bashCompleteCategory(ctx *cli.Context) {
 		return
 	}
 
-	s, ok := ctx.App.Metadata["setup"].(*setup.Setup)
-
-	if !ok {
-		return
+    s, err := setupEnv(ctx)
+    if err != nil {
+        return 
 	}
 
 	if s.Id.Id == nil {
@@ -92,11 +89,10 @@ func bashCompleteCategory(ctx *cli.Context) {
 func bashCompleteForAdd(ctx *cli.Context) {
 
 	if ctx.NArg() == 0 {
-		s, ok := ctx.App.Metadata["setup"].(*setup.Setup)
-
-		if !ok {
-			return
-		}
+        s, err := setupEnv(ctx)
+        if err != nil {
+            return 
+        }
 
 		if s.Id.Id == nil {
 			return

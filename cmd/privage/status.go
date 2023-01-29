@@ -1,23 +1,22 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/urfave/cli/v2"
 
 	"github.com/revelaction/privage/config"
 	id "github.com/revelaction/privage/identity"
-	"github.com/revelaction/privage/setup"
+	//"github.com/revelaction/privage/setup"
 )
 
 // statusAction prints on the terminal a status of the privage command
 // configuration
 func statusAction(ctx *cli.Context) error {
 
-	s, ok := ctx.App.Metadata["setup"].(*setup.Setup)
-	if !ok {
-		return errors.New("Can not cast to Type Setup")
+    s, err := setupEnv(ctx)
+    if err != nil {
+        return fmt.Errorf("Unable to setup environment configuration: %s", err)
 	}
 
 	fmt.Println()

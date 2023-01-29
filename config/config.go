@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"errors"
 
 	"github.com/BurntSushi/toml"
 )
@@ -61,34 +62,27 @@ type Config struct {
 //
 // It tries to find a valid .toml config file. If not found, an empty
 // struct is returned.
-func New() (*Config, error) {
+func New(argConfig string) (*Config, error) {
 
-	var path string
+   // try conf from arguments
+    if fileExists(argConfig) {
+        return build(argConfig)
+    }
 
-	// 1) try home first
-	homeDir, err := os.UserHomeDir()
-	if err == nil {
-		homePath := homeDir + "/" + FileName
-		if fileExists(homePath) {
-			path = homePath
-		}
-	} else {
-		currentDir, err := os.Getwd()
-		if err != nil {
-			return &Config{}, err
-		}
+    homePath, err := homeDirPath()
+    if err == nil {
+        return build(homePath)
+    }
 
-		currentPath := currentDir + "/" + FileName
-		if fileExists(currentPath) {
-			path = currentPath
-		}
-	}
+    currentPath, err := currentDirPath()
+    if err == nil {
+        return build(currentPath)
+    }
 
-	if len(path) == 0 {
-		return &Config{}, nil
-	}
+	return &Config{}, err
+}
 
-	// validate config file
+func build(path string) (*Config, error) {
 	var conf *Config
 
 	if _, err := toml.DecodeFile(path, &conf); err != nil {
@@ -96,6 +90,11 @@ func New() (*Config, error) {
 	}
 
 	// Expand tilde home directory from the config file
+	homeDir, err := os.UserHomeDir()
+    if err != nil {
+        return &Config{}, errors.New("Found no home dir")
+    }
+
 	if strings.HasPrefix(conf.IdentityPath, "~/") {
 		conf.IdentityPath = filepath.Join(homeDir, conf.IdentityPath[2:])
 	}
@@ -106,6 +105,34 @@ func New() (*Config, error) {
 
 	conf.Path = path
 	return conf, nil
+}
+
+func homeDirPath() (string, error) {
+	homeDir, err := os.UserHomeDir()
+    if err != nil {
+        return "", err
+    }
+
+    path := homeDir + "/" + FileName
+    if !fileExists(path) {
+        return "", errors.New("Found no default conf file in home dir")
+    }
+
+    return path, nil
+}
+
+func currentDirPath() (string, error) {
+	currentDir, err := os.Getwd()
+    if err != nil {
+        return "", err
+    }
+
+    path := currentDir+ "/" + FileName
+    if !fileExists(path) {
+        return "", errors.New("Found no default config file in current dir")
+    }
+
+    return path, nil
 }
 
 // Create creates a config file.
