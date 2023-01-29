@@ -30,8 +30,6 @@ func setupEnv(ctx *cli.Context) (*setup.Setup, error) {
         conf.RepositoryPath=argRepo
     }
 
-
-
 	// find identity and repository for encrypted files
 	s, err := setup.New(conf)
 	if err != nil {
