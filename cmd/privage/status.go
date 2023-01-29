@@ -7,7 +7,6 @@ import (
 
 	"github.com/revelaction/privage/config"
 	id "github.com/revelaction/privage/identity"
-	//"github.com/revelaction/privage/setup"
 )
 
 // statusAction prints on the terminal a status of the privage command
