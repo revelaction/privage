@@ -20,6 +20,18 @@ func setupEnv(ctx *cli.Context) (*setup.Setup, error) {
 		return &setup.Setup{},err
 	}
 
+    // override conf file with arg params
+	argKey := ctx.String("key")
+    if "" != argKey {
+        conf.IdentityPath=argKey
+    }
+	argRepo := ctx.String("repository")
+    if "" != argRepo {
+        conf.RepositoryPath=argRepo
+    }
+
+
+
 	// find identity and repository for encrypted files
 	s, err := setup.New(conf)
 	if err != nil {

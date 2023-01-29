@@ -69,7 +69,7 @@ func bashCompleteCategory(ctx *cli.Context) {
 	}
 
 	if s.Id.Id == nil {
-		return
+		return 
 	}
 
 	categories := map[string]struct{}{}

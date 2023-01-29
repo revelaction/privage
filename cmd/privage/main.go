@@ -32,6 +32,16 @@ func main() {
 			Aliases: []string{"c"},
 			Usage:   "Use file as privage configuration file",
 		},
+		&cli.StringFlag{
+			Name:    "key",
+			Aliases: []string{"k"},
+			Usage:   "Use file path for private key",
+		},
+		&cli.StringFlag{
+			Name:    "repository",
+			Aliases: []string{"r"},
+			Usage:   "Use file path as path for the repository",
+		},
 	}
 
 	app.Commands = allCommands
