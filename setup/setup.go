@@ -36,48 +36,117 @@ func (s *Setup) Copy() *Setup {
 	return &Setup{C: conf, Repository: repo}
 }
 
-func New(conf *config.Config) (*Setup, error) {
+func NewFromArgs(keyPath, repoPath, pivSlot string) (*Setup, error) {
 
-	id := identity(conf)
-	repo, err := repository(conf)
+	id := identity(keyPath, repoPath)
+
+    // repoPath
+    _, err := directoryExists(repoPath)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Setup{C: conf, Id: id, Repository: repo}, nil
+	return &Setup{C: &config.Config{}, Id: id, Repository: repoPath}, nil
 }
 
-func identity(c *config.Config) id.Identity {
-	path := ""
-	if len(c.IdentityPath) > 0 {
-		path = c.IdentityPath
-	}
+func identity(keyPath, pivSlot string) id.Identity {
 
-	// Only if piv_slot exist in the config and only then, we check the yubikey
-	if c.IdentityType == id.TypePiv {
-		slot, err := strconv.ParseUint(c.IdentityPivSlot, 16, 32)
-		if err != nil {
-			return id.Identity{Err: fmt.Errorf("could not convert slot %s to hex: %v", slot, err)}
-		}
-		return id.LoadPiv(c.IdentityPath, uint32(slot), c.IdentityPivAlgo)
-	}
+    if "" != pivSlot {
+	    return id.Load(keyPath)
+    }
 
-	// Try load as a normal age key
-	return id.Load(path)
+    slot, err := strconv.ParseUint(pivSlot, 16, 32)
+    if err != nil {
+        return id.Identity{Err: fmt.Errorf("could not convert slot %s to hex: %v", slot, err)}
+    }
+
+	return id.LoadPiv(keyPath, uint32(slot), "")
 }
 
-func repository(conf *config.Config) (string, error) {
-	// 1) Config
-	if len(conf.RepositoryPath) > 0 {
-		// TODO we should check dir exist.
-		return conf.RepositoryPath, nil
-	}
+//func identityForConf(key, pivSlot) id.Identity {
+//	path := ""
+//	if len(c.IdentityPath) > 0 {
+//		path = c.IdentityPath
+//	}
+//
+//	// Only if piv_slot exist in the config and only then, we check the yubikey
+//	if c.IdentityType == id.TypePiv {
+//		slot, err := strconv.ParseUint(c.IdentityPivSlot, 16, 32)
+//		if err != nil {
+//			return id.Identity{Err: fmt.Errorf("could not convert slot %s to hex: %v", slot, err)}
+//		}
+//		return id.LoadPiv(c.IdentityPath, uint32(slot), c.IdentityPivAlgo)
+//	}
+//
+//	// Try load as a normal age key
+//	return id.Load(path)
+//
+//}
 
-    // 2) current dir
-	path, err := os.Getwd()
-	if err != nil {
-		return "", fmt.Errorf("No repository directory found: %w", err)
-	}
 
-	return path, nil
+//func New(conf *config.Config) (*Setup, error) {
+//
+//	id := identity(conf)
+//	repo, err := repository(conf)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	return &Setup{C: conf, Id: id, Repository: repo}, nil
+//}
+
+//func repository(path string) (string, error) {
+//    if directoryExists(path) {
+//        return path
+//    }
+//}
+
+func directoryExists(path string) (bool, error) {
+
+    stat, err := os.Stat(path);
+    if err != nil {
+        if os.IsNotExist(err) {
+            return false, nil
+        } else {
+            return false, err
+        }
+    }
+
+    return stat.IsDir(), nil
 }
+
+
+//func identity(c *config.Config) id.Identity {
+//	path := ""
+//	if len(c.IdentityPath) > 0 {
+//		path = c.IdentityPath
+//	}
+//
+//	// Only if piv_slot exist in the config and only then, we check the yubikey
+//	if c.IdentityType == id.TypePiv {
+//		slot, err := strconv.ParseUint(c.IdentityPivSlot, 16, 32)
+//		if err != nil {
+//			return id.Identity{Err: fmt.Errorf("could not convert slot %s to hex: %v", slot, err)}
+//		}
+//		return id.LoadPiv(c.IdentityPath, uint32(slot), c.IdentityPivAlgo)
+//	}
+//
+//	// Try load as a normal age key
+//	return id.Load(path)
+//}
+//
+//func repositoryForConf(conf *config.Config) (string, error) {
+//	// 1) Config
+//	if len(conf.RepositoryPath) > 0 {
+//		// TODO we should check dir exist.
+//		return conf.RepositoryPath, nil
+//	}
+//
+//    // 2) current dir
+//	path, err := os.Getwd()
+//	if err != nil {
+//		return "", fmt.Errorf("No repository directory found: %w", err)
+//	}
+//
+//	return path, nil
+//}
