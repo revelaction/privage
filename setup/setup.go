@@ -38,15 +38,29 @@ func (s *Setup) Copy() *Setup {
 
 func NewFromArgs(keyPath, repoPath, pivSlot string) (*Setup, error) {
 
-	id := identity(keyPath, repoPath)
+	id := identity(keyPath, pivSlot)
 
     // repoPath
     _, err := directoryExists(repoPath)
 	if err != nil {
-		return nil, err
+		return &Setup{}, err
 	}
 
 	return &Setup{C: &config.Config{}, Id: id, Repository: repoPath}, nil
+}
+
+func NewFromConfigFile(path string) (*Setup, error) {
+
+    // validates the path, toml, and identiti, repo paths
+	conf, err := config.New(path)
+	if err != nil {
+	    return &Setup{}, err
+    }
+
+    // Build identity TODO piv
+	id := identity(conf.IdentityPath, conf.IdentityPivSlot)
+
+	return &Setup{C: &config.Config{}, Id: id, Repository: conf.RepositoryPath}, nil
 }
 
 func identity(keyPath, pivSlot string) id.Identity {

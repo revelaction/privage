@@ -15,6 +15,7 @@ import (
 func setupEnv(ctx *cli.Context) (*setup.Setup, error) {
 
 
+	// conf Can be empty struct
     // main motto:
     // arguments -k, -r are incompatble with configurtaion files -c or conf search.
     //
@@ -56,12 +57,14 @@ func setupEnv(ctx *cli.Context) (*setup.Setup, error) {
 
     }
 
-    //if "" != argConf {
-    //    s, err := setup.NewFromConf(argConf)
-    //    if err != nil {
-    //        return &setup.Setup{},err
-    //    }
-    //}
+    if "" != argConf {
+        s, err := setup.NewFromConfigFile(argConf)
+        if err != nil {
+            return &setup.Setup{},err
+        }
+
+        return s, nil
+    }
 
     //// search for a config file in usual paths
 	//s, err := setup.New()

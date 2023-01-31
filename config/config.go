@@ -62,11 +62,11 @@ type Config struct {
 //
 // It tries to find a valid .toml config file. If not found, an empty
 // struct is returned.
-func New(argConfig string) (*Config, error) {
+func NewOld(path string) (*Config, error) {
 
    // try conf from arguments
-    if fileExists(argConfig) {
-        return build(argConfig)
+    if fileExists(path) {
+        return build(path)
     }
 
     homePath, err := homeDirPath()
@@ -82,9 +82,43 @@ func New(argConfig string) (*Config, error) {
 	return &Config{}, err
 }
 
+// validate and build
+func New(path string) (*Config, error) {
+	var conf *Config
+
+    // path exist
+    if !fileExists(path) {
+        return &Config{}, fmt.Errorf("File %s does not exists.", path)
+    }
+    // is valid toml
+	if _, err := toml.DecodeFile(path, &conf); err != nil {
+		return &Config{}, fmt.Errorf("File %s is not a valid .toml file.", path)
+	}
+    // has key IdentityPath
+	if "" == conf.IdentityPath {
+		return &Config{}, fmt.Errorf("File %s does not have a IdentityPath (age key) field", path)
+    }
+    // IdentityPath exist
+    if !fileExists(conf.IdentityPath) {
+        return &Config{}, fmt.Errorf("IdentityPath (age key) %s does not exists.", conf.IdentityPath)
+    }
+
+    // has key RepositoryPath
+	if "" == conf.RepositoryPath {
+		return &Config{}, fmt.Errorf("File %s does not have a RepositoryPath field", path)
+    }
+    // RepositoryPath exist
+    if !fileExists(conf.RepositoryPath) {
+        return &Config{}, fmt.Errorf("RepositoryPath %s does not exists.", conf.RepositoryPath)
+    }
+
+    return conf, nil 
+}
+
 func build(path string) (*Config, error) {
 	var conf *Config
 
+    // Validate
 	if _, err := toml.DecodeFile(path, &conf); err != nil {
 		return &Config{}, fmt.Errorf("file %s is not a valid .toml file.", path)
 	}
