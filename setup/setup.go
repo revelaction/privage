@@ -65,7 +65,7 @@ func NewFromConfigFile(path string) (*Setup, error) {
 
 func identity(keyPath, pivSlot string) id.Identity {
 
-    if "" != pivSlot {
+    if "" == pivSlot {
 	    return id.Load(keyPath)
     }
 

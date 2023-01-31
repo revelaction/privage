@@ -92,6 +92,10 @@ func New(path string) (*Config, error) {
 	if "" == conf.IdentityPath {
 		return &Config{}, fmt.Errorf("File %s does not have a IdentityPath (age key) field", path)
     }
+
+    // expand ~/
+    expandHome(conf)
+
     // IdentityPath exist
     if !fileExists(conf.IdentityPath) {
         return &Config{}, fmt.Errorf("IdentityPath (age key) %s does not exists.", conf.IdentityPath)
@@ -106,7 +110,6 @@ func New(path string) (*Config, error) {
         return &Config{}, fmt.Errorf("RepositoryPath %s does not exists.", conf.RepositoryPath)
     }
 
-    expandHome(conf)
 	conf.Path = path
     return conf, nil 
 }
