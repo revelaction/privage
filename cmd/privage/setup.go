@@ -4,7 +4,7 @@ import (
     "errors"
 	"github.com/urfave/cli/v2"
 
-	//"github.com/revelaction/privage/config"
+	"github.com/revelaction/privage/config"
 	"github.com/revelaction/privage/setup"
 )
 
@@ -66,24 +66,17 @@ func setupEnv(ctx *cli.Context) (*setup.Setup, error) {
         return s, nil
     }
 
-    //// search for a config file in usual paths
-	//s, err := setup.New()
-	//if err != nil {
-	//	return &setup.Setup{},err
-	//}
+    path, err := config.FindPath()
+    if err != nil {
+        return &setup.Setup{},err
+    }
 
-    return &setup.Setup{},errors.New("TODO unimplemented")
-	//return s, nil
+    s, err := setup.NewFromConfigFile(path)
+    if err != nil {
+        return &setup.Setup{},err
+    }
 
+    return s, nil
 
-
-    // setup classes shoudl not have ctx
-    // if -k not empty
-    // NewFromArgs(k,r,p) // inside setup/setup "" means no argmnent it generates a identity error and currentdir path
-    // 
-    // if -c not empty
-    // NewFromConfig(k,r) validate
-    // if no, 
-    // New() search for aconf path, load as NewFromConfig
 }
 

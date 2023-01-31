@@ -58,28 +58,22 @@ type Config struct {
 	Login string `toml:"default_login"`
 }
 
-// New creates a config struct.
-//
-// It tries to find a valid .toml config file. If not found, an empty
-// struct is returned.
-func NewOld(path string) (*Config, error) {
-
-   // try conf from arguments
-    if fileExists(path) {
-        return build(path)
-    }
+// Search paths for a conf file
+// First in home 
+// second in current
+func FindPath() (string, error) {
 
     homePath, err := homeDirPath()
     if err == nil {
-        return build(homePath)
+        return homePath, nil
     }
 
     currentPath, err := currentDirPath()
     if err == nil {
-        return build(currentPath)
+        return currentPath, nil
     }
 
-	return &Config{}, err
+    return "", fmt.Errorf("Could not find any configuration file. %s", err)
 }
 
 // validate and build
@@ -112,21 +106,16 @@ func New(path string) (*Config, error) {
         return &Config{}, fmt.Errorf("RepositoryPath %s does not exists.", conf.RepositoryPath)
     }
 
+    expandHome(conf)
+	conf.Path = path
     return conf, nil 
 }
 
-func build(path string) (*Config, error) {
-	var conf *Config
+func expandHome(conf *Config) (*Config, error) {
 
-    // Validate
-	if _, err := toml.DecodeFile(path, &conf); err != nil {
-		return &Config{}, fmt.Errorf("file %s is not a valid .toml file.", path)
-	}
-
-	// Expand tilde home directory from the config file
 	homeDir, err := os.UserHomeDir()
     if err != nil {
-        return &Config{}, errors.New("Found no home dir")
+        return conf, errors.New("Found no home dir")
     }
 
 	if strings.HasPrefix(conf.IdentityPath, "~/") {
@@ -137,10 +126,11 @@ func build(path string) (*Config, error) {
 		conf.RepositoryPath = filepath.Join(homeDir, conf.RepositoryPath[2:])
 	}
 
-	conf.Path = path
-	return conf, nil
+    return conf, nil
 }
 
+// homeDirPath returns the existant privage conf file in home
+// if not found, it returns an error 
 func homeDirPath() (string, error) {
 	homeDir, err := os.UserHomeDir()
     if err != nil {
@@ -149,7 +139,7 @@ func homeDirPath() (string, error) {
 
     path := homeDir + "/" + FileName
     if !fileExists(path) {
-        return "", errors.New("Found no default conf file in home dir")
+        return "", fmt.Errorf("Configuration file %s not found", path)
     }
 
     return path, nil
@@ -163,7 +153,7 @@ func currentDirPath() (string, error) {
 
     path := currentDir+ "/" + FileName
     if !fileExists(path) {
-        return "", errors.New("Found no default config file in current dir")
+        return "", fmt.Errorf("Configuration file %s not found", path)
     }
 
     return path, nil
