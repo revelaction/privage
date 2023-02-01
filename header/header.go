@@ -26,7 +26,7 @@ type Header struct {
 	Category string
 	Label    string
 
-	// Path of the privage file containing the header  
+	// Path of the privage file containing the header
 	Path string
 
 	// Error when unpadding or decrypting the header of the  file
@@ -54,7 +54,7 @@ func (h *Header) Pad() []byte {
 	return []byte(versionStr + categoryStr + labelStr)
 }
 
-// Parse parses a serialized version of a header and creates a Header struct 
+// Parse parses a serialized version of a header and creates a Header struct
 func Parse(h []byte) *Header {
 
 	res := &Header{}

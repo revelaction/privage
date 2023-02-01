@@ -12,9 +12,9 @@ import (
 
 func keyAction(ctx *cli.Context) error {
 
-    s, err := setupEnv(ctx)
-    if err != nil {
-        return fmt.Errorf("Unable to setup environment configuration: %s", err)
+	s, err := setupEnv(ctx)
+	if err != nil {
+		return fmt.Errorf("Unable to setup environment configuration: %s", err)
 	}
 
 	// piv functionality requires conf piv slot

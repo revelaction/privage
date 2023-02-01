@@ -27,9 +27,9 @@ const (
 // identity and secret directory paths.
 func initAction(ctx *cli.Context) error {
 
-    s, err := setupEnv(ctx)
-    if err != nil {
-        return fmt.Errorf("Unable to setup environment configuration: %s", err)
+	s, err := setupEnv(ctx)
+	if err != nil {
+		return fmt.Errorf("Unable to setup environment configuration: %s", err)
 	}
 
 	// If config file exist, we exit

@@ -18,9 +18,9 @@ func deleteAction(ctx *cli.Context) error {
 
 	label := ctx.Args().First()
 
-    s, err := setupEnv(ctx)
-    if err != nil {
-        return fmt.Errorf("Unable to setup environment configuration: %s", err)
+	s, err := setupEnv(ctx)
+	if err != nil {
+		return fmt.Errorf("Unable to setup environment configuration: %s", err)
 	}
 
 	if s.Id.Id == nil {

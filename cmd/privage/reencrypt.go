@@ -17,9 +17,9 @@ func reencryptAction(ctx *cli.Context) error {
 	isForce := ctx.Bool("force")
 	isClean := ctx.Bool("clean")
 
-    s, err := setupEnv(ctx)
-    if err != nil {
-        return fmt.Errorf("Unable to setup environment configuration: %s", err)
+	s, err := setupEnv(ctx)
+	if err != nil {
+		return fmt.Errorf("Unable to setup environment configuration: %s", err)
 	}
 
 	if s.Id.Id == nil {

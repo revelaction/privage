@@ -23,9 +23,9 @@ const (
 // fiels with the new key.
 func rotateAction(ctx *cli.Context) error {
 
-    s, err := setupEnv(ctx)
-    if err != nil {
-        return fmt.Errorf("Unable to setup environment configuration: %s", err)
+	s, err := setupEnv(ctx)
+	if err != nil {
+		return fmt.Errorf("Unable to setup environment configuration: %s", err)
 	}
 
 	isClean := ctx.Bool("clean")

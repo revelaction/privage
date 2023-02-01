@@ -43,9 +43,9 @@ func bashCompleteLabel(ctx *cli.Context) {
 		return
 	}
 
-    s, err := setupEnv(ctx)
-    if err != nil {
-        return 
+	s, err := setupEnv(ctx)
+	if err != nil {
+		return
 	}
 
 	if s.Id.Id == nil {
@@ -63,13 +63,13 @@ func bashCompleteCategory(ctx *cli.Context) {
 		return
 	}
 
-    s, err := setupEnv(ctx)
-    if err != nil {
-        return 
+	s, err := setupEnv(ctx)
+	if err != nil {
+		return
 	}
 
 	if s.Id.Id == nil {
-		return 
+		return
 	}
 
 	categories := map[string]struct{}{}
@@ -89,10 +89,10 @@ func bashCompleteCategory(ctx *cli.Context) {
 func bashCompleteForAdd(ctx *cli.Context) {
 
 	if ctx.NArg() == 0 {
-        s, err := setupEnv(ctx)
-        if err != nil {
-            return 
-        }
+		s, err := setupEnv(ctx)
+		if err != nil {
+			return
+		}
 
 		if s.Id.Id == nil {
 			return

@@ -19,11 +19,11 @@ type Setup struct {
 	// Config object, can be empty struct
 	C *config.Config
 
-    // Identity wrapper, can be a empty age identity, in that case the error is
-    // present
+	// Identity wrapper, can be a empty age identity, in that case the error is
+	// present
 	Id id.Identity
 
-    // The real repo path, if no from config toml, this will be current path
+	// The real repo path, if no from config toml, this will be current path
 	Repository string
 }
 
@@ -40,7 +40,7 @@ func NewFromArgs(keyPath, repoPath, pivSlot string) (*Setup, error) {
 
 	id := identity(keyPath, pivSlot)
 
-    _, err := directoryExists(repoPath)
+	_, err := directoryExists(repoPath)
 	if err != nil {
 		return &Setup{}, err
 	}
@@ -50,11 +50,11 @@ func NewFromArgs(keyPath, repoPath, pivSlot string) (*Setup, error) {
 
 func NewFromConfigFile(path string) (*Setup, error) {
 
-    // validates the path, toml, and identiti, repo paths
+	// validates the path, toml, and identiti, repo paths
 	conf, err := config.New(path)
 	if err != nil {
-	    return &Setup{}, err
-    }
+		return &Setup{}, err
+	}
 
 	id := identity(conf.IdentityPath, conf.IdentityPivSlot)
 
@@ -63,28 +63,28 @@ func NewFromConfigFile(path string) (*Setup, error) {
 
 func identity(keyPath, pivSlot string) id.Identity {
 
-    if "" == pivSlot {
-	    return id.Load(keyPath)
-    }
+	if "" == pivSlot {
+		return id.Load(keyPath)
+	}
 
-    slot, err := strconv.ParseUint(pivSlot, 16, 32)
-    if err != nil {
-        return id.Identity{Err: fmt.Errorf("could not convert slot %s to hex: %v", slot, err)}
-    }
+	slot, err := strconv.ParseUint(pivSlot, 16, 32)
+	if err != nil {
+		return id.Identity{Err: fmt.Errorf("could not convert slot %s to hex: %v", slot, err)}
+	}
 
 	return id.LoadPiv(keyPath, uint32(slot), "")
 }
 
 func directoryExists(path string) (bool, error) {
 
-    stat, err := os.Stat(path);
-    if err != nil {
-        if os.IsNotExist(err) {
-            return false, nil
-        } else {
-            return false, err
-        }
-    }
+	stat, err := os.Stat(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		} else {
+			return false, err
+		}
+	}
 
-    return stat.IsDir(), nil
+	return stat.IsDir(), nil
 }

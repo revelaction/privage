@@ -8,15 +8,15 @@ import (
 	"github.com/urfave/cli/v2"
 
 	"github.com/revelaction/privage/header"
-    //"github.com/revelaction/privage/setup"
+	//"github.com/revelaction/privage/setup"
 )
 
 // listAction list encripted files
 func listAction(ctx *cli.Context) error {
 
-    s, err := setupEnv(ctx)
-    if err != nil {
-        return fmt.Errorf("Unable to setup environment configuration: %s", err)
+	s, err := setupEnv(ctx)
+	if err != nil {
+		return fmt.Errorf("Unable to setup environment configuration: %s", err)
 	}
 
 	filter := "" // no filter

@@ -25,9 +25,9 @@ func clipboardAction(ctx *cli.Context) error {
 		return errors.New("clipboard command needs one argument: label")
 	}
 
-    s, err := setupEnv(ctx)
-    if err != nil {
-        return fmt.Errorf("Unable to setup environment configuration: %s", err)
+	s, err := setupEnv(ctx)
+	if err != nil {
+		return fmt.Errorf("Unable to setup environment configuration: %s", err)
 	}
 
 	if s.Id.Id == nil {

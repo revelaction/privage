@@ -21,9 +21,9 @@ func showAction(ctx *cli.Context) error {
 		return errors.New("show command needs one argument")
 	}
 
-    s, err := setupEnv(ctx)
-    if err != nil {
-        return fmt.Errorf("Unable to setup environment configuration: %s", err)
+	s, err := setupEnv(ctx)
+	if err != nil {
+		return fmt.Errorf("Unable to setup environment configuration: %s", err)
 	}
 
 	// Flag to determine if we dump the file to stout (all) or only selected

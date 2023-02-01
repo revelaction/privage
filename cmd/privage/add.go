@@ -15,7 +15,7 @@ import (
 )
 
 // addAction adds a new privage encrypted file
-// 
+//
 // the first argument is a category. A category can be anything. There is a
 // predefined category (credential) that generates credential files.
 // the second one (label) is:
@@ -23,9 +23,9 @@ import (
 // - a existing file in the current directory
 func addAction(ctx *cli.Context) error {
 
-    s, err := setupEnv(ctx)
-    if err != nil {
-        return fmt.Errorf("Unable to setup environment configuration: %s", err)
+	s, err := setupEnv(ctx)
+	if err != nil {
+		return fmt.Errorf("Unable to setup environment configuration: %s", err)
 	}
 
 	if s.Id.Id == nil {

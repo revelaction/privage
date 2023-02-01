@@ -1,11 +1,11 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
-	"errors"
 
 	"github.com/BurntSushi/toml"
 )
@@ -38,7 +38,7 @@ default_email = ""
 // A Config contains configuration data found in the .toml config file (if it exists)
 type Config struct {
 
-	// The Path of the existing config file. 
+	// The Path of the existing config file.
 	// If this is not empty, a config file was found
 	Path string
 
@@ -59,67 +59,67 @@ type Config struct {
 }
 
 // Search paths for a conf file
-// First in home 
+// First in home
 // second in current
 func FindPath() (string, error) {
 
-    homePath, err := homeDirPath()
-    if err == nil {
-        return homePath, nil
-    }
+	homePath, err := homeDirPath()
+	if err == nil {
+		return homePath, nil
+	}
 
-    currentPath, err := currentDirPath()
-    if err == nil {
-        return currentPath, nil
-    }
+	currentPath, err := currentDirPath()
+	if err == nil {
+		return currentPath, nil
+	}
 
-    return "", fmt.Errorf("Could not find any configuration file. %s", err)
+	return "", fmt.Errorf("Could not find any configuration file. %s", err)
 }
 
 // validate and build
 func New(path string) (*Config, error) {
 	var conf *Config
 
-    // path exist
-    if !fileExists(path) {
-        return &Config{}, fmt.Errorf("File %s does not exists.", path)
-    }
-    // is valid toml
+	// path exist
+	if !fileExists(path) {
+		return &Config{}, fmt.Errorf("File %s does not exists.", path)
+	}
+	// is valid toml
 	if _, err := toml.DecodeFile(path, &conf); err != nil {
 		return &Config{}, fmt.Errorf("File %s is not a valid .toml file.", path)
 	}
-    // has key IdentityPath
+	// has key IdentityPath
 	if "" == conf.IdentityPath {
 		return &Config{}, fmt.Errorf("File %s does not have a IdentityPath (age key) field", path)
-    }
+	}
 
-    // expand ~/
-    expandHome(conf)
+	// expand ~/
+	expandHome(conf)
 
-    // IdentityPath exist
-    if !fileExists(conf.IdentityPath) {
-        return &Config{}, fmt.Errorf("IdentityPath (age key) %s does not exists.", conf.IdentityPath)
-    }
+	// IdentityPath exist
+	if !fileExists(conf.IdentityPath) {
+		return &Config{}, fmt.Errorf("IdentityPath (age key) %s does not exists.", conf.IdentityPath)
+	}
 
-    // has key RepositoryPath
+	// has key RepositoryPath
 	if "" == conf.RepositoryPath {
 		return &Config{}, fmt.Errorf("File %s does not have a RepositoryPath field", path)
-    }
-    // RepositoryPath exist
-    if !fileExists(conf.RepositoryPath) {
-        return &Config{}, fmt.Errorf("RepositoryPath %s does not exists.", conf.RepositoryPath)
-    }
+	}
+	// RepositoryPath exist
+	if !fileExists(conf.RepositoryPath) {
+		return &Config{}, fmt.Errorf("RepositoryPath %s does not exists.", conf.RepositoryPath)
+	}
 
 	conf.Path = path
-    return conf, nil 
+	return conf, nil
 }
 
 func expandHome(conf *Config) (*Config, error) {
 
 	homeDir, err := os.UserHomeDir()
-    if err != nil {
-        return conf, errors.New("Found no home dir")
-    }
+	if err != nil {
+		return conf, errors.New("Found no home dir")
+	}
 
 	if strings.HasPrefix(conf.IdentityPath, "~/") {
 		conf.IdentityPath = filepath.Join(homeDir, conf.IdentityPath[2:])
@@ -129,37 +129,37 @@ func expandHome(conf *Config) (*Config, error) {
 		conf.RepositoryPath = filepath.Join(homeDir, conf.RepositoryPath[2:])
 	}
 
-    return conf, nil
+	return conf, nil
 }
 
 // homeDirPath returns the existant privage conf file in home
-// if not found, it returns an error 
+// if not found, it returns an error
 func homeDirPath() (string, error) {
 	homeDir, err := os.UserHomeDir()
-    if err != nil {
-        return "", err
-    }
+	if err != nil {
+		return "", err
+	}
 
-    path := homeDir + "/" + FileName
-    if !fileExists(path) {
-        return "", fmt.Errorf("Configuration file %s not found", path)
-    }
+	path := homeDir + "/" + FileName
+	if !fileExists(path) {
+		return "", fmt.Errorf("Configuration file %s not found", path)
+	}
 
-    return path, nil
+	return path, nil
 }
 
 func currentDirPath() (string, error) {
 	currentDir, err := os.Getwd()
-    if err != nil {
-        return "", err
-    }
+	if err != nil {
+		return "", err
+	}
 
-    path := currentDir+ "/" + FileName
-    if !fileExists(path) {
-        return "", fmt.Errorf("Configuration file %s not found", path)
-    }
+	path := currentDir + "/" + FileName
+	if !fileExists(path) {
+		return "", fmt.Errorf("Configuration file %s not found", path)
+	}
 
-    return path, nil
+	return path, nil
 }
 
 // Create creates a config file.
