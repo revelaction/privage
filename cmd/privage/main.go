@@ -38,6 +38,11 @@ func main() {
 			Usage:   "Use file path for private key",
 		},
 		&cli.StringFlag{
+			Name:    "piv-slot",
+			Aliases: []string{"p"},
+			Usage:   "The PIV slot for decryption of the age key",
+		},
+		&cli.StringFlag{
 			Name:    "repository",
 			Aliases: []string{"r"},
 			Usage:   "Use file path as path for the repository",
