@@ -41,7 +41,7 @@ You may want to use `privage` if:
 
 If your system has Go 1.17+:
 
-    go install github.com/revelaction/privage/cmd...@v0.6.0-beta
+    go install github.com/revelaction/privage/cmd...@v0.7.0-beta
 
 # Usage
 
