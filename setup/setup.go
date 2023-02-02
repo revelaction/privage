@@ -58,7 +58,7 @@ func NewFromConfigFile(path string) (*Setup, error) {
 
 	id := identity(conf.IdentityPath, conf.IdentityPivSlot)
 
-	return &Setup{C: &config.Config{}, Id: id, Repository: conf.RepositoryPath}, nil
+	return &Setup{C: conf, Id: id, Repository: conf.RepositoryPath}, nil
 }
 
 func identity(keyPath, pivSlot string) id.Identity {

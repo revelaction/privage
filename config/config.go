@@ -94,7 +94,10 @@ func New(path string) (*Config, error) {
 	}
 
 	// expand ~/
-	expandHome(conf)
+    conf, err := expandHome(conf)
+	if err != nil {
+		return &Config{}, fmt.Errorf("Could not expand home", err)
+	}
 
 	// IdentityPath exist
 	if !fileExists(conf.IdentityPath) {
@@ -105,6 +108,7 @@ func New(path string) (*Config, error) {
 	if "" == conf.RepositoryPath {
 		return &Config{}, fmt.Errorf("File %s does not have a RepositoryPath field", path)
 	}
+
 	// RepositoryPath exist
 	if !fileExists(conf.RepositoryPath) {
 		return &Config{}, fmt.Errorf("RepositoryPath %s does not exists.", conf.RepositoryPath)
