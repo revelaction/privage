@@ -43,6 +43,12 @@ On Linux you can use the [pre-built binaries](https://github.com/revelaction/pri
 
 If your system has a supported version of Go, you can build from source
 
+## Dependencies
+
+    sudo apt-get -y install pkg-config libpcsclite-dev libpcsclite1 pcscd pcsc-tools build-essential pkg-config
+
+## privage
+ 
     go install github.com/revelaction/privage/cmd...@v0.8.2-beta
 
 # Usage
