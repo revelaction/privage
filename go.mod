@@ -1,14 +1,14 @@
 module github.com/revelaction/privage
 
-go 1.17
+go 1.21
 
 require (
 	filippo.io/age v1.1.1
-	github.com/BurntSushi/toml v1.2.1
+	github.com/BurntSushi/toml v1.3.2
 	github.com/atotto/clipboard v0.1.4
-	github.com/go-piv/piv-go v1.10.0
+	github.com/go-piv/piv-go v1.11.0
 	github.com/sethvargo/go-password v0.2.0
-	github.com/urfave/cli/v2 v2.24.2
+	github.com/urfave/cli/v2 v2.25.7
 )
 
 require (
