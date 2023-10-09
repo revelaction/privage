@@ -1,0 +1,64 @@
+name: Build and upload binaries
+on:
+  release:
+    types: [published]
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  build:
+    name: Build binaries
+    runs-on: ubuntu-latest
+    environment: "Build, release binaries"
+    strategy:
+      matrix:
+        include:
+          - {GOOS: linux, GOARCH: amd64}
+          - {GOOS: linux, GOARCH: arm, GOARM: 6}
+          - {GOOS: linux, GOARCH: arm64}
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.x
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Build binary
+        run: |        
+          VERSION="$(git describe --tags)"
+          echo "$version tag is $VERSION"
+          DIR="$(mktemp -d)"
+          mkdir "$DIR/privage"
+          sudo apt-get -y install pkg-config libpcsclite-dev libpcsclite1 pcscd pcsc-tools build-essential pkg-config
+          go build -o "$DIR/privage" -ldflags "-X main.Version=$VERSION" -trimpath ./cmd/...
+          tar -cvzf "privage-$VERSION-$GOOS-$GOARCH.tar.gz" -C "$DIR" privage  
+        env:
+          CGO_ENABLED: 0
+          GOOS: ${{ matrix.GOOS }}
+          GOARCH: ${{ matrix.GOARCH }}
+          GOARM: ${{ matrix.GOARM }}
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: privage-binaries
+          path: privage-*
+  upload:
+    name: Upload release binaries
+    if: github.event_name == 'release'
+    needs: build
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download workflow artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: privage-binaries
+      - name: Upload release artifacts
+        run: gh release upload "$GITHUB_REF_NAME" privage-*
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
