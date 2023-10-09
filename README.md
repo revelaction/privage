@@ -28,18 +28,20 @@ You may want to use `privage` if:
 # Features
 
 - `privage` uses the golang [age API](https://github.com/FiloSottile/age/blob/main/age.go) for encryption of files.
-- `privage` can use a yubikey (PIV smart card) to encrypt the age secret key. See [Yubikey](#markdown-header-yubikey)   
-- `privage` uses `categories` to allow classification of the encrypted files. 
+- privage can use a yubikey (PIV smart card) to encrypt the age secret key. See [Yubikey](#markdown-header-yubikey)   
+- privage uses `categories` to allow classification of the encrypted files. 
 - Encrypted files do not reveal any metadata. `privage` encrypted files names are hashes of the file name and the category. See [design](#design)   
-- `privage` encrypts any kind of file, not only credentials/passwords.
-- `privage` can easily (with one command) change the secret key and reencode all the files with the new key. See [rotate](#rotate)   
-- `privage` tries to be simple: it does not wrap `git` or your editor: Use git to control your
+- privage encrypts any kind of file, not only credentials/passwords.
+- privage can easily (with one command) change the secret key and reencode all the files with the new key. See [rotate](#rotate)   
+- privage tries to be simple: it does not wrap `git` or your editor: Use git to control your
   repository and use your preferred editor to edit credentials files.
 - Powerful command completion. All commands have completion. See [Bash Completion](#bash-completion)   
 
 # Installation
 
-If your system has Go:
+On Linux you can use the [pre-built binaries](https://github.com/revelaction/privage/releases/)
+
+If your system has a supported version of Go, you can build from source
 
     go install github.com/revelaction/privage/cmd...@v0.8.2-beta
 
