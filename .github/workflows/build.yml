@@ -36,7 +36,7 @@ jobs:
           go build -o "$DIR/privage" -ldflags "-X main.Version=$VERSION" -trimpath ./cmd/...
           tar -cvzf "privage-$VERSION-$GOOS-$GOARCH.tar.gz" -C "$DIR" privage  
         env:
-          CGO_ENABLED: 0
+          CGO_ENABLED: 1
           GOOS: ${{ matrix.GOOS }}
           GOARCH: ${{ matrix.GOARCH }}
           GOARM: ${{ matrix.GOARM }}
