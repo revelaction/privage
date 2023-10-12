@@ -58,18 +58,20 @@ If your system has a supported version of Go, you can build from source
 Create a repository to contain your encrypted credentials and other secret
 files. This repository can be pushed to untrusted 3-party services.
 
-    mkdir /home/user/mysecrets
-    cd /home/user/mysecrets
-    git init
-
+```console
+mkdir /home/user/mysecrets
+cd /home/user/mysecrets
+git init
+```
 
 Now run `privage init`:  
 
-    privage init
-    🔑 Generated age key file `/home/user/mysecrets/privage-key.txt` ✔️
-    📒 Generated `/home/user/mysecrets/.gitignore` file ✔️
-    📑 Generated config file .privage.conf ✔️
-
+```console
+privage init
+🔑 Generated age key file `/home/user/mysecrets/privage-key.txt` ✔️
+📒 Generated `/home/user/mysecrets/.gitignore` file ✔️
+📑 Generated config file .privage.conf ✔️
+```
     
 The `init` command does three things:
 
@@ -94,10 +96,12 @@ To create a encrypted age secret key with a
 [yubikey](#markdown-header-yubikey), add the flag `--piv-slot`, `-p` with the
 yubikey slot that will be used to encrypt/decrypt the age key.
 
-    privage init -p 86
-    🔑 Generated encrypted age key file `/home/user/src/privage/privage-key.txt` with PIV slot 86 ✔️
-    📒 Generated `/home/user/src/privage/.gitignore` file ✔️
-    📑 Generated config file .privage.conf ✔️
+```console
+privage init -p 86
+🔑 Generated encrypted age key file `/home/user/src/privage/privage-key.txt` with PIV slot 86 ✔️
+📒 Generated `/home/user/src/privage/.gitignore` file ✔️
+📑 Generated config file .privage.conf ✔️
+```
 
 ## Create a credentials file
 
@@ -109,9 +113,10 @@ To add a barebone credentials file (that you can later edit), use the command
 `credential`) and a `label` (any string that good describes the website, f.ex.
 `somewebsite.com@loginname`).
 
-
-    privage add credential somewebsite.com@loginname
-    An encrypted file was saved for 📖 somewebsite.com@loginname  🔖credential
+```console
+privage add credential somewebsite.com@loginname
+An encrypted file was saved for 📖 somewebsite.com@loginname  🔖credential
+```
 
 `privage` will generate a random password, put the password (among other
 fields) in a `.toml` file and encrypt that file under the `category`
@@ -122,14 +127,16 @@ It is recommended to use some naming convention for the credentials label, like
 
 You can now list the encrypted file with: 
 
-    ls -al
+```console
+ls -al
 
-    drwxrwxr-x  3 user user 4096 Sep 26 18:27 .
-    drwxr-xr-x 29 user user 4096 Sep 25 21:43 ..
-    -rw-rw-r--  1 user user  347 Sep 26 18:27 66ceb74807d0fd997566360b22ecbda1590ec35fbd3dd0ce88e15311a4e53faf.age
-    drwxrwxr-x  7 user user 4096 Sep 26 18:16 .git
-    -rw-------  1 user user    0 Sep 26 18:21 .gitignore
-    -rw-------  1 user user  189 Sep 26 18:21 privage-key.txt
+drwxrwxr-x  3 user user 4096 Sep 26 18:27 .
+drwxr-xr-x 29 user user 4096 Sep 25 21:43 ..
+-rw-rw-r--  1 user user  347 Sep 26 18:27 66ceb74807d0fd997566360b22ecbda1590ec35fbd3dd0ce88e15311a4e53faf.age
+drwxrwxr-x  7 user user 4096 Sep 26 18:16 .git
+-rw-------  1 user user    0 Sep 26 18:21 .gitignore
+-rw-------  1 user user  189 Sep 26 18:21 privage-key.txt
+```
 
 That long `age` file is the encrypted credential file.  The label
 (somewebsite.com@loginname) and the category (credential) were encrypted along
@@ -142,8 +149,9 @@ with the credential information.
 For example, to encrypt the file `secret-plan.doc` under the category
 `work`:
 
-
-    privage add work secret-plan.doc
+```console
+privage add work secret-plan.doc
+```
 
 ## List the encrypted files
 
