@@ -1,5 +1,7 @@
 # privage
 
+<p align="center"><img alt="kind" src="./logo.png"/></p>
+
 `privage` is a terminal based password manager and general file encryption tool that
 relies on [age](https://age-encryption.org/v1) for encryption. Optionally it uses a 
 [yubikey](https://developers.yubico.com/PIV/) for encryption of the age key.
