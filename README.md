@@ -1,5 +1,3 @@
-# privage
-
 <p align="center"><img alt="kind" src="./logo.png"/></p>
 
 `privage` is a terminal based password manager and general file encryption tool that
