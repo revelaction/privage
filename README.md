@@ -161,82 +161,98 @@ privage add work secret-plan.doc
 
 To list the encrypted files, use `list`:
 
-    privage list
-    Found 2 total encrypted tracked files.
+```console
+privage list
+Found 2 total encrypted tracked files.
 
-            📖 somewebsite.com@loginname  🔖credential
-            💼 secret-plan.doc 🔖work
+        📖 somewebsite.com@loginname  🔖credential
+        💼 secret-plan.doc 🔖work
+```
 
 
 To list only encrypted files corresponding to the category `credential`:
 
-    privage list credential
-    Found 1 files matching your category 'credential' of a total of 2 tracked files.
+```console
+privage list credential
+Found 1 files matching your category 'credential' of a total of 2 tracked files.
 
-            📖 somewebsite.com@loginname  🔖credential
+        📖 somewebsite.com@loginname  🔖credential
+```
 
 The `list` command accepts a string for matching the labels and categories:
 
-    privage list somew
-    Found 1 files with name matching 'somew':
+```console
+privage list somew
+Found 1 files with name matching 'somew':
 
-        📖 somewebsite.com@loginname  🔖credential
+    📖 somewebsite.com@loginname  🔖credential
+```
 
 
 ## Copy the password to the clipboard 
 
 The command `clipboard` copies the credential password to the clipboard 
 
+```console
     privage clipboard somewebsite.com@loginname 
     The password for `somewebsite.com@loginname` is in the clipboard
+```
 
 Use the flag `-d` (`--delete`) to empty the clipboard.
 
+```console
     privage clipboard -d 
+```
 
 ## Show the contents of a credentials file
 
 the command `show` presents in the terminal the login and the password:
 
-    privage show somewebsite.com@loginname
+```console
+privage show somewebsite.com@loginname
 
-        Login:👤 loginname
-        Password:🔑 ad81h4b54*)(y73
+    Login:👤 loginname
+    Password:🔑 ad81h4b54*)(y73
+```
 
 To show all the credentials file contents, use the flag `-a`
 
-    privage show -a somewebsite.com@loginname
-    #
-    login = "loginname"
-    password = "ad8Q1hD4b54*)(y73"
+```toml
+privage show -a somewebsite.com@loginname
+#
+login = "loginname"
+password = "ad8Q1hD4b54*)(y73"
 
-    email = ""
-    url = "somewebsite.com"
+email = ""
+url = "somewebsite.com"
 
-    # API keys
-    api_key = ""
-    api_secret = ""
-    api_name = ""
-    api_passphrase = ""
-    verification_code = ""
+# API keys
+api_key = ""
+api_secret = ""
+api_name = ""
+api_passphrase = ""
+verification_code = ""
 
-    # two factor backup code
-    two_factor_auth = ""
+# two factor backup code
+two_factor_auth = ""
 
-    # Other fields can be put in multiline
-    remarks = '''
-    - xxxx
-    '''
+# Other fields can be put in multiline
+remarks = '''
+- xxxx
+'''
+```
 
 ## Decrypt a file for manual edition
 
 Use `decrypt` to decrypt the contents of a file:
     
-    privage decrypt somewebsite.com@loginname
-    The file somewebsite.com@loginname was decrypted in the directory /home/user/mysecrets.
+```console
+privage decrypt somewebsite.com@loginname
+The file somewebsite.com@loginname was decrypted in the directory /home/user/mysecrets.
 
-    (Use "privage reencrypt --force" to reencrypt all decrypted files)
-    (Use "privage reencrypt --clean" to reencrypt all decrypted files and after that delete them)
+(Use "privage reencrypt --force" to reencrypt all decrypted files)
+(Use "privage reencrypt --clean" to reencrypt all decrypted files and after that delete them)
+```
 
 `decrypt` will write a decrypted file in the repository directory. In the case
 of credentials files, the decrypted file is a `.toml` file. You can use now
