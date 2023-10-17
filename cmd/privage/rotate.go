@@ -20,7 +20,7 @@ const (
 )
 
 // rotateAction generates a new age key and reencrypts all present encrypted
-// fiels with the new key.
+// fields with the new key.
 func rotateAction(ctx *cli.Context) error {
 
 	s, err := setupEnv(ctx)

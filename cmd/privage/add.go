@@ -38,12 +38,12 @@ func addAction(ctx *cli.Context) error {
 
 	cat := ctx.Args().First()
 	if len(cat) > header.MaxLenghtCategory {
-		return errors.New("First argument (category) lenght is greater than max allowed")
+		return errors.New("First argument (category) length is greater than max allowed")
 	}
 
 	label := ctx.Args().Get(1)
 	if len(label) > header.MaxLenghtLabel {
-		return errors.New("Second argument (label) lenght is greater than max allowed")
+		return errors.New("Second argument (label) length is greater than max allowed")
 	}
 
 	// Check label exists

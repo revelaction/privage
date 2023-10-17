@@ -136,7 +136,7 @@ func expandHome(conf *Config) (*Config, error) {
 	return conf, nil
 }
 
-// homeDirPath returns the existant privage conf file in home
+// homeDirPath returns the existent privage conf file in home
 // if not found, it returns an error
 func homeDirPath() (string, error) {
 	homeDir, err := os.UserHomeDir()
