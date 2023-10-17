@@ -194,14 +194,14 @@ Found 1 files with name matching 'somew':
 The command `clipboard` copies the credential password to the clipboard 
 
 ```console
-    privage clipboard somewebsite.com@loginname 
-    The password for `somewebsite.com@loginname` is in the clipboard
+privage clipboard somewebsite.com@loginname 
+The password for `somewebsite.com@loginname` is in the clipboard
 ```
 
 Use the flag `-d` (`--delete`) to empty the clipboard.
 
 ```console
-    privage clipboard -d 
+privage clipboard -d 
 ```
 
 ## Show the contents of a credentials file
@@ -217,7 +217,7 @@ privage show somewebsite.com@loginname
 
 To show all the credentials file contents, use the flag `-a`
 
-```toml
+```console
 privage show -a somewebsite.com@loginname
 #
 login = "loginname"
@@ -259,7 +259,9 @@ of credentials files, the decrypted file is a `.toml` file. You can use now
 your favorite editor to change the password, user, email
 and other predefined fields.
 
-    vim somewebsite.com@loginname
+```console
+vim somewebsite.com@loginname
+```
 
 After manually changing the file, you have to reencrypt the file...
 
@@ -268,13 +270,15 @@ After manually changing the file, you have to reencrypt the file...
 Use the `reencrypt` command to reencrypt `all` files that were decrypted and are present in
 the repository directory:
 
-    ⤷ privage reencrypt
-    Found the following files to be reencrypted:
+```console
+⤷ privage reencrypt
+Found the following files to be reencrypted:
 
-    📖 somewebsite.com@me  🔖credential
+📖 somewebsite.com@me  🔖credential
 
-    (Use "privage reencrypt --force" to reencrypt all files)
-    (Use "privage reencrypt --clean" to reencrypt and also delete the decrypted files)
+(Use "privage reencrypt --force" to reencrypt all files)
+(Use "privage reencrypt --clean" to reencrypt and also delete the decrypted files)
+```
 
 Without flags, `reencrypt` will only show (dry-run) the files that will be reencrypted.
 Use the flag `-f` or `-c` to force the reencryption. 
@@ -283,19 +287,23 @@ Use the flag `-f` or `-c` to force the reencryption.
 
 the command `delete` deletes a encryted file:
 
-    privage delete somewebsite.com@loginname
+```console
+privage delete somewebsite.com@loginname
+```
 
 ## Get information about the configuration
 
-    ⤷ privage status
+```console
+⤷ privage status
 
-    🔑 Found age key file privage-key.txt in /home/user/mysecrets/privage-key.txt ✔️
-    📂 The directory of the encripted files is /home/user/mysecrets ✔️
-    📑 Found config file .privage.conf in /home/user/.privage.conf ✔️
+🔑 Found age key file privage-key.txt in /home/user/mysecrets/privage-key.txt ✔️
+📂 The directory of the encripted files is /home/user/mysecrets ✔️
+📑 Found config file .privage.conf in /home/user/.privage.conf ✔️
 
-         The configuration file /home/user/.privage.conf is up to date
+     The configuration file /home/user/.privage.conf is up to date
 
-    🔐  Found 13 encrypted files for the age key /home/user/mysecrets/privage-key.txt
+🔐  Found 13 encrypted files for the age key /home/user/mysecrets/privage-key.txt
+```
 
 
 ## Rotate 
@@ -305,20 +313,26 @@ With the flag `--clean`, it will also delete the encrypted files with the old ke
 
 To generate a new age key and reencrypt all the files:
 
-    privage rotate
+```console
+privage rotate
+```
 
 You can add the flag `--clean` to delete the old key encrypted files, and swap the secret key file names.
 
 
-    private rotate --clean
+```console
+private rotate --clean
+```
 
 To generate a yubikey encrypted age secret key, use the flag `--piv-slot`,
 `-p`, to provide the yubikey slot that holds the key. See [possible
 values](https://developers.yubico.com/PIV/Introduction/Certificate_slots.html). 
 
 
-    # f. ex: use the 0x86 slot of the yubikey 5 
-    private rotate -p 86 --clean
+```console
+# f. ex: use the 0x86 slot of the yubikey 5 
+private rotate -p 86 --clean
+```
 
 # Design
 
@@ -338,8 +352,10 @@ When writing the encrypted file, `privage` hashes the header and the public age
 key, and uses the hash as name of the encrypted file. Encrypted
 `privage` file names look like this:
 
-    425020f87e753ebe4dba67a872de04b7ce7350a63af9f74c1b7c4d633b41573c.age
-    5e107b8e3b57411d5661d05e54f755408dd12c831a6b63e8033885c211da1317.age
+```console
+425020f87e753ebe4dba67a872de04b7ce7350a63af9f74c1b7c4d633b41573c.age
+5e107b8e3b57411d5661d05e54f755408dd12c831a6b63e8033885c211da1317.age
+```
 
 
 # Bash Completion
@@ -347,6 +363,8 @@ key, and uses the hash as name of the encrypted file. Encrypted
 `privage` has builtin bash autocompletion. You can enable completion commands by putting the following bash
 snippet in your `.bashrc` file:
 
-    if hash privage; then
-        PROG=privage source <(privage bash)
-    fi
+```console
+if hash privage; then
+    PROG=privage source <(privage bash)
+fi
+```
