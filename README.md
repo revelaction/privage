@@ -1,5 +1,7 @@
 <p align="center"><img alt="kind" src="./logo.png"/></p>
 
+ <a href="https://goreportcard.com/report/github.com/revelaction/privage"><img src="https://goreportcard.com/badge/github.com/revelaction/privage" alt="Code Status" /></a>
+
 `privage` is a terminal based password manager and general file encryption tool that
 relies on [age](https://age-encryption.org/v1) for encryption. Optionally it uses a 
 [yubikey](https://developers.yubico.com/PIV/) for encryption of the age key.
