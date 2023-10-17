@@ -95,7 +95,7 @@ func bashCompleteCategory(ctx *cli.Context) {
 
 	}
 
-	for k, _ := range categories {
+	for k := range categories {
 		fmt.Println(k)
 	}
 }

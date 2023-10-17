@@ -145,7 +145,7 @@ func labelExists(label string, identity id.Identity) bool {
 		}
 	}
 
-	for k, _ := range labels {
+	for k := range labels {
 		if k == label {
 			return true
 		}

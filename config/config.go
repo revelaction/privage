@@ -94,7 +94,7 @@ func New(path string) (*Config, error) {
 	}
 
 	// expand ~/
-    conf, err := expandHome(conf)
+	conf, err := expandHome(conf)
 	if err != nil {
 		return &Config{}, fmt.Errorf("Could not expand home", err)
 	}

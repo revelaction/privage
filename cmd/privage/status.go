@@ -55,7 +55,7 @@ func statusAction(ctx *cli.Context) error {
 
 	cnt := 0
 	if s.Id.Id != nil {
-		for _ = range headerGenerator(s.Repository, s.Id) {
+		for range headerGenerator(s.Repository, s.Id) {
 			cnt++
 		}
 
