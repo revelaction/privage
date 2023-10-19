@@ -2,7 +2,7 @@
 
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/revelaction/privage)](https://goreportcard.com/report/github.com/revelaction/privage)
-[![GitHub Release](https://img.shields.io/github/v/release/revelaction/mankidown?style=flat)]() 
+[![GitHub Release](https://img.shields.io/github/v/release/revelaction/privage?style=flat)]() 
 
 `privage` is a terminal based password manager and general file encryption tool that
 relies on [age](https://age-encryption.org/v1) for encryption. Optionally it uses a 
