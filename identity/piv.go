@@ -3,8 +3,8 @@ package identity
 import (
 	"filippo.io/age"
 	"fmt"
-	"io/ioutil"
 	"os"
+	"io"
 
 	"crypto"
 	"crypto/rand"
@@ -45,17 +45,17 @@ func CreatePivRsa(filePath string, slot uint32, algo string) error {
 
 	retiredSlot, ok := piv.RetiredKeyManagementSlot(slot)
 	if !ok {
-		return fmt.Errorf("Could not access slot %x in the PIV device", slot)
+		return fmt.Errorf("could not access slot %x in the PIV device", slot)
 	}
 
 	cert, err := yubikey.Certificate(retiredSlot)
 	if err != nil {
-		return fmt.Errorf("Could not get certificate in slot %x: %v", slot, err)
+		return fmt.Errorf("could not get certificate in slot %x: %v", slot, err)
 	}
 
 	encrypted, err := rsa.EncryptPKCS1v15(rand.Reader, cert.PublicKey.(*rsa.PublicKey), []byte(k.String()))
 	if err != nil {
-		return fmt.Errorf("Could not encrypt private key: %v", err)
+		return fmt.Errorf("could not encrypt private key: %v", err)
 	}
 
 	encoder := ascii85.NewEncoder(f)
@@ -96,7 +96,7 @@ func LoadRaw(path string, slot uint32, algo string) ([]byte, error) {
 
 	defer f.Close()
 
-	decoded, err := ioutil.ReadAll(ascii85.NewDecoder(f))
+	decoded, err := io.ReadAll(ascii85.NewDecoder(f))
 	if err != nil {
 		return nil, fmt.Errorf("could not read message file: %v", err)
 	}
@@ -109,12 +109,12 @@ func LoadRaw(path string, slot uint32, algo string) ([]byte, error) {
 
 	retiredSlot, ok := piv.RetiredKeyManagementSlot(slot)
 	if !ok {
-		return nil, fmt.Errorf("Could not access slot %x in the PIV device", slot)
+		return nil, fmt.Errorf("could not access slot %x in the PIV device", slot)
 	}
 
 	cert, err := yubikey.Certificate(retiredSlot)
 	if err != nil {
-		return nil, fmt.Errorf("Could not get certificate in slot %x: %v", slot, err)
+		return nil, fmt.Errorf("could not get certificate in slot %x: %v", slot, err)
 	}
 
 	// TODO Auth for list
@@ -139,11 +139,11 @@ func LoadRaw(path string, slot uint32, algo string) ([]byte, error) {
 func yubikey() (*piv.YubiKey, error) {
 	cards, err := piv.Cards()
 	if err != nil {
-		return nil, fmt.Errorf("Could not list cards: %v", err)
+		return nil, fmt.Errorf("could not list cards: %v", err)
 	}
 
 	if len(cards) == 0 {
-		return nil, fmt.Errorf("No Cards detected")
+		return nil, fmt.Errorf("no Cards detected")
 	}
 
 	yubikey, err := piv.Open(cards[0])

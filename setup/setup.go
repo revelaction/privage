@@ -30,8 +30,7 @@ type Setup struct {
 // Copy returns a copy of the Setup s with an empty Identity
 func (s *Setup) Copy() *Setup {
 
-	var conf *config.Config
-	conf = s.C
+	var conf *config.Config = s.C
 	repo := s.Repository
 	return &Setup{C: conf, Repository: repo}
 }
@@ -63,13 +62,13 @@ func NewFromConfigFile(path string) (*Setup, error) {
 
 func identity(keyPath, pivSlot string) id.Identity {
 
-	if "" == pivSlot {
+	if pivSlot == "" {
 		return id.Load(keyPath)
 	}
 
 	slot, err := strconv.ParseUint(pivSlot, 16, 32)
 	if err != nil {
-		return id.Identity{Err: fmt.Errorf("could not convert slot %s to hex: %v", slot, err)}
+		return id.Identity{Err: fmt.Errorf("could not convert slot %d to hex: %v", slot, err)}
 	}
 
 	return id.LoadPiv(keyPath, uint32(slot), "")

@@ -64,7 +64,7 @@ type Credential struct {
 func LogFields(r io.Reader) error {
 
 	var conf Credential
-	_, err := toml.DecodeReader(r, &conf)
+	_, err := toml.NewDecoder(r).Decode(&conf)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func LogFields(r io.Reader) error {
 func CopyClipboard(r io.Reader) error {
 
 	var conf Credential
-	_, err := toml.DecodeReader(r, &conf)
+	_, err := toml.NewDecoder(r).Decode(&conf)
 	if err != nil {
 		return err
 	}
