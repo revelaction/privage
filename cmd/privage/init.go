@@ -29,7 +29,7 @@ func initAction(ctx *cli.Context) error {
 
 	s, err := setupEnv(ctx)
 	if err != nil {
-		return fmt.Errorf("Unable to setup environment configuration: %s", err)
+		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}
 
 	// If config file exist, we exit
@@ -64,12 +64,12 @@ func initAction(ctx *cli.Context) error {
 
 		identitySlot, err := strconv.ParseUint(slot, 16, 32)
 		if err != nil {
-			return fmt.Errorf("Could not convert slot %s to hex: %v", slot, err)
+			return fmt.Errorf("could not convert slot %s to hex: %v", slot, err)
 		}
 
 		err = id.CreatePivRsa(identityPath, uint32(identitySlot), identityAlgo)
 		if err != nil {
-			return fmt.Errorf("Error creating encrypted age key in slot %s: %w", slot, err)
+			return fmt.Errorf("error creating encrypted age key in slot %s: %w", slot, err)
 		}
 
 		fmt.Printf("🔑 Generated encrypted age key file `%s` with PIV slot %s ✔️\n", identityPath, slot)
@@ -105,7 +105,7 @@ func initAction(ctx *cli.Context) error {
 	//
 	err = config.Create(identityPath, identityType, slot, currentDir)
 	if err != nil {
-		return fmt.Errorf("Could not generate config file: %w", err)
+		return fmt.Errorf("could not generate config file: %w", err)
 	}
 
 	fmt.Printf("📑 Generated config file %s ✔️\n", config.FileName)

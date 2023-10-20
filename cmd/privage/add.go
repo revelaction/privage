@@ -123,10 +123,10 @@ func addCredential(h *header.Header, s *setup.Setup) error {
 func addCustomCategory(h *header.Header, s *setup.Setup) error {
 
 	content, err := os.Open(h.Label)
-	defer content.Close()
 	if err != nil {
 		return err
 	}
+	defer content.Close()
 
 	err = encryptSave(h, "", content, s)
 	if err != nil {

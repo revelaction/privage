@@ -15,7 +15,7 @@ func clipboardAction(ctx *cli.Context) error {
 	if ctx.Bool("delete") {
 		err := credential.EmptyClipboard()
 		if err != nil {
-			return fmt.Errorf("Could not emtpty the clipboard: %w", err)
+			return fmt.Errorf("could not emtpty the clipboard: %w", err)
 		}
 
 		return nil
@@ -27,11 +27,11 @@ func clipboardAction(ctx *cli.Context) error {
 
 	s, err := setupEnv(ctx)
 	if err != nil {
-		return fmt.Errorf("Unable to setup environment configuration: %s", err)
+		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}
 
 	if s.Id.Id == nil {
-		return fmt.Errorf("Found no privage key file: %w", s.Id.Err)
+		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}
 
 	label := ctx.Args().First()
@@ -52,7 +52,7 @@ func clipboard(label string, s *setup.Setup) error {
 
 			err = credential.CopyClipboard(r)
 			if err != nil {
-				return fmt.Errorf("Could not copy to clipboard: %w", err)
+				return fmt.Errorf("could not copy to clipboard: %w", err)
 			}
 
 			fmt.Printf("The password for `%s` is in the clipboard\n", label)

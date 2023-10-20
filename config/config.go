@@ -89,7 +89,7 @@ func New(path string) (*Config, error) {
 		return &Config{}, fmt.Errorf("file %s is not a valid .toml file", path)
 	}
 	// has key IdentityPath
-	if "" == conf.IdentityPath {
+	if conf.IdentityPath == ""{
 		return &Config{}, fmt.Errorf("file %s does not have a IdentityPath (age key) field", path)
 	}
 
@@ -105,7 +105,7 @@ func New(path string) (*Config, error) {
 	}
 
 	// has key RepositoryPath
-	if "" == conf.RepositoryPath {
+	if conf.RepositoryPath == ""{
 		return &Config{}, fmt.Errorf("file %s does not have a RepositoryPath field", path)
 	}
 

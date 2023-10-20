@@ -158,7 +158,7 @@ func filesForAddCmd(root string) []string {
 		}
 
 		// no dot
-		if "." == s[0:1] {
+		if s[0:1] == "." {
 			return nil
 		}
 
