@@ -77,8 +77,8 @@ func PadEncrypted(header []byte) ([]byte, error) {
 func Unpad(header []byte) ([]byte, error) {
 
 	idx := bytes.Index(header, []byte(ageHeaderPrefix))
-	if -1 == idx {
-		return nil, errors.New("Could not unpad header, age prefix not found.")
+	if idx == -1 {
+		return nil, errors.New("could not unpad header, age prefix not found")
 	}
 
 	return header[idx:], nil

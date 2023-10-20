@@ -96,7 +96,7 @@ func New(path string) (*Config, error) {
 	// expand ~/
 	conf, err := expandHome(conf)
 	if err != nil {
-		return &Config{}, fmt.Errorf("could not expand home", err)
+        return &Config{}, fmt.Errorf("could not expand home: %s", err)
 	}
 
 	// IdentityPath exist

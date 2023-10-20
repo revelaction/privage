@@ -49,10 +49,10 @@ func Load(confPath string) Identity {
 
 	if len(confPath) > 0 {
 		ff, err := os.Open(confPath)
-		defer ff.Close()
 		if err == nil {
 			return parseIdentity(ff, confPath)
 		}
+		defer ff.Close()
 
 		// no Path
 		return Identity{Err: err}
@@ -66,7 +66,6 @@ func Load(confPath string) Identity {
 
 	currentPath := currentDir + "/" + FileName
 	fl, err := os.Open(currentPath)
-	defer fl.Close()
 	if err == nil {
 		return parseIdentity(fl, currentPath)
 	}
@@ -74,6 +73,7 @@ func Load(confPath string) Identity {
 	if !errors.Is(err, os.ErrNotExist) {
 		return Identity{Err: err}
 	}
+	defer fl.Close()
 
 	// try home
 	homeDir, err := os.UserHomeDir()
@@ -83,7 +83,6 @@ func Load(confPath string) Identity {
 
 	homePath := homeDir + "/" + FileName
 	f, err := os.Open(homePath)
-	defer f.Close()
 	if err == nil {
 		return parseIdentity(f, homePath)
 	}
@@ -91,6 +90,7 @@ func Load(confPath string) Identity {
 	if !errors.Is(err, os.ErrNotExist) {
 		return Identity{Err: err}
 	}
+	defer f.Close()
 
 	return Identity{Err: err}
 }
