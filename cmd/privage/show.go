@@ -23,7 +23,7 @@ func showAction(ctx *cli.Context) error {
 
 	s, err := setupEnv(ctx)
 	if err != nil {
-		return fmt.Errorf("Unable to setup environment configuration: %s", err)
+		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}
 
 	// Flag to determine if we dump the file to stout (all) or only selected
@@ -32,7 +32,7 @@ func showAction(ctx *cli.Context) error {
 	isAll := ctx.Bool("all")
 
 	if s.Id.Id == nil {
-		return fmt.Errorf("Found no privage key file: %w", s.Id.Err)
+		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}
 
 	label := ctx.Args().First()

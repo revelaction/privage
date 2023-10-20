@@ -16,7 +16,7 @@ func listAction(ctx *cli.Context) error {
 
 	s, err := setupEnv(ctx)
 	if err != nil {
-		return fmt.Errorf("Unable to setup environment configuration: %s", err)
+		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}
 
 	filter := "" // no filter
@@ -27,7 +27,7 @@ func listAction(ctx *cli.Context) error {
 	headers := []*header.Header{}
 
 	if s.Id.Id == nil {
-		return fmt.Errorf("Found no privage key file: %w", s.Id.Err)
+		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}
 
 	for h := range headerGenerator(s.Repository, s.Id) {

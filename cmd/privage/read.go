@@ -28,19 +28,20 @@ func headerGenerator(repoDir string, identity id.Identity) <-chan *header.Header
 			h.Path = path
 
 			f, err := os.Open(path)
-			defer f.Close()
 			if err != nil {
-				h.Err = fmt.Errorf("Could not open file %s: %w", path)
+				h.Err = fmt.Errorf("could not open file %s: %w", path, err)
 
 				ch <- h
 				continue
 			}
 
+			defer f.Close()
+
 			// Header
 			headerBlock := make([]byte, header.BlockSize)
 			_, err = io.ReadFull(f, headerBlock)
 			if err != nil {
-				h.Err = fmt.Errorf("Could not read header in file %s: %w", path)
+				h.Err = fmt.Errorf("could not read header in file %s: %w", path, err)
 				ch <- h
 				continue
 			}
@@ -48,7 +49,7 @@ func headerGenerator(repoDir string, identity id.Identity) <-chan *header.Header
 			// first remove the pad
 			unpadded, err := header.Unpad(headerBlock)
 			if err != nil {
-				h.Err = fmt.Errorf("Could not unpad header in file %s: %w", path, err)
+				h.Err = fmt.Errorf("could not unpad header in file %s: %w", path, err)
 				ch <- h
 				continue
 			}
@@ -56,14 +57,14 @@ func headerGenerator(repoDir string, identity id.Identity) <-chan *header.Header
 			uReader := bytes.NewReader(unpadded)
 			r, err := age.Decrypt(uReader, identity.Id)
 			if err != nil {
-				h.Err = fmt.Errorf("Could not Decrypt header in file %s with identity %s: %w", path, identity.Path, err)
+				h.Err = fmt.Errorf("could not Decrypt header in file %s with identity %s: %w", path, identity.Path, err)
 				ch <- h
 				continue
 			}
 
 			out := &bytes.Buffer{}
 			if _, err := io.Copy(out, r); err != nil {
-				h.Err = fmt.Errorf("Could not copy to buffer the header in file %s: %w", path, err)
+				h.Err = fmt.Errorf("could not copy to buffer the header in file %s: %w", path, err)
 				ch <- h
 				continue
 			}

@@ -19,8 +19,8 @@ func setupEnv(ctx *cli.Context) (*setup.Setup, error) {
 	argRepository := ctx.String("repository")
 	argPivSlot := ctx.String("piv-slot")
 
-	if "" != argKey {
-		if "" != argConf {
+	if argKey != ""{
+		if argConf != ""{
 			return &setup.Setup{}, errors.New("flags -c and -k are incompatible")
 		}
 
@@ -32,7 +32,7 @@ func setupEnv(ctx *cli.Context) (*setup.Setup, error) {
 		return s, nil
 	}
 
-	if "" != argConf {
+	if argConf != "" {
 		s, err := setup.NewFromConfigFile(argConf)
 		if err != nil {
 			return &setup.Setup{}, err

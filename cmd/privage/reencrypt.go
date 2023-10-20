@@ -19,11 +19,11 @@ func reencryptAction(ctx *cli.Context) error {
 
 	s, err := setupEnv(ctx)
 	if err != nil {
-		return fmt.Errorf("Unable to setup environment configuration: %s", err)
+		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}
 
 	if s.Id.Id == nil {
-		return fmt.Errorf("Found no privage key file: %w", s.Id.Err)
+		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}
 
 	return reencrypt(s, isForce, isClean)
@@ -72,7 +72,7 @@ func reencrypt(s *setup.Setup, isForce, isClean bool) error {
 		if header.CategoryCredential == h.Category {
 			err := credential.ValidateFile(s.Repository + "/" + h.Label)
 			if err != nil {
-				return fmt.Errorf("Invalid credential file %s. toml error: %w", h.Label, err)
+				return fmt.Errorf("invalid credential file %s. toml error: %w", h.Label, err)
 			}
 		}
 
@@ -149,6 +149,4 @@ func logFilesToBeProcessed(toEncrypt []*header.Header) {
 	}
 
 	fmt.Println()
-
-	return
 }

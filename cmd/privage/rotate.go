@@ -25,7 +25,7 @@ func rotateAction(ctx *cli.Context) error {
 
 	s, err := setupEnv(ctx)
 	if err != nil {
-		return fmt.Errorf("Unable to setup environment configuration: %s", err)
+		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}
 
 	isClean := ctx.Bool("clean")
@@ -37,12 +37,12 @@ func rotateAction(ctx *cli.Context) error {
 func rotate(s *setup.Setup, isClean bool, slot string) error {
 
 	if s.Id.Id == nil {
-		return fmt.Errorf("Found no privage key file: %w", s.Id.Err)
+		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}
 
 	numFiles := numFilesForIdentity(s.Repository, s.Id)
 	if numFiles == 0 {
-		return fmt.Errorf("Found no encrypted files with key %s", s.Id.Path)
+		return fmt.Errorf("found no encrypted files with key %s", s.Id.Path)
 	}
 
 	fmt.Printf("Found %d files encrypted with key %s\n", numFiles, s.Id.Path)
@@ -102,7 +102,7 @@ func rotate(s *setup.Setup, isClean bool, slot string) error {
 		}
 
 		if err != nil {
-			return fmt.Errorf("Could not create age key file: %w", err)
+			return fmt.Errorf("could not create age key file: %w", err)
 		}
 
 		// Load
