@@ -73,7 +73,7 @@ func FindPath() (string, error) {
 		return currentPath, nil
 	}
 
-	return "", fmt.Errorf("Could not find any configuration file. %s", err)
+	return "", fmt.Errorf("could not find any configuration file %s", err)
 }
 
 // validate and build
@@ -82,36 +82,36 @@ func New(path string) (*Config, error) {
 
 	// path exist
 	if !fileExists(path) {
-		return &Config{}, fmt.Errorf("File %s does not exists.", path)
+		return &Config{}, fmt.Errorf("file %s does not exists", path)
 	}
 	// is valid toml
 	if _, err := toml.DecodeFile(path, &conf); err != nil {
-		return &Config{}, fmt.Errorf("File %s is not a valid .toml file.", path)
+		return &Config{}, fmt.Errorf("file %s is not a valid .toml file", path)
 	}
 	// has key IdentityPath
 	if "" == conf.IdentityPath {
-		return &Config{}, fmt.Errorf("File %s does not have a IdentityPath (age key) field", path)
+		return &Config{}, fmt.Errorf("file %s does not have a IdentityPath (age key) field", path)
 	}
 
 	// expand ~/
 	conf, err := expandHome(conf)
 	if err != nil {
-		return &Config{}, fmt.Errorf("Could not expand home", err)
+		return &Config{}, fmt.Errorf("could not expand home", err)
 	}
 
 	// IdentityPath exist
 	if !fileExists(conf.IdentityPath) {
-		return &Config{}, fmt.Errorf("IdentityPath (age key) %s does not exists.", conf.IdentityPath)
+		return &Config{}, fmt.Errorf("age key %s does not exists", conf.IdentityPath)
 	}
 
 	// has key RepositoryPath
 	if "" == conf.RepositoryPath {
-		return &Config{}, fmt.Errorf("File %s does not have a RepositoryPath field", path)
+		return &Config{}, fmt.Errorf("file %s does not have a RepositoryPath field", path)
 	}
 
 	// RepositoryPath exist
 	if !fileExists(conf.RepositoryPath) {
-		return &Config{}, fmt.Errorf("RepositoryPath %s does not exists.", conf.RepositoryPath)
+		return &Config{}, fmt.Errorf("the RepositoryPath %s does not exists", conf.RepositoryPath)
 	}
 
 	conf.Path = path
@@ -122,7 +122,7 @@ func expandHome(conf *Config) (*Config, error) {
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return conf, errors.New("Found no home dir")
+		return conf, errors.New("found no home dir")
 	}
 
 	if strings.HasPrefix(conf.IdentityPath, "~/") {
@@ -146,7 +146,7 @@ func homeDirPath() (string, error) {
 
 	path := homeDir + "/" + FileName
 	if !fileExists(path) {
-		return "", fmt.Errorf("Configuration file %s not found", path)
+		return "", fmt.Errorf("configuration file %s not found", path)
 	}
 
 	return path, nil
@@ -160,7 +160,7 @@ func currentDirPath() (string, error) {
 
 	path := currentDir + "/" + FileName
 	if !fileExists(path) {
-		return "", fmt.Errorf("Configuration file %s not found", path)
+		return "", fmt.Errorf("configuration file %s not found", path)
 	}
 
 	return path, nil

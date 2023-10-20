@@ -25,30 +25,30 @@ func addAction(ctx *cli.Context) error {
 
 	s, err := setupEnv(ctx)
 	if err != nil {
-		return fmt.Errorf("Unable to setup environment configuration: %s", err)
+		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}
 
 	if s.Id.Id == nil {
-		return fmt.Errorf("Found no privage key file: %w", s.Id.Err)
+		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}
 
 	if ctx.Args().Len() != 2 {
-		return errors.New("Usage <category> <label>")
+		return errors.New("usage <category> <label>")
 	}
 
 	cat := ctx.Args().First()
 	if len(cat) > header.MaxLenghtCategory {
-		return errors.New("First argument (category) length is greater than max allowed")
+		return errors.New("first argument (category) length is greater than max allowed")
 	}
 
 	label := ctx.Args().Get(1)
 	if len(label) > header.MaxLenghtLabel {
-		return errors.New("Second argument (label) length is greater than max allowed")
+		return errors.New("second argument (label) length is greater than max allowed")
 	}
 
 	// Check label exists
 	if labelExists(label, s.Id) {
-		return errors.New("Second argument (label) already exist")
+		return errors.New("second argument (label) already exist")
 	}
 
 	h := &header.Header{Label: label}
@@ -60,7 +60,7 @@ func addAction(ctx *cli.Context) error {
 	default:
 		// if custom category, label must be a existing file in the current directory
 		if _, err := os.Stat(label); os.IsNotExist(err) {
-			return errors.New("Second argument (label) must be a existing file in this directory")
+			return errors.New("second argument (label) must be a existing file in this directory")
 		}
 
 		h.Category = cat
