@@ -6,7 +6,7 @@
 [![GitHub Release](https://img.shields.io/github/v/release/revelaction/privage?style=flat)]() 
 [![GitHub Release](https://img.shields.io/badge/built_with-Go-00ADD8.svg?style=flat)]()
 ![GitHub last commit](https://img.shields.io/github/last-commit/revelaction/privage?color=red)
-![sloc](https://sloc.xyz/github/revelaction/ical-git)
+![sloc](https://sloc.xyz/github/revelaction/privage)
 
 `privage` is a terminal based password manager and general file encryption tool that
 relies on [age](https://age-encryption.org/v1) for encryption. Optionally it uses a 
