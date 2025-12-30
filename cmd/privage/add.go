@@ -106,7 +106,7 @@ func addCredential(h *header.Header, s *setup.Setup) error {
 		return err
 	}
 
-	show(h.Label, s, false)
+	show(h.Label, s)
 
 	fmt.Println("You can edit the credentials file by running these commands:")
 	fmt.Println()

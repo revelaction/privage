@@ -3,20 +3,19 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/urfave/cli/v2"
 
-	"github.com/revelaction/privage/credential"
-	"github.com/revelaction/privage/header"
 	"github.com/revelaction/privage/setup"
 )
 
-// showAction prints in the terminal partially/all the contents of an encrypted
-// file.
-func showAction(ctx *cli.Context) error {
+// catAction prints in the terminal the contents of an encrypted file.
+func catAction(ctx *cli.Context) error {
 
 	if ctx.Args().Len() == 0 {
-		return errors.New("show command needs one argument")
+		return errors.New("cat command needs one argument (label)")
 	}
 
 	s, err := setupEnv(ctx)
@@ -30,10 +29,10 @@ func showAction(ctx *cli.Context) error {
 
 	label := ctx.Args().First()
 
-	return show(label, s)
+	return cat(label, s)
 }
 
-func show(label string, s *setup.Setup) error {
+func cat(label string, s *setup.Setup) error {
 
 	for h := range headerGenerator(s.Repository, s.Id) {
 
@@ -41,17 +40,13 @@ func show(label string, s *setup.Setup) error {
 
 			r, err := contentReader(h, s.Id)
 			if err != nil {
-
 				return err
 			}
 
-			if h.Category != header.CategoryCredential {
-				return fmt.Errorf("file '%s' is not a credential. Use 'privage cat %s' to view its contents", label, label)
-			}
-
-			err = credential.LogFields(r)
-			if err != nil {
-				return err
+			if _, err := io.Copy(os.Stdout, r); err != nil {
+				if err != io.ErrUnexpectedEOF {
+					return err
+				}
 			}
 
 			return nil

@@ -50,13 +50,12 @@ var allCommands = []*cli.Command{
 		Action:       showAction,
 		BashComplete: bashCompleteLabel,
 		Usage:        "Show the contents the an encripted file.",
-		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:    "all",
-				Aliases: []string{"a"},
-				Usage:   "Show all the contents of a file",
-			},
-		},
+	},
+	{
+		Name:         "cat",
+		Action:       catAction,
+		BashComplete: bashCompleteLabel,
+		Usage:        "Print the full contents of an encrypted file to stdout.",
 	},
 	{
 		Name:         "clipboard",
