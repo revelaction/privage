@@ -214,7 +214,7 @@ privage clipboard -d
 
 ## Show the contents of a credentials file
 
-the command `show` presents in the terminal the login and the password:
+The command `show` presents in the terminal the login and the password of a credential file:
 
 ```console
 privage show somewebsite.com@loginname
@@ -223,32 +223,29 @@ privage show somewebsite.com@loginname
     Password:🔑 ad81h4b54*)(y73
 ```
 
-To show all the credentials file contents, use the flag `-a`
+If the file is not a credential file, `privage` will ask you to use `cat`.
+
+## Cat the contents of an encrypted file
+
+The command `cat` prints the decrypted contents of an encrypted file to the terminal (standard output). This is useful for piping to other commands or viewing the raw content of a file (including the full content of credential files).
 
 ```console
-privage show -a somewebsite.com@loginname
+privage cat somewebsite.com@loginname
 #
 login = "loginname"
 password = "ad8Q1hD4b54*)(y73"
 
 email = ""
 url = "somewebsite.com"
-
-# API keys
-api_key = ""
-api_secret = ""
-api_name = ""
-api_passphrase = ""
-verification_code = ""
-
-# two factor backup code
-two_factor_auth = ""
-
-# Other fields can be put in multiline
-remarks = '''
-- xxxx
-'''
+...
 ```
+
+Or for regular files:
+
+```console
+privage cat secret-plan.doc
+```
+
 
 ## Decrypt a file for manual edition
 
@@ -395,6 +392,7 @@ add        Add a new encrypted file.
 delete     Delete an encrypted file.
 list       list metadata of all/some encrypted files.
 show       Show the contents the an encripted file.
+cat        Print the decrypted contents of an encrypted file to stdout.
 clipboard  Copy the credential password to the clipboard
     decrypt    Decrypt a file and write its content in a file named after the label
 reencrypt  Reencrypt all decrypted files that are already encrypted. (default is dry-run)
