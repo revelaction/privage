@@ -8,9 +8,9 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-// statusAction prints on the terminal a status of the privage command
+// statusCommand prints on the terminal a status of the privage command
 // configuration
-func statusAction(opts setup.Options, args []string) error {
+func statusCommand(opts setup.Options, args []string) error {
 
 	s, err := setupEnv(opts)
 	if err != nil {

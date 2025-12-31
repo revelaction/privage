@@ -9,9 +9,9 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-// showAction prints in the terminal partially/all the contents of an encrypted
+// showCommand prints in the terminal partially/all the contents of an encrypted
 // file.
-func showAction(opts setup.Options, args []string) error {
+func showCommand(opts setup.Options, args []string) error {
 
 	if len(args) == 0 {
 		return errors.New("show command needs one argument")

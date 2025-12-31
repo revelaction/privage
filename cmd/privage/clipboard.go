@@ -9,7 +9,7 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-func clipboardAction(opts setup.Options, args []string) error {
+func clipboardCommand(opts setup.Options, args []string) error {
 	fs := flag.NewFlagSet("clipboard", flag.ExitOnError)
 	var deleteFlag bool
 	fs.BoolVar(&deleteFlag, "delete", false, "Delete the contents of the clipboard")

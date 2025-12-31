@@ -21,11 +21,11 @@ const (
 !*.age`
 )
 
-// initAction generates an age identity in the current dir if no identity was found.
+// initCommand generates an age identity in the current dir if no identity was found.
 // It generates a .gitignore file in the current directory if not existing.
 // It generates a .privage.conf file in the home directory, with the
 // identity and secret directory paths.
-func initAction(opts setup.Options, args []string) error {
+func initCommand(opts setup.Options, args []string) error {
 	fs := flag.NewFlagSet("init", flag.ExitOnError)
 	var slot string
 	fs.StringVar(&slot, "piv-slot", "", "Use the yubikey slot key to encrypt the age private key")

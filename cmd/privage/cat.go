@@ -9,8 +9,8 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-// catAction prints in the terminal the contents of an encrypted file.
-func catAction(opts setup.Options, args []string) error {
+// catCommand prints in the terminal the contents of an encrypted file.
+func catCommand(opts setup.Options, args []string) error {
 
 	if len(args) == 0 {
 		return errors.New("cat command needs one argument (label)")

@@ -29,7 +29,7 @@ import (
 // - COMP_WORDS: ["privage", "-k", "key.txt", "show", ""]
 // - args received here: ["--", "privage", "-k", "key.txt", "show", ""]
 // - commandIndex starts at 2, skips "-k" and "key.txt", and identifies "show" at index 4.
-func completeAction(opts setup.Options, args []string) error {
+func completeCommand(opts setup.Options, args []string) error {
 
 	if len(args) < 2 {
 		return nil

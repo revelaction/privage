@@ -10,8 +10,8 @@ import (
 	//"github.com/revelaction/privage/setup"
 )
 
-// listAction list encripted files
-func listAction(opts setup.Options, args []string) error {
+// listCommand list encripted files
+func listCommand(opts setup.Options, args []string) error {
 
 	s, err := setupEnv(opts)
 	if err != nil {

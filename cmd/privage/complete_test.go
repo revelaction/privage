@@ -67,7 +67,7 @@ func TestCompleteAction_Subcommands(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			output, err := captureStdout(func() error {
-				return completeAction(setup.Options{}, tt.args)
+				return completeCommand(setup.Options{}, tt.args)
 			})
 
 			if err != nil {

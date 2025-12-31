@@ -9,7 +9,7 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-func keyAction(opts setup.Options, args []string) error {
+func keyCommand(opts setup.Options, args []string) error {
 
 	s, err := setupEnv(opts)
 	if err != nil {

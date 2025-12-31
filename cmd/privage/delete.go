@@ -8,7 +8,7 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-func deleteAction(opts setup.Options, args []string) error {
+func deleteCommand(opts setup.Options, args []string) error {
 
 	if len(args) == 0 {
 		return errors.New("delete command needs one argument (label)")

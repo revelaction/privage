@@ -19,9 +19,9 @@ const (
 	fileNameRotate = "privage-key-rotate.txt"
 )
 
-// rotateAction generates a new age key and reencrypts all present encrypted
+// rotateCommand generates a new age key and reencrypts all present encrypted
 // fields with the new key.
-func rotateAction(opts setup.Options, args []string) error {
+func rotateCommand(opts setup.Options, args []string) error {
 	fs := flag.NewFlagSet("rotate", flag.ExitOnError)
 	var isClean bool
 	var slot string

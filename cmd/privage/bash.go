@@ -34,7 +34,7 @@ _privage_autocomplete() {
 complete -F _privage_autocomplete privage
 `
 
-func bashAction(opts setup.Options, args []string) error {
+func bashCommand(opts setup.Options, args []string) error {
 	fmt.Print(complete)
 	return nil
 }

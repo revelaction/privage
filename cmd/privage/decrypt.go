@@ -10,8 +10,8 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-// decryptAction decrypts an encrypted file
-func decryptAction(opts setup.Options, args []string) error {
+// decryptCommand decrypts an encrypted file
+func decryptCommand(opts setup.Options, args []string) error {
 
 	if len(args) == 0 {
 		return errors.New("decrypt command needs one argument (label)")

@@ -12,14 +12,14 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-// addAction adds a new privage encrypted file
+// addCommand adds a new privage encrypted file
 //
 // the first argument is a category. A category can be anything. There is a
 // predefined category (credential) that generates credential files.
 // the second one (label) is:
 // - a label for credentials
 // - a existing file in the current directory
-func addAction(opts setup.Options, args []string) error {
+func addCommand(opts setup.Options, args []string) error {
 
 	s, err := setupEnv(opts)
 	if err != nil {

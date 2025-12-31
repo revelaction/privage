@@ -10,8 +10,8 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-// reencryptAction reencrypts modified files
-func reencryptAction(opts setup.Options, args []string) error {
+// reencryptCommand reencrypts modified files
+func reencryptCommand(opts setup.Options, args []string) error {
 	fs := flag.NewFlagSet("reencrypt", flag.ExitOnError)
 	var isForce, isClean bool
 	fs.BoolVar(&isForce, "force", false, "Force encryption of the files.")
