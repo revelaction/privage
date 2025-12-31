@@ -6,13 +6,14 @@ import (
 	"strings"
 
 	"github.com/revelaction/privage/header"
+	"github.com/revelaction/privage/setup"
 	//"github.com/revelaction/privage/setup"
 )
 
 // listAction list encripted files
-func listAction(args []string) error {
+func listAction(opts setup.Options, args []string) error {
 
-	s, err := setupEnv(global)
+	s, err := setupEnv(opts)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}

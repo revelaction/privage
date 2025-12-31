@@ -5,13 +5,14 @@ import (
 
 	"github.com/revelaction/privage/config"
 	id "github.com/revelaction/privage/identity"
+	"github.com/revelaction/privage/setup"
 )
 
 // statusAction prints on the terminal a status of the privage command
 // configuration
-func statusAction(args []string) error {
+func statusAction(opts setup.Options, args []string) error {
 
-	s, err := setupEnv(global)
+	s, err := setupEnv(opts)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}

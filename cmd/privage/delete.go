@@ -8,7 +8,7 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-func deleteAction(args []string) error {
+func deleteAction(opts setup.Options, args []string) error {
 
 	if len(args) == 0 {
 		return errors.New("delete command needs one argument (label)")
@@ -16,7 +16,7 @@ func deleteAction(args []string) error {
 
 	label := args[0]
 
-	s, err := setupEnv(global)
+	s, err := setupEnv(opts)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}

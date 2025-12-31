@@ -21,7 +21,7 @@ const (
 
 // rotateAction generates a new age key and reencrypts all present encrypted
 // fields with the new key.
-func rotateAction(args []string) error {
+func rotateAction(opts setup.Options, args []string) error {
 	fs := flag.NewFlagSet("rotate", flag.ExitOnError)
 	var isClean bool
 	var slot string
@@ -34,7 +34,7 @@ func rotateAction(args []string) error {
 		return err
 	}
 
-	s, err := setupEnv(global)
+	s, err := setupEnv(opts)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}

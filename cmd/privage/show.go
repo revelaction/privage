@@ -11,13 +11,13 @@ import (
 
 // showAction prints in the terminal partially/all the contents of an encrypted
 // file.
-func showAction(args []string) error {
+func showAction(opts setup.Options, args []string) error {
 
 	if len(args) == 0 {
 		return errors.New("show command needs one argument")
 	}
 
-	s, err := setupEnv(global)
+	s, err := setupEnv(opts)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}

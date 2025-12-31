@@ -11,7 +11,7 @@ import (
 )
 
 // reencryptAction reencrypts modified files
-func reencryptAction(args []string) error {
+func reencryptAction(opts setup.Options, args []string) error {
 	fs := flag.NewFlagSet("reencrypt", flag.ExitOnError)
 	var isForce, isClean bool
 	fs.BoolVar(&isForce, "force", false, "Force encryption of the files.")
@@ -23,7 +23,7 @@ func reencryptAction(args []string) error {
 		return err
 	}
 
-	s, err := setupEnv(global)
+	s, err := setupEnv(opts)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}

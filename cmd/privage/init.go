@@ -9,6 +9,7 @@ import (
 
 	"github.com/revelaction/privage/config"
 	id "github.com/revelaction/privage/identity"
+	"github.com/revelaction/privage/setup"
 )
 
 const (
@@ -24,7 +25,7 @@ const (
 // It generates a .gitignore file in the current directory if not existing.
 // It generates a .privage.conf file in the home directory, with the
 // identity and secret directory paths.
-func initAction(args []string) error {
+func initAction(opts setup.Options, args []string) error {
 	fs := flag.NewFlagSet("init", flag.ExitOnError)
 	var slot string
 	fs.StringVar(&slot, "piv-slot", "", "Use the yubikey slot key to encrypt the age private key")
@@ -34,7 +35,7 @@ func initAction(args []string) error {
 		return err
 	}
 
-	s, err := setupEnv(global)
+	s, err := setupEnv(opts)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}

@@ -63,33 +63,33 @@ func main() {
 
 	switch cmd {
 	case "init":
-		err = initAction(args)
+		err = initAction(global, args)
 	case "key":
-		err = keyAction(args)
+		err = keyAction(global, args)
 	case "status":
-		err = statusAction(args)
+		err = statusAction(global, args)
 	case "add":
-		err = addAction(args)
+		err = addAction(global, args)
 	case "delete":
-		err = deleteAction(args)
+		err = deleteAction(global, args)
 	case "list":
-		err = listAction(args)
+		err = listAction(global, args)
 	case "show":
-		err = showAction(args)
+		err = showAction(global, args)
 	case "cat":
-		err = catAction(args)
+		err = catAction(global, args)
 	case "clipboard":
-		err = clipboardAction(args)
+		err = clipboardAction(global, args)
 	case "decrypt":
-		err = decryptAction(args)
+		err = decryptAction(global, args)
 	case "reencrypt":
-		err = reencryptAction(args)
+		err = reencryptAction(global, args)
 	case "rotate":
-		err = rotateAction(args)
+		err = rotateAction(global, args)
 	case "bash":
-		err = bashAction(args)
+		err = bashAction(global, args)
 	case "complete":
-		err = completeAction(args)
+		err = completeAction(global, args)
 	case "help", "h":
 		flag.Usage()
 	default:

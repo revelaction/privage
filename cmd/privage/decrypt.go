@@ -11,13 +11,13 @@ import (
 )
 
 // decryptAction decrypts an encrypted file
-func decryptAction(args []string) error {
+func decryptAction(opts setup.Options, args []string) error {
 
 	if len(args) == 0 {
 		return errors.New("decrypt command needs one argument (label)")
 	}
 
-	s, err := setupEnv(global)
+	s, err := setupEnv(opts)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}

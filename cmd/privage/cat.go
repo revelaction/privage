@@ -10,13 +10,13 @@ import (
 )
 
 // catAction prints in the terminal the contents of an encrypted file.
-func catAction(args []string) error {
+func catAction(opts setup.Options, args []string) error {
 
 	if len(args) == 0 {
 		return errors.New("cat command needs one argument (label)")
 	}
 
-	s, err := setupEnv(global)
+	s, err := setupEnv(opts)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}

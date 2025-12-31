@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/revelaction/privage/setup"
 )
 
 const complete = `#! /bin/bash
@@ -32,7 +34,7 @@ _privage_autocomplete() {
 complete -F _privage_autocomplete privage
 `
 
-func bashAction(args []string) error {
+func bashAction(opts setup.Options, args []string) error {
 	fmt.Print(complete)
 	return nil
 }

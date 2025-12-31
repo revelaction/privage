@@ -19,9 +19,9 @@ import (
 // the second one (label) is:
 // - a label for credentials
 // - a existing file in the current directory
-func addAction(args []string) error {
+func addAction(opts setup.Options, args []string) error {
 
-	s, err := setupEnv(global)
+	s, err := setupEnv(opts)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}

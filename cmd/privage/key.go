@@ -6,11 +6,12 @@ import (
 	"strconv"
 
 	id "github.com/revelaction/privage/identity"
+	"github.com/revelaction/privage/setup"
 )
 
-func keyAction(args []string) error {
+func keyAction(opts setup.Options, args []string) error {
 
-	s, err := setupEnv(global)
+	s, err := setupEnv(opts)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}

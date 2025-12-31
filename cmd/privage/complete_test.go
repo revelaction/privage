@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/revelaction/privage/setup"
 )
 
 // captureStdout captures the output of a function that writes to stdout
@@ -65,7 +67,7 @@ func TestCompleteAction_Subcommands(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			output, err := captureStdout(func() error {
-				return completeAction(tt.args)
+				return completeAction(setup.Options{}, tt.args)
 			})
 
 			if err != nil {

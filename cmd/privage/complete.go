@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/revelaction/privage/header"
+	"github.com/revelaction/privage/setup"
 )
 
 // completeAction handles the autocompletion requests triggered by the bash completion script.
@@ -28,7 +29,7 @@ import (
 // - COMP_WORDS: ["privage", "-k", "key.txt", "show", ""]
 // - args received here: ["--", "privage", "-k", "key.txt", "show", ""]
 // - commandIndex starts at 2, skips "-k" and "key.txt", and identifies "show" at index 4.
-func completeAction(args []string) error {
+func completeAction(opts setup.Options, args []string) error {
 
 	if len(args) < 2 {
 		return nil
@@ -74,19 +75,19 @@ func completeAction(args []string) error {
 
 		switch cmd {
 		case "show", "cat", "delete", "clipboard", "decrypt":
-			return completeLabels(lastWord)
+			return completeLabels(opts, lastWord)
 		case "list":
-			return completeCategoriesAndLabels(lastWord)
+			return completeCategoriesAndLabels(opts, lastWord)
 		case "add":
-			return completeAdd(args, commandIndex, lastWord)
+			return completeAdd(opts, args, commandIndex, lastWord)
 		}
 	}
 
 	return nil
 }
 
-func completeLabels(prefix string) error {
-	s, err := setupEnv(global)
+func completeLabels(opts setup.Options, prefix string) error {
+	s, err := setupEnv(opts)
 	if err != nil {
 		return nil
 	}
@@ -102,8 +103,8 @@ func completeLabels(prefix string) error {
 	return nil
 }
 
-func completeCategoriesAndLabels(prefix string) error {
-	s, err := setupEnv(global)
+func completeCategoriesAndLabels(opts setup.Options, prefix string) error {
+	s, err := setupEnv(opts)
 	if err != nil {
 		return nil
 	}
@@ -129,7 +130,7 @@ func completeCategoriesAndLabels(prefix string) error {
 	return nil
 }
 
-func completeAdd(args []string, commandIndex int, prefix string) error {
+func completeAdd(opts setup.Options, args []string, commandIndex int, prefix string) error {
 	// args[commandIndex] is "add"
 	// args[commandIndex+1] is category
 	// args[commandIndex+2] is label
@@ -138,7 +139,7 @@ func completeAdd(args []string, commandIndex int, prefix string) error {
 
 	if relativeIndex == 1 {
 		// complete categories
-		s, err := setupEnv(global)
+		s, err := setupEnv(opts)
 		if err == nil && s.Id.Id != nil {
 			categories := map[string]struct{}{}
 			for h := range headerGenerator(s.Repository, s.Id) {

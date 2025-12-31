@@ -9,7 +9,7 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-func clipboardAction(args []string) error {
+func clipboardAction(opts setup.Options, args []string) error {
 	fs := flag.NewFlagSet("clipboard", flag.ExitOnError)
 	var deleteFlag bool
 	fs.BoolVar(&deleteFlag, "delete", false, "Delete the contents of the clipboard")
@@ -32,7 +32,7 @@ func clipboardAction(args []string) error {
 		return errors.New("clipboard command needs one argument: label")
 	}
 
-	s, err := setupEnv(global)
+	s, err := setupEnv(opts)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}
