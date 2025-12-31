@@ -8,10 +8,25 @@ import (
 	"github.com/revelaction/privage/header"
 )
 
-// completeAction handles the autocompletion requests.
-// args[0] is usually the command being completed (e.g., "privage")
-// args[1] is the sub-command (e.g., "show")
-// args[2...] are the arguments typed so far
+// completeAction handles the autocompletion requests triggered by the bash completion script.
+//
+// Understanding the Argument Flow:
+// 1. Bash triggers the completion function and executes:
+//    privage complete -- "${COMP_WORDS[@]}"
+//
+// 2. In main.go, flag.Parse() is called. Since "complete" is the first positional 
+//    argument, flag.Parse() stops there. It does NOT consume the "--" separator 
+//    because the separator appears after the "complete" command token.
+//
+// 3. main.go passes flag.Args()[1:] to this function.
+//    - args[0]: "--" (The separator inserted by bash.go)
+//    - args[1]: "privage" (The first element of COMP_WORDS, the binary name)
+//    - args[2...]: The actual command line arguments typed by the user.
+//
+// Example: User types 'privage -k key.txt show [TAB]'
+// - COMP_WORDS: ["privage", "-k", "key.txt", "show", ""]
+// - args received here: ["--", "privage", "-k", "key.txt", "show", ""]
+// - commandIndex starts at 2, skips "-k" and "key.txt", and identifies "show" at index 4.
 func completeAction(args []string) error {
 
 	if len(args) < 2 {
