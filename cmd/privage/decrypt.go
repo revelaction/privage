@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -27,35 +28,43 @@ func decryptAction(args []string) error {
 
 	label := args[0]
 
-	return decrypt(label, s)
+	return decrypt(s, label)
 }
 
-func decrypt(label string, s *setup.Setup) error {
+// decrypt creates a decrypted copy of an encrypted file contents. It saves the
+// copy in the repository directory under the file name label
+func decrypt(s *setup.Setup, label string) error {
 
 	for h := range headerGenerator(s.Repository, s.Id) {
 
 		if h.Label == label {
+
+			w, err := os.Create(s.Repository + "/" + label)
+			if err != nil {
+				return err
+			}
+			defer w.Close()
 
 			r, err := contentReader(h, s.Id)
 			if err != nil {
 				return err
 			}
 
-			f, err := os.Create(label)
-			if err != nil {
-				return err
-			}
-			defer f.Close()
+			bufFile := bufio.NewWriter(w)
 
-			_, err = io.Copy(f, r)
-			if err != nil {
-				return err
+			if _, err := io.Copy(bufFile, r); err != nil {
+
+				if err != io.ErrUnexpectedEOF {
+					return err
+				}
 			}
 
-			fmt.Printf("The file %s was decrypted in the directory %s.\n\n", label, s.Repository)
+			bufFile.Flush()
 
+			fmt.Printf("The file %s was decrypted in the directory %s.\n", label, s.Repository)
+			fmt.Println()
 			fmt.Println("(Use \"privage reencrypt --force\" to reencrypt all decrypted files)")
-			fmt.Println("(Use \"privage reencrypt --clean\" to reencrypt all decrypted files and after that delete them)")
+			fmt.Println("(Use \"privage reencrypt --clean\" to reencrypt and delete all decrypted files)")
 
 			return nil
 		}
