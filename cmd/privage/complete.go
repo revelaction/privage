@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/fs"
 	"path/filepath"
 	"strings"
 
@@ -170,24 +171,33 @@ func completeAdd(args []string, commandIndex int, prefix string) error {
 
 
 // filesForAddCmd returns a slice of files for the add command.
-// Copied/Adapted from bash.go (which will be deleted/refactored)
+//
+// It excludes dot and age files, symlinks and directory paths.
 func filesForAddCmd(root string) []string {
 	var a []string
-	
-	// This is a simplified version for the example. 
-	// In reality we should use filepath.WalkDir like before.
-	entries, err := filepath.Glob(root + "/*")
-	if err != nil {
-		return nil
-	}
-	
-	for _, e := range entries {
-		// primitive filtering
-		if strings.HasSuffix(e, ".age") {
-			continue
+	filepath.WalkDir(root, func(s string, d fs.DirEntry, e error) error {
+		if e != nil {
+			return e
 		}
-		a = append(a, e)
-	}
+
+		if filepath.Ext(d.Name()) == AgeExtension {
+			return nil
+		}
+
+		// no dir, no symlink
+		if !d.Type().IsRegular() {
+			return nil
+		}
+
+		// no dot
+		if s[0:1] == "." {
+			return nil
+		}
+
+		a = append(a, s)
+
+		return nil
+	})
 
 	return a
 }
