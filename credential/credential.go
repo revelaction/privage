@@ -3,8 +3,9 @@ package credential
 import (
 	"fmt"
 	"io"
+	"os"
 
-	"github.com/BurntSushi/toml"
+	"github.com/pelletier/go-toml/v2"
 	"github.com/atotto/clipboard"
 	"github.com/sethvargo/go-password/password"
 )
@@ -64,7 +65,7 @@ type Credential struct {
 func LogFields(r io.Reader) error {
 
 	var conf Credential
-	_, err := toml.NewDecoder(r).Decode(&conf)
+	err := toml.NewDecoder(r).Decode(&conf)
 	if err != nil {
 		return err
 	}
@@ -81,7 +82,7 @@ func LogFields(r io.Reader) error {
 func CopyClipboard(r io.Reader) error {
 
 	var conf Credential
-	_, err := toml.NewDecoder(r).Decode(&conf)
+	err := toml.NewDecoder(r).Decode(&conf)
 	if err != nil {
 		return err
 	}
@@ -106,13 +107,19 @@ func EmptyClipboard() error {
 // ValidateFile validates a file as toml credential file.
 func ValidateFile(filePath string) error {
 
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+
 	var conf Credential
-	if _, err := toml.DecodeFile(filePath, &conf); err != nil {
+	if err := toml.Unmarshal(data, &conf); err != nil {
 		return err
 	}
 
 	return nil
 }
+
 
 // GeneratePassword generates a random password
 func GeneratePassword() (string, error) {

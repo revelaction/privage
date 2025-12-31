@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/BurntSushi/toml"
+	"github.com/pelletier/go-toml/v2"
 )
 
 const (
@@ -84,19 +84,25 @@ func New(path string) (*Config, error) {
 	if !fileExists(path) {
 		return &Config{}, fmt.Errorf("file %s does not exists", path)
 	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return &Config{}, err
+	}
+
 	// is valid toml
-	if _, err := toml.DecodeFile(path, &conf); err != nil {
+	if err := toml.Unmarshal(data, &conf); err != nil {
 		return &Config{}, fmt.Errorf("file %s is not a valid .toml file", path)
 	}
 	// has key IdentityPath
-	if conf.IdentityPath == ""{
+	if conf.IdentityPath == "" {
 		return &Config{}, fmt.Errorf("file %s does not have a IdentityPath (age key) field", path)
 	}
 
 	// expand ~/
-	conf, err := expandHome(conf)
+	conf, err = expandHome(conf)
 	if err != nil {
-        return &Config{}, fmt.Errorf("could not expand home: %s", err)
+		return &Config{}, fmt.Errorf("could not expand home: %s", err)
 	}
 
 	// IdentityPath exist
@@ -105,7 +111,7 @@ func New(path string) (*Config, error) {
 	}
 
 	// has key RepositoryPath
-	if conf.RepositoryPath == ""{
+	if conf.RepositoryPath == "" {
 		return &Config{}, fmt.Errorf("file %s does not have a RepositoryPath field", path)
 	}
 
