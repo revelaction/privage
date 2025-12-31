@@ -16,7 +16,7 @@ func catAction(args []string) error {
 		return errors.New("cat command needs one argument (label)")
 	}
 
-	s, err := setupEnv(global.KeyFile, global.ConfigFile, global.RepoPath, global.PivSlot)
+	s, err := setupEnv(global)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}

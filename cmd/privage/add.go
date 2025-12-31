@@ -21,7 +21,7 @@ import (
 // - a existing file in the current directory
 func addAction(args []string) error {
 
-	s, err := setupEnv(global.KeyFile, global.ConfigFile, global.RepoPath, global.PivSlot)
+	s, err := setupEnv(global)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}

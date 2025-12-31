@@ -27,6 +27,15 @@ type Setup struct {
 	Repository string
 }
 
+// Options contains the configuration parameters provided via global flags
+// or environment to initialize the Setup.
+type Options struct {
+	KeyFile    string
+	ConfigFile string
+	RepoPath   string
+	PivSlot    string
+}
+
 // Copy returns a copy of the Setup s with an empty Identity
 func (s *Setup) Copy() *Setup {
 

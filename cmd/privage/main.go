@@ -6,14 +6,11 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/revelaction/privage/setup"
 )
 
-var global struct {
-	KeyFile    string
-	ConfigFile string
-	RepoPath   string
-	PivSlot    string
-}
+var global setup.Options
 
 var (
 	BuildCommit string

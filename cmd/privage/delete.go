@@ -16,7 +16,7 @@ func deleteAction(args []string) error {
 
 	label := args[0]
 
-	s, err := setupEnv(global.KeyFile, global.ConfigFile, global.RepoPath, global.PivSlot)
+	s, err := setupEnv(global)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}

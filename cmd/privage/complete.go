@@ -86,7 +86,7 @@ func completeAction(args []string) error {
 }
 
 func completeLabels(prefix string) error {
-	s, err := setupEnv(global.KeyFile, global.ConfigFile, global.RepoPath, global.PivSlot)
+	s, err := setupEnv(global)
 	if err != nil {
 		return nil
 	}
@@ -103,7 +103,7 @@ func completeLabels(prefix string) error {
 }
 
 func completeCategoriesAndLabels(prefix string) error {
-	s, err := setupEnv(global.KeyFile, global.ConfigFile, global.RepoPath, global.PivSlot)
+	s, err := setupEnv(global)
 	if err != nil {
 		return nil
 	}
@@ -138,7 +138,7 @@ func completeAdd(args []string, commandIndex int, prefix string) error {
 
 	if relativeIndex == 1 {
 		// complete categories
-		s, err := setupEnv(global.KeyFile, global.ConfigFile, global.RepoPath, global.PivSlot)
+		s, err := setupEnv(global)
 		if err == nil && s.Id.Id != nil {
 			categories := map[string]struct{}{}
 			for h := range headerGenerator(s.Repository, s.Id) {
