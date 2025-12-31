@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-set -x
 
 # Build
 go build -o privage_bin ./cmd/privage
