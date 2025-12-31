@@ -1,10 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
-
-	"github.com/urfave/cli/v2"
 
 	"github.com/revelaction/privage/credential"
 	"github.com/revelaction/privage/header"
@@ -12,12 +11,19 @@ import (
 )
 
 // reencryptAction reencrypts modified files
-func reencryptAction(ctx *cli.Context) error {
+func reencryptAction(args []string) error {
+	fs := flag.NewFlagSet("reencrypt", flag.ExitOnError)
+	var isForce, isClean bool
+	fs.BoolVar(&isForce, "force", false, "Force encryption of the files.")
+	fs.BoolVar(&isForce, "f", false, "alias for -force")
+	fs.BoolVar(&isClean, "clean", false, "Force encryption the files and also delete/clean the decrypted files.")
+	fs.BoolVar(&isClean, "c", false, "alias for -clean")
 
-	isForce := ctx.Bool("force")
-	isClean := ctx.Bool("clean")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
 
-	s, err := setupEnv(ctx)
+	s, err := setupEnv(global.KeyFile, global.ConfigFile, global.RepoPath, global.PivSlot)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}

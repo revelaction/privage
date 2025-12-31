@@ -3,17 +3,15 @@ package main
 import (
 	"fmt"
 
-	"github.com/urfave/cli/v2"
-
 	"github.com/revelaction/privage/config"
 	id "github.com/revelaction/privage/identity"
 )
 
 // statusAction prints on the terminal a status of the privage command
 // configuration
-func statusAction(ctx *cli.Context) error {
+func statusAction(args []string) error {
 
-	s, err := setupEnv(ctx)
+	s, err := setupEnv(global.KeyFile, global.ConfigFile, global.RepoPath, global.PivSlot)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}

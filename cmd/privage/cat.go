@@ -6,19 +6,17 @@ import (
 	"io"
 	"os"
 
-	"github.com/urfave/cli/v2"
-
 	"github.com/revelaction/privage/setup"
 )
 
 // catAction prints in the terminal the contents of an encrypted file.
-func catAction(ctx *cli.Context) error {
+func catAction(args []string) error {
 
-	if ctx.Args().Len() == 0 {
+	if len(args) == 0 {
 		return errors.New("cat command needs one argument (label)")
 	}
 
-	s, err := setupEnv(ctx)
+	s, err := setupEnv(global.KeyFile, global.ConfigFile, global.RepoPath, global.PivSlot)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}
@@ -27,7 +25,7 @@ func catAction(ctx *cli.Context) error {
 		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}
 
-	label := ctx.Args().First()
+	label := args[0]
 
 	return cat(label, s)
 }

@@ -5,23 +5,21 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/urfave/cli/v2"
-
 	"github.com/revelaction/privage/header"
 	//"github.com/revelaction/privage/setup"
 )
 
 // listAction list encripted files
-func listAction(ctx *cli.Context) error {
+func listAction(args []string) error {
 
-	s, err := setupEnv(ctx)
+	s, err := setupEnv(global.KeyFile, global.ConfigFile, global.RepoPath, global.PivSlot)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}
 
 	filter := "" // no filter
-	if ctx.Args().Len() != 0 {
-		filter = ctx.Args().First()
+	if len(args) != 0 {
+		filter = args[0]
 	}
 
 	headers := []*header.Header{}

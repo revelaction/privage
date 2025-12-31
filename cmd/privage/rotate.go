@@ -2,13 +2,13 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
 
 	"filippo.io/age"
-	"github.com/urfave/cli/v2"
 
 	id "github.com/revelaction/privage/identity"
 	"github.com/revelaction/privage/setup"
@@ -21,15 +21,23 @@ const (
 
 // rotateAction generates a new age key and reencrypts all present encrypted
 // fields with the new key.
-func rotateAction(ctx *cli.Context) error {
+func rotateAction(args []string) error {
+	fs := flag.NewFlagSet("rotate", flag.ExitOnError)
+	var isClean bool
+	var slot string
+	fs.BoolVar(&isClean, "clean", false, "Delete old Key's encrypted files. Rename new encrypted files and the new key")
+	fs.BoolVar(&isClean, "c", false, "alias for -clean")
+	fs.StringVar(&slot, "piv-slot", "", "Use the yubikey slot to encrypt the age private key with the RSA Key")
+	fs.StringVar(&slot, "p", "", "alias for -piv-slot")
 
-	s, err := setupEnv(ctx)
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	s, err := setupEnv(global.KeyFile, global.ConfigFile, global.RepoPath, global.PivSlot)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}
-
-	isClean := ctx.Bool("clean")
-	slot := ctx.String("piv-slot")
 
 	return rotate(s, isClean, slot)
 }

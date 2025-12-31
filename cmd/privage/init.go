@@ -2,11 +2,10 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 	"strconv"
-
-	"github.com/urfave/cli/v2"
 
 	"github.com/revelaction/privage/config"
 	id "github.com/revelaction/privage/identity"
@@ -25,9 +24,17 @@ const (
 // It generates a .gitignore file in the current directory if not existing.
 // It generates a .privage.conf file in the home directory, with the
 // identity and secret directory paths.
-func initAction(ctx *cli.Context) error {
+func initAction(args []string) error {
+	fs := flag.NewFlagSet("init", flag.ExitOnError)
+	var slot string
+	fs.StringVar(&slot, "piv-slot", "", "Use the yubikey slot key to encrypt the age private key")
+	fs.StringVar(&slot, "p", "", "alias for -piv-slot")
 
-	s, err := setupEnv(ctx)
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	s, err := setupEnv(global.KeyFile, global.ConfigFile, global.RepoPath, global.PivSlot)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}
@@ -54,9 +61,6 @@ func initAction(ctx *cli.Context) error {
 	identityPath := currentDir + "/" + id.FileName
 	identityType := id.TypeAge
 	identityAlgo := id.PivAlgoRsa2048 // only RSA2048 supported
-
-	// we receive string hex representation like 9a
-	slot := ctx.String("piv-slot")
 
 	// piv key
 	if len(slot) > 0 {

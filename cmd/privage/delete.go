@@ -5,20 +5,18 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/urfave/cli/v2"
-
 	"github.com/revelaction/privage/setup"
 )
 
-func deleteAction(ctx *cli.Context) error {
+func deleteAction(args []string) error {
 
-	if ctx.Args().Len() == 0 {
+	if len(args) == 0 {
 		return errors.New("delete command needs one argument (label)")
 	}
 
-	label := ctx.Args().First()
+	label := args[0]
 
-	s, err := setupEnv(ctx)
+	s, err := setupEnv(global.KeyFile, global.ConfigFile, global.RepoPath, global.PivSlot)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}

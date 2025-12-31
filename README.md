@@ -369,8 +369,8 @@ key, and uses the hash as name of the encrypted file. Encrypted
 snippet in your `.bashrc` file:
 
 ```console
-if hash privage; then
-    PROG=privage source <(privage bash)
+if command -v privage >/dev/null; then
+    source <(privage bash)
 fi
 ```
 

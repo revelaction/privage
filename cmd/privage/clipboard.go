@@ -2,17 +2,24 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
-
-	"github.com/urfave/cli/v2"
 
 	"github.com/revelaction/privage/credential"
 	"github.com/revelaction/privage/setup"
 )
 
-func clipboardAction(ctx *cli.Context) error {
+func clipboardAction(args []string) error {
+	fs := flag.NewFlagSet("clipboard", flag.ExitOnError)
+	var deleteFlag bool
+	fs.BoolVar(&deleteFlag, "delete", false, "Delete the contents of the clipboard")
+	fs.BoolVar(&deleteFlag, "d", false, "alias for -delete")
 
-	if ctx.Bool("delete") {
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	if deleteFlag {
 		err := credential.EmptyClipboard()
 		if err != nil {
 			return fmt.Errorf("could not emtpty the clipboard: %w", err)
@@ -21,11 +28,11 @@ func clipboardAction(ctx *cli.Context) error {
 		return nil
 	}
 
-	if ctx.Args().Len() == 0 {
+	if fs.NArg() == 0 {
 		return errors.New("clipboard command needs one argument: label")
 	}
 
-	s, err := setupEnv(ctx)
+	s, err := setupEnv(global.KeyFile, global.ConfigFile, global.RepoPath, global.PivSlot)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}
@@ -34,7 +41,7 @@ func clipboardAction(ctx *cli.Context) error {
 		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}
 
-	label := ctx.Args().First()
+	label := fs.Arg(0)
 
 	return clipboard(label, s)
 }

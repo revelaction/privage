@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/urfave/cli/v2"
-
 	"github.com/revelaction/privage/credential"
 	"github.com/revelaction/privage/header"
 	id "github.com/revelaction/privage/identity"
@@ -21,9 +19,9 @@ import (
 // the second one (label) is:
 // - a label for credentials
 // - a existing file in the current directory
-func addAction(ctx *cli.Context) error {
+func addAction(args []string) error {
 
-	s, err := setupEnv(ctx)
+	s, err := setupEnv(global.KeyFile, global.ConfigFile, global.RepoPath, global.PivSlot)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}
@@ -32,16 +30,16 @@ func addAction(ctx *cli.Context) error {
 		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}
 
-	if ctx.Args().Len() != 2 {
+	if len(args) != 2 {
 		return errors.New("usage <category> <label>")
 	}
 
-	cat := ctx.Args().First()
+	cat := args[0]
 	if len(cat) > header.MaxLenghtCategory {
 		return errors.New("first argument (category) length is greater than max allowed")
 	}
 
-	label := ctx.Args().Get(1)
+	label := args[1]
 	if len(label) > header.MaxLenghtLabel {
 		return errors.New("second argument (label) length is greater than max allowed")
 	}

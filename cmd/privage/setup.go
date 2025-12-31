@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"github.com/urfave/cli/v2"
 
 	"github.com/revelaction/privage/config"
 	"github.com/revelaction/privage/setup"
@@ -12,15 +11,10 @@ import (
 // arguments have preference. Explicite -k, -r arguments have preference over
 // the -c argument.  If no arguments provided, standard paths are searched for
 // a configuration file .privage.conf
-func setupEnv(ctx *cli.Context) (*setup.Setup, error) {
+func setupEnv(argKey, argConf, argRepository, argPivSlot string) (*setup.Setup, error) {
 
-	argKey := ctx.String("key")
-	argConf := ctx.String("conf")
-	argRepository := ctx.String("repository")
-	argPivSlot := ctx.String("piv-slot")
-
-	if argKey != ""{
-		if argConf != ""{
+	if argKey != "" {
+		if argConf != "" {
 			return &setup.Setup{}, errors.New("flags -c and -k are incompatible")
 		}
 

@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/urfave/cli/v2"
-
 	"github.com/revelaction/privage/credential"
 	"github.com/revelaction/privage/header"
 	"github.com/revelaction/privage/setup"
@@ -13,13 +11,13 @@ import (
 
 // showAction prints in the terminal partially/all the contents of an encrypted
 // file.
-func showAction(ctx *cli.Context) error {
+func showAction(args []string) error {
 
-	if ctx.Args().Len() == 0 {
+	if len(args) == 0 {
 		return errors.New("show command needs one argument")
 	}
 
-	s, err := setupEnv(ctx)
+	s, err := setupEnv(global.KeyFile, global.ConfigFile, global.RepoPath, global.PivSlot)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}
@@ -28,7 +26,7 @@ func showAction(ctx *cli.Context) error {
 		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}
 
-	label := ctx.Args().First()
+	label := args[0]
 
 	return show(label, s)
 }

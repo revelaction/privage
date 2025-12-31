@@ -5,14 +5,12 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/urfave/cli/v2"
-
 	id "github.com/revelaction/privage/identity"
 )
 
-func keyAction(ctx *cli.Context) error {
+func keyAction(args []string) error {
 
-	s, err := setupEnv(ctx)
+	s, err := setupEnv(global.KeyFile, global.ConfigFile, global.RepoPath, global.PivSlot)
 	if err != nil {
 		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}

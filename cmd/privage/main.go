@@ -3,10 +3,17 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"github.com/urfave/cli/v2"
 	"os"
 )
+
+var global struct {
+	KeyFile    string
+	ConfigFile string
+	RepoPath   string
+	PivSlot    string
+}
 
 var (
 	BuildCommit string
@@ -15,43 +22,85 @@ var (
 
 func main() {
 
-	app := &cli.App{}
-
-	app.Name = "privage"
-	app.Version = BuildTag
-	cli.VersionPrinter = func(c *cli.Context) {
-		fmt.Printf("%s version %s, commit %s\n", app.Name, c.App.Version, BuildCommit)
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s [global options] command [command options] [arguments...]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "\nCommands:\n")
+		fmt.Fprintf(os.Stderr, "  init       Add a .gitignore, age/yubikey key file to the current directory. Add a config file in the home directory.\n")
+		fmt.Fprintf(os.Stderr, "  key        Decrypt the age private key with the PIV key defined in the .privage.conf file.\n")
+		fmt.Fprintf(os.Stderr, "  status     Provide information about the current configuration.\n")
+		fmt.Fprintf(os.Stderr, "  add        Add a new encrypted file.\n")
+		fmt.Fprintf(os.Stderr, "  delete     Delete an encrypted file.\n")
+		fmt.Fprintf(os.Stderr, "  list       list metadata of all/some encrypted files.\n")
+		fmt.Fprintf(os.Stderr, "  show       Show the contents the an encripted file.\n")
+		fmt.Fprintf(os.Stderr, "  cat        Print the full contents of an encrypted file to stdout.\n")
+		fmt.Fprintf(os.Stderr, "  clipboard  Copy the credential password to the clipboard\n")
+		fmt.Fprintf(os.Stderr, "  decrypt    Decrypt a file and write its content in a file named after the label\n")
+		fmt.Fprintf(os.Stderr, "  reencrypt  Reencrypt all decrypted files that are already encrypted. (default is dry-run)\n")
+		fmt.Fprintf(os.Stderr, "  rotate     Create a new age key and reencrypt every file with the new key\n")
+		fmt.Fprintf(os.Stderr, "  bash       Dump bash complete script.\n")
+		fmt.Fprintf(os.Stderr, "\nGlobal Options:\n")
+		flag.PrintDefaults()
+		fmt.Fprintf(os.Stderr, "\nVersion: %s, commit %s\n", BuildTag, BuildCommit)
 	}
 
-	app.EnableBashCompletion = true
-	app.UseShortOptionHandling = true
-	app.Usage = "password manager/encryption tool based on age"
-	app.Flags = []cli.Flag{
-		&cli.StringFlag{
-			Name:    "conf",
-			Aliases: []string{"c"},
-			Usage:   "Use file as privage configuration file",
-		},
-		&cli.StringFlag{
-			Name:    "key",
-			Aliases: []string{"k"},
-			Usage:   "Use file path for private key",
-		},
-		&cli.StringFlag{
-			Name:    "piv-slot",
-			Aliases: []string{"p"},
-			Usage:   "The PIV slot for decryption of the age key",
-		},
-		&cli.StringFlag{
-			Name:    "repository",
-			Aliases: []string{"r"},
-			Usage:   "Use file path as path for the repository",
-		},
+	flag.StringVar(&global.ConfigFile, "conf", "", "Use file as privage configuration file")
+	flag.StringVar(&global.ConfigFile, "c", "", "alias for -conf")
+	flag.StringVar(&global.KeyFile, "key", "", "Use file path for private key")
+	flag.StringVar(&global.KeyFile, "k", "", "alias for -key")
+	flag.StringVar(&global.PivSlot, "piv-slot", "", "The PIV slot for decryption of the age key")
+	flag.StringVar(&global.PivSlot, "p", "", "alias for -piv-slot")
+	flag.StringVar(&global.RepoPath, "repository", "", "Use file path as path for the repository")
+	flag.StringVar(&global.RepoPath, "r", "", "alias for -repository")
+
+	flag.Parse()
+
+	if flag.NArg() == 0 {
+		flag.Usage()
+		os.Exit(1)
 	}
 
-	app.Commands = allCommands
+	cmd := flag.Arg(0)
+	args := flag.Args()[1:]
 
-	if err := app.Run(os.Args); err != nil {
+	var err error
+
+	switch cmd {
+	case "init":
+		err = initAction(args)
+	case "key":
+		err = keyAction(args)
+	case "status":
+		err = statusAction(args)
+	case "add":
+		err = addAction(args)
+	case "delete":
+		err = deleteAction(args)
+	case "list":
+		err = listAction(args)
+	case "show":
+		err = showAction(args)
+	case "cat":
+		err = catAction(args)
+	case "clipboard":
+		err = clipboardAction(args)
+	case "decrypt":
+		err = decryptAction(args)
+	case "reencrypt":
+		err = reencryptAction(args)
+	case "rotate":
+		err = rotateAction(args)
+	case "bash":
+		err = bashAction(args)
+	case "complete":
+		err = completeAction(args)
+	case "help", "h":
+		flag.Usage()
+	default:
+		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", cmd)
+		os.Exit(1)
+	}
+
+	if err != nil {
 		fatal(err)
 	}
 }
