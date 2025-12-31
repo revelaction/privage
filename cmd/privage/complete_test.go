@@ -32,32 +32,32 @@ func TestCompleteAction_Subcommands(t *testing.T) {
 	}{
 		{
 			name:     "Empty args",
-			args:     []string{"privage"}, // Should ideally be ["privage", ""], but let's see logic
-			contains: []string{},          // len < 2 returns nil
+			args:     []string{"--", "privage"}, // Should ideally be ["--", "privage", ""], but let's see logic
+			contains: []string{},                // len < 2 returns nil, but now it's len 2
 		},
 		{
 			name:     "Command completion (empty)",
-			args:     []string{"privage", ""},
+			args:     []string{"--", "privage", ""},
 			contains: []string{"show", "add", "list", "init"},
 		},
 		{
 			name:     "Command completion (partial)",
-			args:     []string{"privage", "sh"},
+			args:     []string{"--", "privage", "sh"},
 			contains: []string{"show"},
 		},
 		{
 			name:     "Global flag skipping",
-			args:     []string{"privage", "-k", "key.txt", ""},
+			args:     []string{"--", "privage", "-k", "key.txt", ""},
 			contains: []string{"show", "add"},
 		},
 		{
 			name:     "Global flag skipping (partial)",
-			args:     []string{"privage", "-k", "key.txt", "sh"},
+			args:     []string{"--", "privage", "-k", "key.txt", "sh"},
 			contains: []string{"show"},
 		},
 		{
 			name:     "Global flag skipping (multiple)",
-			args:     []string{"privage", "-c", "conf", "-r", "repo", ""},
+			args:     []string{"--", "privage", "-c", "conf", "-r", "repo", ""},
 			contains: []string{"show", "add"},
 		},
 	}

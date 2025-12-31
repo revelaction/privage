@@ -18,50 +18,30 @@ func completeAction(args []string) error {
 		return nil
 	}
 
-	var cmdToComplete string
-	var lastWord string
-
-	knownCmds := map[string]bool{
-		"init": true, "key": true, "status": true, "add": true,
-		"delete": true, "list": true, "show": true, "cat": true,
-		"clipboard": true, "decrypt": true, "reencrypt": true,
-		"rotate": true, "bash": true, "help": true,
-	}
-
-	// Advanced parsing to skip flags
-	for i := 1; i < len(args); i++ {
-		arg := args[i]
-
+	// 1. Find the index where the subcommand should be
+	// args[0] is "--", args[1] is "privage"
+	commandIndex := 2
+	for commandIndex < len(args) {
+		arg := args[commandIndex]
 		if strings.HasPrefix(arg, "-") {
-			// Check for global flags that take arguments
-			// -k, -key, -c, -conf, -p, -piv-slot, -r, -repository
-			// Note: flag package allows -flag or --flag
+			commandIndex++ // Skip the flag
+			// Check if this global flag takes an argument
 			trimmed := strings.TrimLeft(arg, "-")
 			switch trimmed {
 			case "k", "key", "c", "conf", "p", "piv-slot", "r", "repository":
-				// These take an argument, so skip the next one if available
-				i++
+				commandIndex++ // Skip the flag value
 			}
 			continue
 		}
-
-		if knownCmds[arg] {
-			cmdToComplete = arg
-			break
-		}
+		break
 	}
-	
-	lastWord = args[len(args)-1]
 
-	// If we haven't typed a subcommand yet, or we are currently typing it
-	// (cmdToComplete == lastWord means we just found it at the end)
-	// We check if we are truly at the end (len check might need adjustment if we had flags)
-	// Actually, if cmdToComplete == lastWord, we are completing the command name itself.
-	if cmdToComplete == "" || cmdToComplete == lastWord {
-		// double check: if we typed "privage show <TAB>", args is ["privage", "show", ""]
-		// cmdToComplete is "show". lastWord is "". They are different.
-		// if "privage show", args is ["privage", "show"]. lastWord is "show". Same.
-		
+	cursorIndex := len(args) - 1
+
+	// 2. Decide what to complete based on cursor position relative to command position
+	if cursorIndex == commandIndex {
+		// User is typing the command itself
+		lastWord := args[cursorIndex]
 		cmds := []string{"init", "key", "status", "add", "delete", "list", "show", "cat", "clipboard", "decrypt", "reencrypt", "rotate", "bash", "help"}
 		for _, c := range cmds {
 			if strings.HasPrefix(c, lastWord) {
@@ -71,13 +51,19 @@ func completeAction(args []string) error {
 		return nil
 	}
 
-	switch cmdToComplete {
-	case "show", "cat", "delete", "clipboard", "decrypt":
-		return completeLabels(lastWord)
-	case "list":
-		return completeCategoriesAndLabels(lastWord)
-	case "add":
-		return completeAdd(args, lastWord)
+	if cursorIndex > commandIndex {
+		// We have a subcommand, delegate to specific completion logic
+		cmd := args[commandIndex]
+		lastWord := args[cursorIndex]
+
+		switch cmd {
+		case "show", "cat", "delete", "clipboard", "decrypt":
+			return completeLabels(lastWord)
+		case "list":
+			return completeCategoriesAndLabels(lastWord)
+		case "add":
+			return completeAdd(args, commandIndex, lastWord)
+		}
 	}
 
 	return nil
@@ -110,25 +96,32 @@ func completeCategoriesAndLabels(prefix string) error {
 	}
 
 	categories := map[string]struct{}{}
-	
+
 	for h := range headerGenerator(s.Repository, s.Id) {
 		if strings.HasPrefix(h.Label, prefix) {
 			fmt.Println(h.Label)
 		}
 		categories[h.Category] = struct{}{}
 	}
-	
+
 	for cat := range categories {
 		if strings.HasPrefix(cat, prefix) {
 			fmt.Println(cat)
 		}
 	}
-	
+
 	return nil
 }
 
-func completeAdd(args []string, prefix string) error {
-	if len(args) <= 3 {
+func completeAdd(args []string, commandIndex int, prefix string) error {
+	// args[commandIndex] is "add"
+	// args[commandIndex+1] is category
+	// args[commandIndex+2] is label
+	
+	relativeIndex := len(args) - 1 - commandIndex
+
+	if relativeIndex == 1 {
+		// complete categories
 		s, err := setupEnv(global.KeyFile, global.ConfigFile, global.RepoPath, global.PivSlot)
 		if err == nil && s.Id.Id != nil {
 			categories := map[string]struct{}{}
@@ -141,20 +134,22 @@ func completeAdd(args []string, prefix string) error {
 				}
 			}
 		}
+		// Always suggest credential
 		if strings.HasPrefix(header.CategoryCredential, prefix) {
 			fmt.Println(header.CategoryCredential)
 		}
 		return nil
 	}
-	
-	if len(args) == 4 {
+
+	if relativeIndex == 2 {
+		// suggest files in current directory
 		for _, f := range filesForAddCmd(".") {
 			if strings.HasPrefix(f, prefix) {
 				fmt.Println(f)
 			}
 		}
 	}
-	
+
 	return nil
 }
 
