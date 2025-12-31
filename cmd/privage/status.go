@@ -21,7 +21,7 @@ func statusAction(args []string) error {
 	if s.Id.Id != nil {
 		fmt.Printf("🔑 Found age key file %s in %s ✔️\n", id.FileName, s.Id.Path)
 	} else {
-		fmt.Println("🔑 🚫 Could not find an age key\n")
+		fmt.Println("🔑 🚫 Could not find an age key")
 	}
 
 	fmt.Printf("📂 The directory of the encrypted files is %s ✔️\n", s.Repository)
