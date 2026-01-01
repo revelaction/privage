@@ -1,7 +1,8 @@
 <p align="center"><img alt="kind" src="./logo.png"/></p>
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/revelaction/privage)](https://pkg.go.dev/github.com/revelaction/privage)
-[![Test](https://github.com/revelaction/privage/actions/workflows/test.yml/badge.svg)](https://github.com/revelaction/privage/actions/workflows/test.yml) 
+[![Test](https://github.com/revelaction/privage/actions/workflows/test.yml/badge.svg)](https://github.com/revelaction/privage/actions/workflows/test.yml)
+[![golangci-lint](https://github.com/revelaction/privage/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/revelaction/privage/actions/workflows/golangci-lint.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/revelaction/privage)](https://goreportcard.com/report/github.com/revelaction/privage)
 [![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/revelaction/privage/main/.github/badges/coverage.json)](https://github.com/revelaction/privage/actions/workflows/test.yml)
 [![sloc](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/revelaction/privage/main/.github/badges/sloc.json)](https://github.com/revelaction/privage/actions/workflows/sloc.yml)
