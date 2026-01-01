@@ -48,6 +48,8 @@ var commands = []string{
 // - commandIndex starts at 2, skips "-k" and "key.txt", and identifies "show" at index 4.
 func completeCommand(opts setup.Options, args []string) error {
 
+    // Decouple the completion logic from file system and encryption
+    // dependencies by injecting dependencies via functions
 	listHeaders := func() ([]*header.Header, error) {
 		s, err := setupEnv(opts)
 		if err != nil {

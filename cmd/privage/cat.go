@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/revelaction/privage/header"
 	"github.com/revelaction/privage/setup"
 )
 
@@ -27,21 +28,41 @@ func catCommand(opts setup.Options, args []string) error {
 
 	label := args[0]
 
-	return cat(label, s)
+	streamHeaders := func() <-chan *header.Header {
+		return headerGenerator(s.Repository, s.Id)
+	}
+
+	openContent := func(h *header.Header) (io.Reader, error) {
+		return contentReader(h, s.Id)
+	}
+
+	return cat(label, streamHeaders, openContent, os.Stdout)
 }
 
-func cat(label string, s *setup.Setup) error {
+// HeaderStreamFunc and ContentOpenFunc are defined to allow injecting dependency
+// implementations into the logic functions (like cat).
+// This enables side-effect-free testing by allowing us to pass mock functions
+// that return static data instead of accessing the file system or encryption keys.
+type HeaderStreamFunc func() <-chan *header.Header
+type ContentOpenFunc func(*header.Header) (io.Reader, error)
 
-	for h := range headerGenerator(s.Repository, s.Id) {
+func cat(
+	label string,
+	streamHeaders HeaderStreamFunc,
+	openContent ContentOpenFunc,
+	out io.Writer,
+) error {
+
+	for h := range streamHeaders() {
 
 		if h.Label == label {
 
-			r, err := contentReader(h, s.Id)
+			r, err := openContent(h)
 			if err != nil {
 				return err
 			}
 
-			if _, err := io.Copy(os.Stdout, r); err != nil {
+			if _, err := io.Copy(out, r); err != nil {
 				if err != io.ErrUnexpectedEOF {
 					return err
 				}
