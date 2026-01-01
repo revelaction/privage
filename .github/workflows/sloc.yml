@@ -1,0 +1,64 @@
+name: sloc
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  sloc-badge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Install scc and jq
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          go install github.com/boyter/scc/v3@latest
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: Run scc and format line count
+        run: |
+          scc --format json --output scc.json .
+          LINES_OF_CODE=$(jq 'map(.Code) | add' scc.json)
+          # Format the number, e.g., 11290 -> 11k, ensuring no decimals or spaces
+          FORMATTED_LINES=$(awk -v lines="$LINES_OF_CODE" 'BEGIN {if (lines >= 1000) {printf "%.0fk", lines/1000} else {print lines}}')
+          echo "LINES_OF_CODE=$LINES_OF_CODE" >> $GITHUB_ENV
+          echo "FORMATTED_LINES=$FORMATTED_LINES" >> $GITHUB_ENV
+
+      - name: Generate SLOC endpoint
+        run: |
+          # Create badge directory
+          mkdir -p .github/badges
+
+          # Create a JSON endpoint for shields.io
+          cat > .github/badges/sloc.json << EOF
+          {
+            "schemaVersion": 1,
+            "label": "total lines",
+            "message": "${{ env.FORMATTED_LINES }}",
+            "color": "brightgreen"
+          }
+          EOF
+
+      - name: Commit SLOC endpoint
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          if git diff --quiet HEAD -- .github/badges/sloc.json; then
+            echo "No changes to SLOC endpoint"
+          else
+            git add .github/badges/sloc.json
+            git commit -m "Update total lines endpoint: ${{ env.LINES_OF_CODE }}"
+            git pull --rebase
+            git push
+          fi
