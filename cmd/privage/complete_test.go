@@ -1,10 +1,28 @@
 package main
 
 import (
+	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 
-	"github.com/revelaction/privage/setup"
+	"github.com/revelaction/privage/header"
 )
+
+// noHeaders is a helper list func returning empty headers
+func noHeaders() ([]*header.Header, error) {
+	return nil, nil
+}
+
+// noFiles is a helper list func returning empty files
+func noFiles() ([]string, error) {
+	return nil, nil
+}
+
+// errorHeaders is a helper list func returning an error
+func errorHeaders() ([]*header.Header, error) {
+	return nil, errors.New("simulated error")
+}
 
 func TestCompleteAction_Subcommands(t *testing.T) {
 	tests := []struct {
@@ -14,8 +32,8 @@ func TestCompleteAction_Subcommands(t *testing.T) {
 	}{
 		{
 			name:     "Empty args",
-			args:     []string{"--", "privage"}, // Should ideally be ["--", "privage", ""], but let's see logic
-			contains: []string{},                // len < 2 returns nil, but now it's len 2
+			args:     []string{"--", "privage"}, 
+			contains: []string{},               
 		},
 		{
 			name:     "Command completion (empty)",
@@ -46,24 +64,172 @@ func TestCompleteAction_Subcommands(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			suggestions, err := getCompletions(setup.Options{}, tt.args)
+			completions, err := getCompletions(tt.args, noHeaders, noFiles)
 
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
 			for _, c := range tt.contains {
-				found := false
-				for _, s := range suggestions {
-					if s == c {
-						found = true
-						break
-					}
-				}
-				if !found {
-					t.Errorf("expected suggestions to contain '%s', got: %v", c, suggestions)
-				}
+				assertContains(t, completions, c)
 			}
 		})
+	}
+}
+
+func TestComplete_Values(t *testing.T) {
+	// Setup static data
+	headers := []*header.Header{
+		{Label: "mycred", Category: "credential"},
+		{Label: "work_stuff", Category: "work"},
+		{Label: "other_thing", Category: "other"},
+	}
+	files := []string{"local.txt", "image.png"}
+
+	// ListFuncs
+	listHeaders := func() ([]*header.Header, error) { return headers, nil }
+	listFiles := func() ([]string, error) { return files, nil }
+
+	tests := []struct {
+		name     string
+		args     []string
+		contains []string
+	}{
+		{
+			name:     "Show Label",
+			args:     []string{"--", "privage", "show", "my"},
+			contains: []string{"mycred"},
+		},
+		{
+			name:     "Show Label (All)",
+			args:     []string{"--", "privage", "show", ""},
+			contains: []string{"mycred", "work_stuff", "other_thing"},
+		},
+		{
+			name:     "List Category/Label",
+			args:     []string{"--", "privage", "list", "wo"},
+			contains: []string{"work"}, // category matches
+		},
+		{
+			name:     "Add Category",
+			args:     []string{"--", "privage", "add", "wo"},
+			contains: []string{"work"},
+		},
+		{
+			name:     "Add Category (Credential)",
+			args:     []string{"--", "privage", "add", "cred"},
+			contains: []string{"credential"}, // from default
+		},
+		{
+			name:     "Add File (Local)",
+			args:     []string{"--", "privage", "add", "work", "loc"},
+			contains: []string{"local.txt"},
+		},
+		{
+			name:     "Add File (All)",
+			args:     []string{"--", "privage", "add", "work", ""},
+			contains: []string{"local.txt", "image.png"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			completions, err := getCompletions(tt.args, listHeaders, listFiles)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			for _, c := range tt.contains {
+				assertContains(t, completions, c)
+			}
+		})
+	}
+}
+
+func TestComplete_Errors(t *testing.T) {
+	// If getting headers fails, we should handle it gracefully (e.g. return nil or partial)
+	
+	// Case 1: Show command - expects headers. If error, returns nil/empty.
+	args := []string{"--", "privage", "show", ""}
+	completions, err := getCompletions(args, errorHeaders, noFiles)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(completions) != 0 {
+		t.Errorf("expected empty completions on error, got %v", completions)
+	}
+
+	// Case 2: Add command - expects headers for categories. If error, should still return "credential"
+	args = []string{"--", "privage", "add", "cred"}
+	completions, err = getCompletions(args, errorHeaders, noFiles)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	assertContains(t, completions, header.CategoryCredential)
+}
+
+func TestFilesForAddCmd(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create some files
+	createFile(t, tmpDir, "file1.txt")
+	createFile(t, tmpDir, "file2.log")
+	createFile(t, tmpDir, ".hidden")
+	createFile(t, tmpDir, "secret.age")
+	if err := os.Mkdir(filepath.Join(tmpDir, "subdir"), 0755); err != nil {
+		t.Fatal(err)
+	}
+
+	// Switch to temp dir to simulate real usage
+	wd, _ := os.Getwd()
+	defer os.Chdir(wd)
+	os.Chdir(tmpDir)
+
+	files := filesForAddCmd(".")
+
+	expected := []string{
+		"file1.txt",
+		"file2.log",
+	}
+	
+	if len(files) != len(expected) {
+		t.Errorf("expected %d files, got %d: %v", len(expected), len(files), files)
+	}
+
+	for _, exp := range expected {
+		assertContains(t, files, exp)
+	}
+	
+	for _, f := range files {
+		if filepath.Base(f) == ".hidden" {
+			t.Error("should not contain dot files")
+		}
+		if filepath.Ext(f) == ".age" {
+			t.Error("should not contain .age files")
+		}
+	}
+}
+
+// Helpers
+
+func createFile(t *testing.T, dir, name string) {
+	t.Helper()
+	f, err := os.Create(filepath.Join(dir, name))
+	if err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
+}
+
+func assertContains(t *testing.T, list []string, item string) {
+	t.Helper()
+	found := false
+	for _, s := range list {
+		if s == item {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected list to contain '%s', got: %v", item, list)
 	}
 }

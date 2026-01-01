@@ -47,17 +47,41 @@ var commands = []string{
 // - args received here: ["--", "privage", "-k", "key.txt", "show", ""]
 // - commandIndex starts at 2, skips "-k" and "key.txt", and identifies "show" at index 4.
 func completeCommand(opts setup.Options, args []string) error {
-	suggestions, err := getCompletions(opts, args)
+
+	listHeaders := func() ([]*header.Header, error) {
+		s, err := setupEnv(opts)
+		if err != nil {
+			return nil, err
+		}
+		if s.Id.Id == nil {
+			return nil, nil
+		}
+
+		var headers []*header.Header
+		for h := range headerGenerator(s.Repository, s.Id) {
+			headers = append(headers, h)
+		}
+		return headers, nil
+	}
+
+	listFiles := func() ([]string, error) {
+		return filesForAddCmd("."), nil
+	}
+
+	completions, err := getCompletions(args, listHeaders, listFiles)
 	if err != nil {
 		return err
 	}
-	for _, s := range suggestions {
-		fmt.Println(s)
+	for _, c := range completions {
+		fmt.Println(c)
 	}
 	return nil
 }
 
-func getCompletions(opts setup.Options, args []string) ([]string, error) {
+type HeaderListFunc func() ([]*header.Header, error)
+type FileListFunc func() ([]string, error)
+
+func getCompletions(args []string, listHeaders HeaderListFunc, listFiles FileListFunc) ([]string, error) {
 	if len(args) < 2 {
 		return nil, nil
 	}
@@ -86,13 +110,13 @@ func getCompletions(opts setup.Options, args []string) ([]string, error) {
 	if cursorIndex == commandIndex {
 		// User is typing the command itself
 		lastWord := args[cursorIndex]
-		var suggestions []string
+		var completions []string
 		for _, c := range commands {
 			if strings.HasPrefix(c, lastWord) {
-				suggestions = append(suggestions, c)
+				completions = append(completions, c)
 			}
 		}
-		return suggestions, nil
+		return completions, nil
 	}
 
 	if cursorIndex > commandIndex {
@@ -102,64 +126,60 @@ func getCompletions(opts setup.Options, args []string) ([]string, error) {
 
 		switch cmd {
 		case "show", "cat", "delete", "clipboard", "decrypt":
-			return completeLabels(opts, lastWord)
+			headers, err := listHeaders()
+			if err != nil {
+				return nil, nil
+			}
+			return completeLabels(headers, lastWord), nil
 		case "list":
-			return completeCategoriesAndLabels(opts, lastWord)
+			headers, err := listHeaders()
+			if err != nil {
+				return nil, nil
+			}
+			return completeCategoriesAndLabels(headers, lastWord), nil
 		case "add":
-			return completeAdd(opts, args, commandIndex, lastWord)
+			// We ignore header errors to allow at least "credential" completion
+			headers, _ := listHeaders()
+			// We ignore file errors to allow other completions
+			files, _ := listFiles()
+			return completeAdd(headers, files, args, commandIndex, lastWord), nil
 		}
 	}
 
 	return nil, nil
 }
 
-func completeLabels(opts setup.Options, prefix string) ([]string, error) {
-	s, err := setupEnv(opts)
-	if err != nil {
-		return nil, nil
-	}
-	if s.Id.Id == nil {
-		return nil, nil
-	}
-
-	var suggestions []string
-	for h := range headerGenerator(s.Repository, s.Id) {
+func completeLabels(headers []*header.Header, prefix string) []string {
+	var completions []string
+	for _, h := range headers {
 		if strings.HasPrefix(h.Label, prefix) {
-			suggestions = append(suggestions, h.Label)
+			completions = append(completions, h.Label)
 		}
 	}
-	return suggestions, nil
+	return completions
 }
 
-func completeCategoriesAndLabels(opts setup.Options, prefix string) ([]string, error) {
-	s, err := setupEnv(opts)
-	if err != nil {
-		return nil, nil
-	}
-	if s.Id.Id == nil {
-		return nil, nil
-	}
-
+func completeCategoriesAndLabels(headers []*header.Header, prefix string) []string {
 	categories := map[string]struct{}{}
-	var suggestions []string
+	var completions []string
 
-	for h := range headerGenerator(s.Repository, s.Id) {
+	for _, h := range headers {
 		if strings.HasPrefix(h.Label, prefix) {
-			suggestions = append(suggestions, h.Label)
+			completions = append(completions, h.Label)
 		}
 		categories[h.Category] = struct{}{}
 	}
 
 	for cat := range categories {
 		if strings.HasPrefix(cat, prefix) {
-			suggestions = append(suggestions, cat)
+			completions = append(completions, cat)
 		}
 	}
 
-	return suggestions, nil
+	return completions
 }
 
-func completeAdd(opts setup.Options, args []string, commandIndex int, prefix string) ([]string, error) {
+func completeAdd(headers []*header.Header, files []string, args []string, commandIndex int, prefix string) []string {
 	// args[commandIndex] is "add"
 	// args[commandIndex+1] is category
 	// args[commandIndex+2] is label
@@ -167,39 +187,38 @@ func completeAdd(opts setup.Options, args []string, commandIndex int, prefix str
 	relativeIndex := len(args) - 1 - commandIndex
 
 	if relativeIndex == 1 {
-		var suggestions []string
+		var completions []string
 		// complete categories
-		s, err := setupEnv(opts)
-		if err == nil && s.Id.Id != nil {
+		if headers != nil {
 			categories := map[string]struct{}{}
-			for h := range headerGenerator(s.Repository, s.Id) {
+			for _, h := range headers {
 				categories[h.Category] = struct{}{}
 			}
 			for cat := range categories {
 				if strings.HasPrefix(cat, prefix) {
-					suggestions = append(suggestions, cat)
+					completions = append(completions, cat)
 				}
 			}
 		}
 		// Always suggest credential
 		if strings.HasPrefix(header.CategoryCredential, prefix) {
-			suggestions = append(suggestions, header.CategoryCredential)
+			completions = append(completions, header.CategoryCredential)
 		}
-		return suggestions, nil
+		return completions
 	}
 
 	if relativeIndex == 2 {
-		var suggestions []string
+		var completions []string
 		// suggest files in current directory
-		for _, f := range filesForAddCmd(".") {
+		for _, f := range files {
 			if strings.HasPrefix(f, prefix) {
-				suggestions = append(suggestions, f)
+				completions = append(completions, f)
 			}
 		}
-		return suggestions, nil
+		return completions
 	}
 
-	return nil, nil
+	return nil
 }
 
 // filesForAddCmd returns a slice of files for the add command.
@@ -212,17 +231,29 @@ func filesForAddCmd(root string) []string {
 			return e
 		}
 
+		// 1. Identify hidden files/dirs by name (works for abs paths and subdirs)
+		if strings.HasPrefix(d.Name(), ".") {
+			if d.IsDir() {
+				// We do not want to walk into hidden directories (like .git)
+				// But we must be careful: if root IS a hidden dir (like .), we shouldn't skip it immediately
+				// However, standard usage is root="." which has Name=".".
+				if s != root {
+					return filepath.SkipDir
+				}
+				// If s == root and it starts with ., we proceed (but we don't append it because it's a dir)
+			}
+			// If it's a file starting with ., skip it
+			if !d.IsDir() {
+				return nil
+			}
+		}
+
 		if filepath.Ext(d.Name()) == AgeExtension {
 			return nil
 		}
 
 		// no dir, no symlink
 		if !d.Type().IsRegular() {
-			return nil
-		}
-
-		// no dot
-		if s[0:1] == "." {
 			return nil
 		}
 
