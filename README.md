@@ -7,7 +7,11 @@
 [![Build](https://github.com/revelaction/privage/actions/workflows/build.yml/badge.svg)](https://github.com/revelaction/privage/actions/workflows/build.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/revelaction/privage?style=flat)]() 
 [![GitHub Release](https://img.shields.io/badge/built_with-Go-00ADD8.svg?style=flat)]()
+
 [![sloc](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/revelaction/privage/main/.github/badges/sloc.json)](https://github.com/revelaction/privage/actions/workflows/sloc.yml)
+[![deps](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/caasmo/restinpieces/master/.github/badges/deps.json)](https://github.com/caasmo/restinpieces/actions/workflows/dependencies.yml)
+[![GitHub Release](https://img.shields.io/github/v/release/revelaction/privage?style=flat)]() 
+[![GitHub Release](https://img.shields.io/badge/built_with-Go-00ADD8.svg?style=flat)]()
 
 `privage` is a terminal based password manager and general file encryption tool that
 relies on [age](https://age-encryption.org/v1) for encryption. Optionally it uses a 
