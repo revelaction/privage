@@ -7,7 +7,6 @@ require (
 	github.com/atotto/clipboard v0.1.4
 	github.com/go-piv/piv-go v1.11.0
 	github.com/pelletier/go-toml/v2 v2.2.4
-	github.com/sethvargo/go-password v0.2.0
 )
 
 require (

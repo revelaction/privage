@@ -1,22 +1,20 @@
 package credential
 
 import (
+	"crypto/rand"
 	"fmt"
 	"io"
+	"math/big"
 	"os"
 
 	"github.com/pelletier/go-toml/v2"
 	"github.com/atotto/clipboard"
-	"github.com/sethvargo/go-password/password"
 )
 
 const (
-	// go-password constants
-	passLenght          = 25
-	passNumDigits       = 5
-	passNumSymbols      = 5
-	passAllowUppercase  = true
-	passAllowRepetition = true
+	// password constants
+	passLenght = 25
+	alphabet   = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 
 	// Template is the content template of a credential.
 	// credentials files are .toml files.
@@ -123,10 +121,18 @@ func ValidateFile(filePath string) error {
 
 // GeneratePassword generates a random password
 func GeneratePassword() (string, error) {
-	res, err := password.Generate(passLenght, passNumDigits, passNumSymbols, !passAllowUppercase, passAllowRepetition)
-	if err != nil {
-		return "", err
+
+	b := make([]byte, passLenght)
+
+	max := big.NewInt(int64(len(alphabet)))
+
+	for i := range b {
+		n, err := rand.Int(rand.Reader, max)
+		if err != nil {
+			return "", err
+		}
+		b[i] = alphabet[n.Int64()]
 	}
 
-	return res, nil
+	return string(b), nil
 }
