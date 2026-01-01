@@ -10,6 +10,23 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
+var commands = []string{
+	"init",
+	"key",
+	"status",
+	"add",
+	"delete",
+	"list",
+	"show",
+	"cat",
+	"clipboard",
+	"decrypt",
+	"reencrypt",
+	"rotate",
+	"bash",
+	"help",
+}
+
 // completeAction handles the autocompletion requests triggered by the bash completion script.
 //
 // Understanding the Argument Flow:
@@ -30,9 +47,19 @@ import (
 // - args received here: ["--", "privage", "-k", "key.txt", "show", ""]
 // - commandIndex starts at 2, skips "-k" and "key.txt", and identifies "show" at index 4.
 func completeCommand(opts setup.Options, args []string) error {
+	suggestions, err := getCompletions(opts, args)
+	if err != nil {
+		return err
+	}
+	for _, s := range suggestions {
+		fmt.Println(s)
+	}
+	return nil
+}
 
+func getCompletions(opts setup.Options, args []string) ([]string, error) {
 	if len(args) < 2 {
-		return nil
+		return nil, nil
 	}
 
 	// 1. Find the index where the subcommand should be
@@ -59,13 +86,13 @@ func completeCommand(opts setup.Options, args []string) error {
 	if cursorIndex == commandIndex {
 		// User is typing the command itself
 		lastWord := args[cursorIndex]
-		cmds := []string{"init", "key", "status", "add", "delete", "list", "show", "cat", "clipboard", "decrypt", "reencrypt", "rotate", "bash", "help"}
-		for _, c := range cmds {
+		var suggestions []string
+		for _, c := range commands {
 			if strings.HasPrefix(c, lastWord) {
-				fmt.Println(c)
+				suggestions = append(suggestions, c)
 			}
 		}
-		return nil
+		return suggestions, nil
 	}
 
 	if cursorIndex > commandIndex {
@@ -83,61 +110,64 @@ func completeCommand(opts setup.Options, args []string) error {
 		}
 	}
 
-	return nil
+	return nil, nil
 }
 
-func completeLabels(opts setup.Options, prefix string) error {
+func completeLabels(opts setup.Options, prefix string) ([]string, error) {
 	s, err := setupEnv(opts)
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 	if s.Id.Id == nil {
-		return nil
+		return nil, nil
 	}
 
+	var suggestions []string
 	for h := range headerGenerator(s.Repository, s.Id) {
 		if strings.HasPrefix(h.Label, prefix) {
-			fmt.Println(h.Label)
+			suggestions = append(suggestions, h.Label)
 		}
 	}
-	return nil
+	return suggestions, nil
 }
 
-func completeCategoriesAndLabels(opts setup.Options, prefix string) error {
+func completeCategoriesAndLabels(opts setup.Options, prefix string) ([]string, error) {
 	s, err := setupEnv(opts)
 	if err != nil {
-		return nil
+		return nil, nil
 	}
 	if s.Id.Id == nil {
-		return nil
+		return nil, nil
 	}
 
 	categories := map[string]struct{}{}
+	var suggestions []string
 
 	for h := range headerGenerator(s.Repository, s.Id) {
 		if strings.HasPrefix(h.Label, prefix) {
-			fmt.Println(h.Label)
+			suggestions = append(suggestions, h.Label)
 		}
 		categories[h.Category] = struct{}{}
 	}
 
 	for cat := range categories {
 		if strings.HasPrefix(cat, prefix) {
-			fmt.Println(cat)
+			suggestions = append(suggestions, cat)
 		}
 	}
 
-	return nil
+	return suggestions, nil
 }
 
-func completeAdd(opts setup.Options, args []string, commandIndex int, prefix string) error {
+func completeAdd(opts setup.Options, args []string, commandIndex int, prefix string) ([]string, error) {
 	// args[commandIndex] is "add"
 	// args[commandIndex+1] is category
 	// args[commandIndex+2] is label
-	
+
 	relativeIndex := len(args) - 1 - commandIndex
 
 	if relativeIndex == 1 {
+		var suggestions []string
 		// complete categories
 		s, err := setupEnv(opts)
 		if err == nil && s.Id.Id != nil {
@@ -147,29 +177,30 @@ func completeAdd(opts setup.Options, args []string, commandIndex int, prefix str
 			}
 			for cat := range categories {
 				if strings.HasPrefix(cat, prefix) {
-					fmt.Println(cat)
+					suggestions = append(suggestions, cat)
 				}
 			}
 		}
 		// Always suggest credential
 		if strings.HasPrefix(header.CategoryCredential, prefix) {
-			fmt.Println(header.CategoryCredential)
+			suggestions = append(suggestions, header.CategoryCredential)
 		}
-		return nil
+		return suggestions, nil
 	}
 
 	if relativeIndex == 2 {
+		var suggestions []string
 		// suggest files in current directory
 		for _, f := range filesForAddCmd(".") {
 			if strings.HasPrefix(f, prefix) {
-				fmt.Println(f)
+				suggestions = append(suggestions, f)
 			}
 		}
+		return suggestions, nil
 	}
 
-	return nil
+	return nil, nil
 }
-
 
 // filesForAddCmd returns a slice of files for the add command.
 //

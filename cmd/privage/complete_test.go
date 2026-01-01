@@ -1,30 +1,10 @@
 package main
 
 import (
-	"bytes"
-	"io"
-	"os"
-	"strings"
 	"testing"
 
 	"github.com/revelaction/privage/setup"
 )
-
-// captureStdout captures the output of a function that writes to stdout
-func captureStdout(f func() error) (string, error) {
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	err := f()
-
-	w.Close()
-	os.Stdout = old
-
-	var buf bytes.Buffer
-	io.Copy(&buf, r)
-	return buf.String(), err
-}
 
 func TestCompleteAction_Subcommands(t *testing.T) {
 	tests := []struct {
@@ -66,17 +46,22 @@ func TestCompleteAction_Subcommands(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			output, err := captureStdout(func() error {
-				return completeCommand(setup.Options{}, tt.args)
-			})
+			suggestions, err := getCompletions(setup.Options{}, tt.args)
 
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
 			for _, c := range tt.contains {
-				if !strings.Contains(output, c) {
-					t.Errorf("expected output to contain '%s', got:\n%s", c, output)
+				found := false
+				for _, s := range suggestions {
+					if s == c {
+						found = true
+						break
+					}
+				}
+				if !found {
+					t.Errorf("expected suggestions to contain '%s', got: %v", c, suggestions)
 				}
 			}
 		})
