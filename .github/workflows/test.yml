@@ -35,15 +35,15 @@ jobs:
         env:
           CGO_ENABLED: 1
         run: |
-          echo "=== Package-level Coverage ==="
+		  echo "=== Package-level Coverage ==="
           go list ./... | grep -v "^$(go list -m)$" | while read pkg; do
             coverage=$(go test -cover "$pkg" 2>/dev/null | grep "coverage:" | awk '{print $5}')
-            dir=$(echo "$pkg" | sed "s|^$(go list -m)|" | sed 's|^/||	')
+            dir=$(echo "$pkg" | sed "s|^$(go list -m)||" | sed 's|^/||')
             
             if [ -n "$coverage" ] && [ "$coverage" != "statements" ]; then
-              printf "% -30s %s\n" "$dir" "$coverage"
+              printf "%-25s %s\n" "$dir" "$coverage"
             else
-              printf "% -30s %s\n" "$dir" "0.0%"
+              printf "%-25s %s\n" "$dir" "0.0%"
             fi
           done
 
