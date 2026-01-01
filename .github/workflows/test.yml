@@ -35,7 +35,7 @@ jobs:
         env:
           CGO_ENABLED: 1
         run: |
-		  echo "=== Package-level Coverage ==="
+          echo "=== Package-level Coverage ==="
           go list ./... | grep -v "^$(go list -m)$" | while read pkg; do
             coverage=$(go test -cover "$pkg" 2>/dev/null | grep "coverage:" | awk '{print $5}')
             dir=$(echo "$pkg" | sed "s|^$(go list -m)||" | sed 's|^/||')
