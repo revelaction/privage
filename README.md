@@ -1,6 +1,8 @@
 <p align="center"><img alt="kind" src="./logo.png"/></p>
 
-
+[![Go Reference](https://pkg.go.dev/badge/github.com/revelaction/privage)](https://pkg.go.dev/github.com/revelaction/privage)
+[![Test](https://github.com/revelaction/privage/actions/workflows/test.yml/badge.svg)](https://github.com/revelaction/privage/actions/workflows/test.yml) 
+[![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/revelaction/privage/main/.github/badges/coverage.json)](https://github.com/revelaction/privage/actions/workflows/test.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/revelaction/privage)](https://goreportcard.com/report/github.com/revelaction/privage)
 [![Build](https://github.com/revelaction/privage/actions/workflows/build.yml/badge.svg)](https://github.com/revelaction/privage/actions/workflows/build.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/revelaction/privage?style=flat)]() 
