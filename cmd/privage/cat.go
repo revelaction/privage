@@ -39,13 +39,6 @@ func catCommand(opts setup.Options, args []string) error {
 	return cat(label, streamHeaders, openContent, os.Stdout)
 }
 
-// HeaderStreamFunc and ContentOpenFunc are defined to allow injecting dependency
-// implementations into the logic functions (like cat).
-// This enables side-effect-free testing by allowing us to pass mock functions
-// that return static data instead of accessing the file system or encryption keys.
-type HeaderStreamFunc func() <-chan *header.Header
-type ContentOpenFunc func(*header.Header) (io.Reader, error)
-
 func cat(
 	label string,
 	streamHeaders HeaderStreamFunc,

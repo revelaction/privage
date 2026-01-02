@@ -45,10 +45,6 @@ func decryptCommand(opts setup.Options, args []string) error {
 	return decrypt(label, s.Repository, streamHeaders, openContent, createFile, os.Stdout)
 }
 
-// FileCreateFunc is defined to allow injecting dependency implementations into
-// the logic functions (like decrypt).
-type FileCreateFunc func(name string) (io.WriteCloser, error)
-
 // decrypt creates a decrypted copy of an encrypted file contents. It saves the
 // copy in the repository directory under the file name label
 func decrypt(
