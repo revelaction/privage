@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 
@@ -20,6 +21,25 @@ import (
 // - a label for credentials
 // - a existing file in the current directory
 func addCommand(opts setup.Options, args []string) error {
+	fs := flag.NewFlagSet("add", flag.ContinueOnError)
+	fs.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s add [category] [label]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "\nDescription:\n")
+		fmt.Fprintf(os.Stderr, "  Add a new encrypted file.\n")
+		fmt.Fprintf(os.Stderr, "\nArguments:\n")
+		fmt.Fprintf(os.Stderr, "  category  A category (e.g., 'credential' or any custom string)\n")
+		fmt.Fprintf(os.Stderr, "  label     A label for credentials, or an existing file path\n")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	args = fs.Args()
+
+	if len(args) != 2 {
+		return errors.New("add command needs two arguments: <category> <label>")
+	}
 
 	s, err := setupEnv(opts)
 	if err != nil {
@@ -28,10 +48,6 @@ func addCommand(opts setup.Options, args []string) error {
 
 	if s.Id.Id == nil {
 		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
-	}
-
-	if len(args) != 2 {
-		return errors.New("usage <category> <label>")
 	}
 
 	cat := args[0]
