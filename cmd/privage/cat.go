@@ -39,12 +39,7 @@ func catCommand(opts setup.Options, args []string) error {
 	return cat(label, streamHeaders, openContent, os.Stdout)
 }
 
-func cat(
-	label string,
-	streamHeaders HeaderStreamFunc,
-	openContent ContentOpenFunc,
-	out io.Writer,
-) error {
+func cat(label string, streamHeaders HeaderStreamFunc, openContent ContentOpenFunc, out io.Writer) error {
 
 	for h := range streamHeaders() {
 

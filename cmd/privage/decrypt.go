@@ -61,12 +61,7 @@ import (
 	
 	// decrypt creates a decrypted copy of an encrypted file contents. It saves the
 	// copy in the repository directory under the file name label
-	func decrypt(
-		label string,
-		streamHeaders HeaderStreamFunc,
-		openContent ContentOpenFunc,
-		createFile FileCreateFunc,
-	) (retErr error) {
+	func decrypt(label string, streamHeaders HeaderStreamFunc, openContent ContentOpenFunc, createFile FileCreateFunc) (retErr error) {
 	
 		for h := range streamHeaders() {
 	
