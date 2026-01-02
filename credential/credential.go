@@ -32,7 +32,7 @@ type Credential struct {
 	VerificationCode string `toml:"verification_code" comment:"Verification or backup codes"`
 	TwoFactorAuth    string `toml:"two_factor_auth" comment:"Two-factor authentication backup code"`
 	// All other stuff here as multiline
-	Remarks string `toml:"remarks" comment:"Additional notes and remarks"`
+	Remarks string `toml:"remarks,multiline" comment:"Additional notes and remarks"`
 
 	// Others captures all custom TOML keys added by the user
 	Others map[string]any `toml:",inline"`
