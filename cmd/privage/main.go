@@ -36,7 +36,14 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  rotate     Create a new age key and reencrypt every file with the new key\n")
 		fmt.Fprintf(os.Stderr, "  bash       Dump bash complete script.\n")
 		fmt.Fprintf(os.Stderr, "\nGlobal Options:\n")
-		flag.PrintDefaults()
+		fmt.Fprintf(os.Stderr, "  -c, -conf string\n")
+		fmt.Fprintf(os.Stderr, "    	Use file as privage configuration file\n")
+		fmt.Fprintf(os.Stderr, "  -k, -key string\n")
+		fmt.Fprintf(os.Stderr, "    	Use file path for private key\n")
+		fmt.Fprintf(os.Stderr, "  -p, -piv-slot string\n")
+		fmt.Fprintf(os.Stderr, "    	The PIV slot for decryption of the age key\n")
+		fmt.Fprintf(os.Stderr, "  -r, -repository string\n")
+		fmt.Fprintf(os.Stderr, "    	Use file path as path for the repository\n")
 		fmt.Fprintf(os.Stderr, "\nVersion: %s, commit %s\n", BuildTag, BuildCommit)
 	}
 
