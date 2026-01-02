@@ -2,7 +2,9 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
+	"os"
 
 	"github.com/revelaction/privage/credential"
 	"github.com/revelaction/privage/header"
@@ -12,9 +14,23 @@ import (
 // showCommand prints in the terminal partially/all the contents of an encrypted
 // file.
 func showCommand(opts setup.Options, args []string) error {
+	fs := flag.NewFlagSet("show", flag.ContinueOnError)
+	fs.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s show [label]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "\nDescription:\n")
+		fmt.Fprintf(os.Stderr, "  Show the contents of an encrypted file (formatted if it's a credential).\n")
+		fmt.Fprintf(os.Stderr, "\nArguments:\n")
+		fmt.Fprintf(os.Stderr, "  label  The label of the file to show\n")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	args = fs.Args()
 
 	if len(args) == 0 {
-		return errors.New("show command needs one argument")
+		return errors.New("show command needs one argument (label)")
 	}
 
 	s, err := setupEnv(opts)
