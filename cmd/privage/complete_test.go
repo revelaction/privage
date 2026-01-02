@@ -130,6 +130,21 @@ func TestComplete_Values(t *testing.T) {
 			args:     []string{"--", "privage", "add", "work", ""},
 			contains: []string{"local.txt", "image.png"},
 		},
+		{
+			name:     "Show Field (Credential)",
+			args:     []string{"--", "privage", "show", "mycred", "pas"},
+			contains: []string{"password"},
+		},
+		{
+			name:     "Show Field (All Credential Fields)",
+			args:     []string{"--", "privage", "show", "mycred", ""},
+			contains: []string{"login", "password", "email", "url", "api_key", "remarks"},
+		},
+		{
+			name:     "Show Field (Non-Credential)",
+			args:     []string{"--", "privage", "show", "work_stuff", ""},
+			contains: []string{},
+		},
 	}
 
 	for _, tt := range tests {
@@ -137,6 +152,9 @@ func TestComplete_Values(t *testing.T) {
 			completions, err := getCompletions(tt.args, listHeaders, listFiles)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.name == "Show Field (Non-Credential)" && len(completions) != 0 {
+				t.Errorf("expected no completions for non-credential field, got %v", completions)
 			}
 			for _, c := range tt.contains {
 				assertContains(t, completions, c)

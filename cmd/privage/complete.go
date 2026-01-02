@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/revelaction/privage/credential"
 	"github.com/revelaction/privage/header"
 	"github.com/revelaction/privage/setup"
 )
@@ -127,7 +128,21 @@ func getCompletions(args []string, listHeaders HeaderListFunc, listFiles FileLis
 		lastWord := args[cursorIndex]
 
 		switch cmd {
-		case "show", "cat", "delete", "clipboard", "decrypt":
+		case "show":
+			headers, err := listHeaders()
+			if err != nil {
+				return nil, nil
+			}
+			relativeIndex := cursorIndex - commandIndex
+			if relativeIndex == 1 {
+				return completeLabels(headers, lastWord), nil
+			}
+			if relativeIndex == 2 {
+				label := args[commandIndex+1]
+				return completeCredentialFields(headers, label, lastWord), nil
+			}
+			return nil, nil
+		case "cat", "delete", "clipboard", "decrypt":
 			headers, err := listHeaders()
 			if err != nil {
 				return nil, nil
@@ -156,6 +171,28 @@ func completeLabels(headers []*header.Header, prefix string) []string {
 	for _, h := range headers {
 		if strings.HasPrefix(h.Label, prefix) {
 			completions = append(completions, h.Label)
+		}
+	}
+	return completions
+}
+
+func completeCredentialFields(headers []*header.Header, label string, prefix string) []string {
+	var isCred bool
+	for _, h := range headers {
+		if h.Label == label {
+			isCred = h.IsCredential()
+			break
+		}
+	}
+
+	if !isCred {
+		return nil
+	}
+
+	var completions []string
+	for _, f := range credential.FieldNames {
+		if strings.HasPrefix(f, prefix) {
+			completions = append(completions, f)
 		}
 	}
 	return completions

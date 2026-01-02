@@ -18,7 +18,12 @@ const (
 	ageHeaderPrefix  = "age-encryption.org/"
 )
 
-// A Header contains the filename and a category (the metadata) of a file.
+// IsCredential returns true if the header belongs to the credential category.
+func (h *Header) IsCredential() bool {
+	return h.Category == CategoryCredential
+}
+
+// Header represents the metadata of an encrypted file.
 //
 // This metadata is serialized and encrypted at the start of a privage file.
 type Header struct {

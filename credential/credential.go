@@ -18,6 +18,21 @@ const (
 	alphabet   = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 )
 
+// FieldNames returns the list of standard TOML field names for a credential.
+var FieldNames = []string{
+	"login",
+	"password",
+	"email",
+	"url",
+	"api_key",
+	"api_secret",
+	"api_name",
+	"api_passphrase",
+	"verification_code",
+	"two_factor_auth",
+	"remarks",
+}
+
 // A Credential contains all relevant information for accessing and controlling
 // an online resource (password/s, api keys, 2FA backup code)
 type Credential struct {
