@@ -3,25 +3,40 @@ package main
 import (
 	"bufio"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/revelaction/privage/header"
-		"github.com/revelaction/privage/setup"
-	)
-	
-	var ErrHeaderNotFound = errors.New("header not found")
-	
-	// decryptCommand decrypts an encrypted file
-	func decryptCommand(opts setup.Options, args []string) error {
-	
-		if len(args) == 0 {
-			return errors.New("decrypt command needs one argument (label)")
-		}
-	
-		s, err := setupEnv(opts)
+	"github.com/revelaction/privage/setup"
+)
+
+var ErrHeaderNotFound = errors.New("header not found")
+
+// decryptCommand decrypts an encrypted file
+func decryptCommand(opts setup.Options, args []string) error {
+	fs := flag.NewFlagSet("decrypt", flag.ContinueOnError)
+	fs.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s decrypt [label]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "\nDescription:\n")
+		fmt.Fprintf(os.Stderr, "  Decrypt a file and write its content in a file named after the label\n")
+		fmt.Fprintf(os.Stderr, "\nArguments:\n")
+		fmt.Fprintf(os.Stderr, "  label  The label of the file to decrypt\n")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	args = fs.Args()
+
+	if len(args) == 0 {
+		return errors.New("decrypt command needs one argument (label)")
+	}
+
+	s, err := setupEnv(opts)
 		if err != nil {
 			return fmt.Errorf("unable to setup environment configuration: %s", err)
 		}
