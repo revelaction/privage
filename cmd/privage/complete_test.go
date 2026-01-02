@@ -190,7 +190,10 @@ func TestFilesForAddCmd(t *testing.T) {
 		t.Fatalf("failed to change to temp directory: %v", err)
 	}
 
-	files := filesForAddCmd(".")
+	files, err := filesForAddCmd(".")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
 
 	expected := []string{
 		"file1.txt",

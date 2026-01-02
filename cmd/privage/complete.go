@@ -67,7 +67,7 @@ func completeCommand(opts setup.Options, args []string) error {
 	}
 
 	listFiles := func() ([]string, error) {
-		return filesForAddCmd("."), nil
+		return filesForAddCmd(".")
 	}
 
 	completions, err := getCompletions(args, listHeaders, listFiles)
@@ -226,9 +226,9 @@ func completeAdd(headers []*header.Header, files []string, args []string, comman
 // filesForAddCmd returns a slice of files for the add command.
 //
 // It excludes dot and age files, symlinks and directory paths.
-func filesForAddCmd(root string) []string {
+func filesForAddCmd(root string) ([]string, error) {
 	var a []string
-	filepath.WalkDir(root, func(s string, d fs.DirEntry, e error) error {
+	err := filepath.WalkDir(root, func(s string, d fs.DirEntry, e error) error {
 		if e != nil {
 			return e
 		}
@@ -264,5 +264,5 @@ func filesForAddCmd(root string) []string {
 		return nil
 	})
 
-	return a
+	return a, err
 }
