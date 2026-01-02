@@ -114,20 +114,22 @@ func EmptyClipboard() error {
 	return nil
 }
 
+// Validate validates a credential from an io.Reader.
+func Validate(r io.Reader) error {
+	_, err := Decode(r)
+	return err
+}
+
 // ValidateFile validates a file as toml credential file.
 func ValidateFile(filePath string) error {
 
-	data, err := os.ReadFile(filePath)
+	f, err := os.Open(filePath)
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 
-	var conf Credential
-	if err := toml.Unmarshal(data, &conf); err != nil {
-		return err
-	}
-
-	return nil
+	return Validate(f)
 }
 
 
