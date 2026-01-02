@@ -26,10 +26,17 @@ const (
 // It generates a .privage.conf file in the home directory, with the
 // identity and secret directory paths.
 func initCommand(opts setup.Options, args []string) error {
-	fs := flag.NewFlagSet("init", flag.ExitOnError)
+	fs := flag.NewFlagSet("init", flag.ContinueOnError)
 	var slot string
 	fs.StringVar(&slot, "piv-slot", "", "Use the yubikey slot key to encrypt the age private key")
 	fs.StringVar(&slot, "p", "", "alias for -piv-slot")
+	fs.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s init [options]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "\nDescription:\n")
+		fmt.Fprintf(os.Stderr, "  Add a .gitignore, age/yubikey key file to the current directory. Add a config file in the home directory.\n")
+		fmt.Fprintf(os.Stderr, "\nOptions:\n")
+		fs.PrintDefaults()
+	}
 
 	if err := fs.Parse(args); err != nil {
 		return err

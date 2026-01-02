@@ -12,12 +12,19 @@ import (
 
 // reencryptCommand reencrypts modified files
 func reencryptCommand(opts setup.Options, args []string) error {
-	fs := flag.NewFlagSet("reencrypt", flag.ExitOnError)
+	fs := flag.NewFlagSet("reencrypt", flag.ContinueOnError)
 	var isForce, isClean bool
 	fs.BoolVar(&isForce, "force", false, "Force encryption of the files.")
 	fs.BoolVar(&isForce, "f", false, "alias for -force")
 	fs.BoolVar(&isClean, "clean", false, "Force encryption the files and also delete/clean the decrypted files.")
 	fs.BoolVar(&isClean, "c", false, "alias for -clean")
+	fs.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s reencrypt [options]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "\nDescription:\n")
+		fmt.Fprintf(os.Stderr, "  Reencrypt all decrypted files that are already encrypted. (default is dry-run)\n")
+		fmt.Fprintf(os.Stderr, "\nOptions:\n")
+		fs.PrintDefaults()
+	}
 
 	if err := fs.Parse(args); err != nil {
 		return err

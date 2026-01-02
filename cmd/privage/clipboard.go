@@ -4,16 +4,26 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/revelaction/privage/credential"
 	"github.com/revelaction/privage/setup"
 )
 
 func clipboardCommand(opts setup.Options, args []string) error {
-	fs := flag.NewFlagSet("clipboard", flag.ExitOnError)
+	fs := flag.NewFlagSet("clipboard", flag.ContinueOnError)
 	var deleteFlag bool
 	fs.BoolVar(&deleteFlag, "delete", false, "Delete the contents of the clipboard")
 	fs.BoolVar(&deleteFlag, "d", false, "alias for -delete")
+	fs.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s clipboard [options] [label]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "\nDescription:\n")
+		fmt.Fprintf(os.Stderr, "  Copy the credential password to the clipboard.\n")
+		fmt.Fprintf(os.Stderr, "\nOptions:\n")
+		fs.PrintDefaults()
+		fmt.Fprintf(os.Stderr, "\nArguments:\n")
+		fmt.Fprintf(os.Stderr, "  label  The label of the credential to copy\n")
+	}
 
 	if err := fs.Parse(args); err != nil {
 		return err

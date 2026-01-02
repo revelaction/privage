@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"strconv"
@@ -10,6 +11,16 @@ import (
 )
 
 func keyCommand(opts setup.Options, args []string) error {
+	fs := flag.NewFlagSet("key", flag.ContinueOnError)
+	fs.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s key\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "\nDescription:\n")
+		fmt.Fprintf(os.Stderr, "  Decrypt the age private key with the PIV key defined in the .privage.conf file.\n")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
 
 	s, err := setupEnv(opts)
 	if err != nil {
