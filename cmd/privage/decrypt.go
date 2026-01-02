@@ -66,7 +66,7 @@ import (
 		streamHeaders HeaderStreamFunc,
 		openContent ContentOpenFunc,
 		createFile FileCreateFunc,
-	) error {
+	) (retErr error) {
 	
 		for h := range streamHeaders() {
 	
@@ -76,7 +76,11 @@ import (
 				if err != nil {
 					return err
 				}
-				defer w.Close()
+				defer func() {
+					if err := w.Close(); err != nil && retErr == nil {
+						retErr = err
+					}
+				}()
 	
 				r, err := openContent(h)
 				if err != nil {
@@ -92,7 +96,9 @@ import (
 					}
 				}
 	
-				bufFile.Flush()
+				if err := bufFile.Flush(); err != nil {
+					return err
+				}
 	
 				return nil
 			}
