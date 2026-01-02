@@ -181,8 +181,14 @@ func TestFilesForAddCmd(t *testing.T) {
 
 	// Switch to temp dir to simulate real usage
 	wd, _ := os.Getwd()
-	defer os.Chdir(wd)
-	os.Chdir(tmpDir)
+	defer func() {
+		if err := os.Chdir(wd); err != nil {
+			t.Errorf("failed to restore working directory: %v", err)
+		}
+	}()
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatalf("failed to change to temp directory: %v", err)
+	}
 
 	files := filesForAddCmd(".")
 
@@ -217,7 +223,9 @@ func createFile(t *testing.T, dir, name string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	f.Close()
+	if err := f.Close(); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func assertContains(t *testing.T, list []string, item string) {
