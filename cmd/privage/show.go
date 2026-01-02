@@ -87,7 +87,9 @@ func show(label string, fieldName string, streamHeaders HeaderStreamFunc, openCo
 				if !ok {
 					return fmt.Errorf("field '%s' not found in credential '%s'", fieldName, label)
 				}
-				fmt.Fprint(out, val)
+				if _, err := fmt.Fprint(out, val); err != nil {
+					return err
+				}
 				return nil
 			}
 
