@@ -24,7 +24,6 @@ func TestDecrypt_Logic(t *testing.T) {
 	// 1. Mock Data
 	targetLabel := "target.txt"
 	secretContent := "decrypted payload"
-	repoPath := "/mock/repo"
 
 	// 2. Mock Scanner (HeaderStreamFunc)
 	mockStreamHeaders := func() <-chan *header.Header {
@@ -54,11 +53,11 @@ func TestDecrypt_Logic(t *testing.T) {
 		return mwc, nil
 	}
 
-	// 5. Capture Stdout
-	var outBuf bytes.Buffer
+	// 5. Capture Stdout - No longer needed for logic test as decrypt is silent on success
+	// var outBuf bytes.Buffer
 
 	// Run
-	err := decrypt(targetLabel, repoPath, mockStreamHeaders, mockOpenContent, mockCreateFile, &outBuf)
+	err := decrypt(targetLabel, mockStreamHeaders, mockOpenContent, mockCreateFile)
 
 	// Assert
 	if err != nil {
@@ -71,12 +70,6 @@ func TestDecrypt_Logic(t *testing.T) {
 	}
 	if createdFiles[targetLabel].String() != secretContent {
 		t.Errorf("expected file content '%s', got '%s'", secretContent, createdFiles[targetLabel].String())
-	}
-
-	// Verify status output
-	expectedOutput := "The file target.txt was decrypted in the directory /mock/repo."
-	if !strings.Contains(outBuf.String(), expectedOutput) {
-		t.Errorf("expected output to contain '%s', got '%s'", expectedOutput, outBuf.String())
 	}
 }
 
@@ -98,14 +91,13 @@ func TestDecrypt_NotFound(t *testing.T) {
 		return nil, errors.New("should not be called")
 	}
 
-	var outBuf bytes.Buffer
-	err := decrypt("missing", "/repo", mockStreamHeaders, mockOpenContent, mockCreateFile, &outBuf)
+	err := decrypt("missing", mockStreamHeaders, mockOpenContent, mockCreateFile)
 
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	if err == nil {
+		t.Fatal("expected error, got nil")
 	}
-	if outBuf.Len() > 0 {
-		t.Errorf("expected no output, got '%s'", outBuf.String())
+	if !errors.Is(err, ErrHeaderNotFound) {
+		t.Errorf("expected ErrHeaderNotFound, got %v", err)
 	}
 }
 
@@ -130,8 +122,7 @@ func TestDecrypt_CreateError(t *testing.T) {
 		return nil, errors.New("permission denied")
 	}
 
-	var outBuf bytes.Buffer
-	err := decrypt(targetLabel, "/repo", mockStreamHeaders, mockOpenContent, mockCreateFile, &outBuf)
+	err := decrypt(targetLabel, mockStreamHeaders, mockOpenContent, mockCreateFile)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
