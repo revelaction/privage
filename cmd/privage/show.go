@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/revelaction/privage/credential"
@@ -44,18 +45,25 @@ func showCommand(opts setup.Options, args []string) error {
 
 	label := args[0]
 
-	return show(label, s)
+	streamHeaders := func() <-chan *header.Header {
+		return headerGenerator(s.Repository, s.Id)
+	}
+
+	openContent := func(h *header.Header) (io.Reader, error) {
+		return contentReader(h, s.Id)
+	}
+
+	return show(label, streamHeaders, openContent, os.Stdout)
 }
 
-func show(label string, s *setup.Setup) error {
+func show(label string, streamHeaders HeaderStreamFunc, openContent ContentOpenFunc, out io.Writer) error {
 
-	for h := range headerGenerator(s.Repository, s.Id) {
+	for h := range streamHeaders() {
 
 		if h.Label == label {
 
-			r, err := contentReader(h, s.Id)
+			r, err := openContent(h)
 			if err != nil {
-
 				return err
 			}
 
@@ -63,12 +71,12 @@ func show(label string, s *setup.Setup) error {
 				return fmt.Errorf("file '%s' is not a credential. Use 'privage cat %s' to view its contents", label, label)
 			}
 
-			err = credential.LogFields(r)
+			cred, err := credential.Decode(r)
 			if err != nil {
 				return err
 			}
 
-			return nil
+			return cred.Fprint(out)
 		}
 	}
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/revelaction/privage/credential"
@@ -89,38 +90,30 @@ func addCommand(opts setup.Options, args []string) error {
 // credential files are toml files
 func addCredential(h *header.Header, s *setup.Setup) error {
 
-	password, err := credential.GeneratePassword()
+	cred, err := credential.New(s.C)
 	if err != nil {
-		return fmt.Errorf("could not generate password: %w", err)
+		return fmt.Errorf("could not create credential: %w", err)
 	}
 
-	// login
-	var login string
-	if len(s.C.Login) > 0 {
-		login = s.C.Login
-	} else if len(s.C.Email) > 0 {
-		login = s.C.Email
-	} else {
-		login = ""
+	var buf bytes.Buffer
+	if err := cred.Encode(&buf); err != nil {
+		return fmt.Errorf("could not encode credential: %w", err)
 	}
 
-	// email
-	var email string
-	if len(s.C.Email) > 0 {
-		email = s.C.Email
-	} else {
-		email = ""
-	}
-
-	content := fmt.Sprintf(credential.Template, login, password, email)
-	r := bytes.NewReader([]byte(content))
-
-	err = encryptSave(h, "", r, s)
+	err = encryptSave(h, "", &buf, s)
 	if err != nil {
 		return err
 	}
 
-	show(h.Label, s)
+	streamHeaders := func() <-chan *header.Header {
+		return headerGenerator(s.Repository, s.Id)
+	}
+
+	openContent := func(h *header.Header) (io.Reader, error) {
+		return contentReader(h, s.Id)
+	}
+
+	show(h.Label, streamHeaders, openContent, os.Stdout)
 
 	fmt.Println("You can edit the credentials file by running these commands:")
 	fmt.Println()
