@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"os"
 
@@ -9,6 +10,20 @@ import (
 )
 
 func deleteCommand(opts setup.Options, args []string) error {
+	fs := flag.NewFlagSet("delete", flag.ContinueOnError)
+	fs.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s delete [label]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "\nDescription:\n")
+		fmt.Fprintf(os.Stderr, "  Delete an encrypted file.\n")
+		fmt.Fprintf(os.Stderr, "\nArguments:\n")
+		fmt.Fprintf(os.Stderr, "  label  The label of the file to delete\n")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	args = fs.Args()
 
 	if len(args) == 0 {
 		return errors.New("delete command needs one argument (label)")
