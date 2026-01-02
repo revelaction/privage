@@ -116,7 +116,7 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 		flag.Usage()
 		return nil
 	default:
-		return fmt.Errorf("Unknown command: %s", cmd)
+		return fmt.Errorf("unknown command: %s", cmd)
 	}
 
 	return err

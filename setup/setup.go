@@ -39,7 +39,7 @@ type Options struct {
 // Copy returns a copy of the Setup s with an empty Identity
 func (s *Setup) Copy() *Setup {
 
-	var conf *config.Config = s.C
+	conf := s.C
 	repo := s.Repository
 	return &Setup{C: conf, Repository: repo}
 }
