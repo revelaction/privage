@@ -18,7 +18,8 @@ const (
 	alphabet   = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 )
 
-// FieldNames returns the list of standard TOML field names for a credential.
+// FieldNames contains the list of standard TOML field names for a credential.
+// It is used for bash autocompletion.
 var FieldNames = []string{
 	"login",
 	"password",

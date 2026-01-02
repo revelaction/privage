@@ -227,6 +227,16 @@ privage show somewebsite.com@loginname
 
 If the file is not a credential file, `privage` will ask you to use `cat`.
 
+## Show a specific field of a credentials file
+
+You can provide a second argument to `show` to print only the value of a specific TOML field. This is particularly useful for automation and shell scripts (e.g., to retrieve an API key).
+
+```console
+privage show somewebsite.com@loginname api_key
+```
+
+Supported field names (like `login`, `password`, `api_key`, `url`, etc.) can be autocompleted by pressing `[TAB]`.
+
 ## Cat the contents of an encrypted file
 
 The command `cat` prints the decrypted contents of an encrypted file to the terminal (standard output). This is useful for piping to other commands or viewing the raw content of a file (including the full content of credential files).
