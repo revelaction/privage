@@ -71,7 +71,9 @@ func addCommand(opts setup.Options, args []string) error {
 	switch cat {
 	case header.CategoryCredential:
 		h.Category = header.CategoryCredential
-		addCredential(h, s)
+		if err := addCredential(h, s); err != nil {
+			return err
+		}
 	default:
 		// if custom category, label must be a existing file in the current directory
 		if _, err := os.Stat(label); os.IsNotExist(err) {
@@ -79,7 +81,9 @@ func addCommand(opts setup.Options, args []string) error {
 		}
 
 		h.Category = cat
-		addCustomCategory(h, s)
+		if err := addCustomCategory(h, s); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -113,7 +117,9 @@ func addCredential(h *header.Header, s *setup.Setup) error {
 		return contentReader(h, s.Id)
 	}
 
-	show(h.Label, "", streamHeaders, openContent, os.Stdout)
+	if err := show(h.Label, "", streamHeaders, openContent, os.Stdout); err != nil {
+		return err
+	}
 
 	fmt.Println("You can edit the credentials file by running these commands:")
 	fmt.Println()
@@ -127,13 +133,17 @@ func addCredential(h *header.Header, s *setup.Setup) error {
 
 // addCustomCategory creates an encrypted file of the contents of a file
 // present in the repository directory
-func addCustomCategory(h *header.Header, s *setup.Setup) error {
+func addCustomCategory(h *header.Header, s *setup.Setup) (err error) {
 
 	content, err := os.Open(h.Label)
 	if err != nil {
 		return err
 	}
-	defer content.Close()
+	defer func() {
+		if cerr := content.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}()
 
 	err = encryptSave(h, "", content, s)
 	if err != nil {
