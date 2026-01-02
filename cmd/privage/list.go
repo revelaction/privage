@@ -1,17 +1,32 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 
 	"github.com/revelaction/privage/header"
 	"github.com/revelaction/privage/setup"
-	//"github.com/revelaction/privage/setup"
 )
 
 // listCommand list encripted files
 func listCommand(opts setup.Options, args []string) error {
+	fs := flag.NewFlagSet("list", flag.ContinueOnError)
+	fs.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s list [filter]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "\nDescription:\n")
+		fmt.Fprintf(os.Stderr, "  List metadata of all or some encrypted files.\n")
+		fmt.Fprintf(os.Stderr, "\nArguments:\n")
+		fmt.Fprintf(os.Stderr, "  filter  Optional filter for category or label name\n")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	args = fs.Args()
 
 	s, err := setupEnv(opts)
 	if err != nil {
