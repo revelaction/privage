@@ -92,7 +92,7 @@ func TestCredential_RoundTrip(t *testing.T) {
 	}
 }
 
-func TestCredential_Fprint(t *testing.T) {
+func TestCredential_FprintBasic(t *testing.T) {
 	cred := &Credential{
 		Login:    "user123",
 		Password: "secret-password",
@@ -102,8 +102,8 @@ func TestCredential_Fprint(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	if err := cred.Fprint(&buf); err != nil {
-		t.Fatalf("Fprint failed: %v", err)
+	if err := cred.FprintBasic(&buf); err != nil {
+		t.Fatalf("FprintBasic failed: %v", err)
 	}
 
 	output := buf.String()
@@ -116,9 +116,9 @@ func TestCredential_Fprint(t *testing.T) {
 		t.Error("output missing password with icon")
 	}
 
-	// Check custom fields
-	if !strings.Contains(output, "custom_field: custom_value") {
-		t.Error("output missing custom field from Others map")
+	// Check custom fields (should NOT be present)
+	if strings.Contains(output, "custom_field: custom_value") {
+		t.Error("output should NOT contain custom field from Others map in FprintBasic")
 	}
 }
 

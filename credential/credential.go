@@ -76,8 +76,8 @@ func (c *Credential) Encode(w io.Writer) error {
 	return enc.Encode(c)
 }
 
-// Fprint prints the most important fields of the credential to an io.Writer.
-func (c *Credential) Fprint(w io.Writer) error {
+// FprintBasic prints the most important fields of the credential to an io.Writer.
+func (c *Credential) FprintBasic(w io.Writer) error {
 	if _, err := fmt.Fprintln(w); err != nil {
 		return err
 	}
@@ -86,12 +86,6 @@ func (c *Credential) Fprint(w io.Writer) error {
 	}
 	if _, err := fmt.Fprintf(w, "%8s%10s🔑 %s\n", "", "Password:", c.Password); err != nil {
 		return err
-	}
-
-	for k, v := range c.Others {
-		if _, err := fmt.Fprintf(w, "%8s%10s %v\n", "", k+":", v); err != nil {
-			return err
-		}
 	}
 
 	if _, err := fmt.Fprintln(w); err != nil {

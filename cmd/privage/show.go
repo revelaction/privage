@@ -76,7 +76,7 @@ func show(label string, streamHeaders HeaderStreamFunc, openContent ContentOpenF
 				return err
 			}
 
-			return cred.Fprint(out)
+			return cred.FprintBasic(out)
 		}
 	}
 
