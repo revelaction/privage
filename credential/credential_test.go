@@ -203,3 +203,38 @@ func TestValidateFile(t *testing.T) {
 		}
 	})
 }
+
+func TestCredential_GetField(t *testing.T) {
+	cred := &Credential{
+		Login:    "lipo",
+		ApiKey:   "key123",
+		Others: map[string]any{
+			"pin": "4444",
+		},
+	}
+
+	tests := []struct {
+		name  string
+		field string
+		want  any
+		ok    bool
+	}{
+		{"FixedField", "login", "lipo", true},
+		{"FixedField2", "api_key", "key123", true},
+		{"CustomField", "pin", "4444", true},
+		{"MissingField", "missing", nil, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := cred.GetField(tt.field)
+			if ok != tt.ok {
+				t.Errorf("GetField(%s) ok = %v, want %v", tt.field, ok, tt.ok)
+			}
+			if got != tt.want {
+				t.Errorf("GetField(%s) = %v, want %v", tt.field, got, tt.want)
+			}
+		})
+	}
+}
+

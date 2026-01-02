@@ -113,7 +113,7 @@ func addCredential(h *header.Header, s *setup.Setup) error {
 		return contentReader(h, s.Id)
 	}
 
-	show(h.Label, streamHeaders, openContent, os.Stdout)
+	show(h.Label, "", streamHeaders, openContent, os.Stdout)
 
 	fmt.Println("You can edit the credentials file by running these commands:")
 	fmt.Println()

@@ -39,8 +39,8 @@ password = "supersecret"
 	// 4. Capture Output
 	var buf bytes.Buffer
 
-	// Run
-	err := show(targetLabel, mockStreamHeaders, mockOpenContent, &buf)
+	// Run - No field requested (Full Show)
+	err := show(targetLabel, "", mockStreamHeaders, mockOpenContent, &buf)
 
 	// Assert
 	if err != nil {
@@ -51,8 +51,15 @@ password = "supersecret"
 	if !strings.Contains(output, "user123") {
 		t.Errorf("expected output to contain login 'user123', got '%s'", output)
 	}
-	if !strings.Contains(output, "supersecret") {
-		t.Errorf("expected output to contain password 'supersecret', got '%s'", output)
+
+	// Run - Specific field requested
+	buf.Reset()
+	err = show(targetLabel, "password", mockStreamHeaders, mockOpenContent, &buf)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if buf.String() != "supersecret" {
+		t.Errorf("expected 'supersecret', got '%s'", buf.String())
 	}
 }
 
@@ -73,7 +80,7 @@ func TestShow_WrongCategory(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err := show(targetLabel, mockStreamHeaders, mockOpenContent, &buf)
+	err := show(targetLabel, "", mockStreamHeaders, mockOpenContent, &buf)
 
 	if err == nil {
 		t.Fatal("expected error for non-credential category, got nil")
@@ -98,12 +105,40 @@ func TestShow_NotFound(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	err := show("missing", mockStreamHeaders, mockOpenContent, &buf)
+	err := show("missing", "", mockStreamHeaders, mockOpenContent, &buf)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if buf.Len() > 0 {
 		t.Errorf("expected no output for missing label, got '%s'", buf.String())
+	}
+}
+
+func TestShow_FieldNotFound(t *testing.T) {
+	targetLabel := "target"
+	secretContent := `login = "user123"`
+
+	mockStreamHeaders := func() <-chan *header.Header {
+		ch := make(chan *header.Header)
+		go func() {
+			ch <- &header.Header{Label: targetLabel, Category: header.CategoryCredential}
+			close(ch)
+		}()
+		return ch
+	}
+
+	mockOpenContent := func(h *header.Header) (io.Reader, error) {
+		return strings.NewReader(secretContent), nil
+	}
+
+	var buf bytes.Buffer
+	err := show(targetLabel, "missing_field", mockStreamHeaders, mockOpenContent, &buf)
+
+	if err == nil {
+		t.Fatal("expected error for missing field, got nil")
+	}
+	if !strings.Contains(err.Error(), "field 'missing_field' not found") {
+		t.Errorf("expected 'field not found' error, got: %v", err)
 	}
 }

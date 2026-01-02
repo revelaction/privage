@@ -17,11 +17,13 @@ import (
 func showCommand(opts setup.Options, args []string) error {
 	fs := flag.NewFlagSet("show", flag.ContinueOnError)
 	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s show [label]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s show [label] [field]\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "\nDescription:\n")
 		fmt.Fprintf(os.Stderr, "  Show the contents of an encrypted file (formatted if it's a credential).\n")
+		fmt.Fprintf(os.Stderr, "  If a field name is provided, only that field's value is printed.\n")
 		fmt.Fprintf(os.Stderr, "\nArguments:\n")
 		fmt.Fprintf(os.Stderr, "  label  The label of the file to show\n")
+		fmt.Fprintf(os.Stderr, "  field  Optional: specific TOML field to show (e.g., api_key)\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -31,7 +33,7 @@ func showCommand(opts setup.Options, args []string) error {
 	args = fs.Args()
 
 	if len(args) == 0 {
-		return errors.New("show command needs one argument (label)")
+		return errors.New("show command needs at least one argument (label)")
 	}
 
 	s, err := setupEnv(opts)
@@ -44,6 +46,10 @@ func showCommand(opts setup.Options, args []string) error {
 	}
 
 	label := args[0]
+	var fieldName string
+	if len(args) > 1 {
+		fieldName = args[1]
+	}
 
 	streamHeaders := func() <-chan *header.Header {
 		return headerGenerator(s.Repository, s.Id)
@@ -53,10 +59,10 @@ func showCommand(opts setup.Options, args []string) error {
 		return contentReader(h, s.Id)
 	}
 
-	return show(label, streamHeaders, openContent, os.Stdout)
+	return show(label, fieldName, streamHeaders, openContent, os.Stdout)
 }
 
-func show(label string, streamHeaders HeaderStreamFunc, openContent ContentOpenFunc, out io.Writer) error {
+func show(label string, fieldName string, streamHeaders HeaderStreamFunc, openContent ContentOpenFunc, out io.Writer) error {
 
 	for h := range streamHeaders() {
 
@@ -74,6 +80,15 @@ func show(label string, streamHeaders HeaderStreamFunc, openContent ContentOpenF
 			cred, err := credential.Decode(r)
 			if err != nil {
 				return err
+			}
+
+			if fieldName != "" {
+				val, ok := cred.GetField(fieldName)
+				if !ok {
+					return fmt.Errorf("field '%s' not found in credential '%s'", fieldName, label)
+				}
+				fmt.Fprint(out, val)
+				return nil
 			}
 
 			return cred.FprintBasic(out)

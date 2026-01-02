@@ -155,3 +155,35 @@ func GeneratePassword() (string, error) {
 
 	return string(b), nil
 }
+
+// GetField returns the value of a field by its TOML key name.
+// It checks both fixed fields and the 'Others' map.
+func (c *Credential) GetField(name string) (any, bool) {
+	switch name {
+	case "login":
+		return c.Login, true
+	case "password":
+		return c.Password, true
+	case "email":
+		return c.Email, true
+	case "url":
+		return c.Url, true
+	case "api_key":
+		return c.ApiKey, true
+	case "api_secret":
+		return c.ApiSecret, true
+	case "api_name":
+		return c.ApiName, true
+	case "api_passphrase":
+		return c.ApiPassphrase, true
+	case "verification_code":
+		return c.VerificationCode, true
+	case "two_factor_auth":
+		return c.TwoFactorAuth, true
+	case "remarks":
+		return c.Remarks, true
+	}
+
+	val, ok := c.Others[name]
+	return val, ok
+}
