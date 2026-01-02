@@ -3,6 +3,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -67,40 +68,44 @@ func main() {
 	args := flag.Args()[1:]
 
 	if err := runCommand(cmd, args, global); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			os.Exit(0)
+		}
 		fatal(err)
 	}
 }
 
 func runCommand(cmd string, args []string, opts setup.Options) error {
+	var err error
 	switch cmd {
 	case "init":
-		return initCommand(opts, args)
+		err = initCommand(opts, args)
 	case "key":
-		return keyCommand(opts, args)
+		err = keyCommand(opts, args)
 	case "status":
-		return statusCommand(opts, args)
+		err = statusCommand(opts, args)
 	case "add":
-		return addCommand(opts, args)
+		err = addCommand(opts, args)
 	case "delete":
-		return deleteCommand(opts, args)
+		err = deleteCommand(opts, args)
 	case "list":
-		return listCommand(opts, args)
+		err = listCommand(opts, args)
 	case "show":
-		return showCommand(opts, args)
+		err = showCommand(opts, args)
 	case "cat":
-		return catCommand(opts, args)
+		err = catCommand(opts, args)
 	case "clipboard":
-		return clipboardCommand(opts, args)
+		err = clipboardCommand(opts, args)
 	case "decrypt":
-		return decryptCommand(opts, args)
+		err = decryptCommand(opts, args)
 	case "reencrypt":
-		return reencryptCommand(opts, args)
+		err = reencryptCommand(opts, args)
 	case "rotate":
-		return rotateCommand(opts, args)
+		err = rotateCommand(opts, args)
 	case "bash":
-		return bashCommand(opts, args)
+		err = bashCommand(opts, args)
 	case "complete":
-		return completeCommand(opts, args)
+		err = completeCommand(opts, args)
 	case "help", "h":
 		if len(args) > 0 {
 			return runCommand(args[0], []string{"--help"}, opts)
@@ -110,6 +115,8 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 	default:
 		return fmt.Errorf("Unknown command: %s", cmd)
 	}
+
+	return err
 }
 
 func fatal(err error) {

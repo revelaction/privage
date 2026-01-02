@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"os"
 
 	"github.com/revelaction/privage/setup"
 )
@@ -35,6 +37,17 @@ complete -F _privage_autocomplete privage
 `
 
 func bashCommand(opts setup.Options, args []string) error {
+	fs := flag.NewFlagSet("bash", flag.ContinueOnError)
+	fs.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s bash\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "\nDescription:\n")
+		fmt.Fprintf(os.Stderr, "  Dump bash complete script.\n")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
 	fmt.Print(complete)
 	return nil
 }
