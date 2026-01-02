@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -12,6 +13,20 @@ import (
 
 // catCommand prints in the terminal the contents of an encrypted file.
 func catCommand(opts setup.Options, args []string) error {
+	fs := flag.NewFlagSet("cat", flag.ContinueOnError)
+	fs.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s cat [label]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "\nDescription:\n")
+		fmt.Fprintf(os.Stderr, "  Print the full contents of an encrypted file to stdout.\n")
+		fmt.Fprintf(os.Stderr, "\nArguments:\n")
+		fmt.Fprintf(os.Stderr, "  label  The label of the file to show\n")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+
+	args = fs.Args()
 
 	if len(args) == 0 {
 		return errors.New("cat command needs one argument (label)")

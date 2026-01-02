@@ -66,46 +66,49 @@ func main() {
 	cmd := flag.Arg(0)
 	args := flag.Args()[1:]
 
-	var err error
+	if err := runCommand(cmd, args, global); err != nil {
+		fatal(err)
+	}
+}
 
+func runCommand(cmd string, args []string, opts setup.Options) error {
 	switch cmd {
 	case "init":
-		err = initCommand(global, args)
+		return initCommand(opts, args)
 	case "key":
-		err = keyCommand(global, args)
+		return keyCommand(opts, args)
 	case "status":
-		err = statusCommand(global, args)
+		return statusCommand(opts, args)
 	case "add":
-		err = addCommand(global, args)
+		return addCommand(opts, args)
 	case "delete":
-		err = deleteCommand(global, args)
+		return deleteCommand(opts, args)
 	case "list":
-		err = listCommand(global, args)
+		return listCommand(opts, args)
 	case "show":
-		err = showCommand(global, args)
+		return showCommand(opts, args)
 	case "cat":
-		err = catCommand(global, args)
+		return catCommand(opts, args)
 	case "clipboard":
-		err = clipboardCommand(global, args)
+		return clipboardCommand(opts, args)
 	case "decrypt":
-		err = decryptCommand(global, args)
+		return decryptCommand(opts, args)
 	case "reencrypt":
-		err = reencryptCommand(global, args)
+		return reencryptCommand(opts, args)
 	case "rotate":
-		err = rotateCommand(global, args)
+		return rotateCommand(opts, args)
 	case "bash":
-		err = bashCommand(global, args)
+		return bashCommand(opts, args)
 	case "complete":
-		err = completeCommand(global, args)
+		return completeCommand(opts, args)
 	case "help", "h":
+		if len(args) > 0 {
+			return runCommand(args[0], []string{"--help"}, opts)
+		}
 		flag.Usage()
+		return nil
 	default:
-		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", cmd)
-		os.Exit(1)
-	}
-
-	if err != nil {
-		fatal(err)
+		return fmt.Errorf("Unknown command: %s", cmd)
 	}
 }
 
