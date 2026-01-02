@@ -142,13 +142,17 @@ func Validate(r io.Reader) error {
 }
 
 // ValidateFile validates a file as toml credential file.
-func ValidateFile(filePath string) error {
+func ValidateFile(filePath string) (err error) {
 
 	f, err := os.Open(filePath)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() {
+		if cerr := f.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}()
 
 	return Validate(f)
 }
