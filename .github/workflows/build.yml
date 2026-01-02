@@ -13,7 +13,7 @@ jobs:
       matrix:
         include:
           - {GOOS: linux, GOARCH: amd64, runner: ubuntu-latest}
-          - {GOOS: linux, GOARCH: arm64, runner: ubuntu-24.04-arm64}
+          - {GOOS: linux, GOARCH: arm64, runner: ubuntu-24.04-arm}
           - {GOOS: darwin, GOARCH: amd64, runner: macos-15-intel}
           - {GOOS: darwin, GOARCH: arm64, runner: macos-latest}
     runs-on: ${{ matrix.runner }}
