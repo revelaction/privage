@@ -102,15 +102,26 @@ func TestDirExists(t *testing.T) {
 
 func TestFindIdentityFile(t *testing.T) {
 	tmpDir := t.TempDir()
-	oldWd, _ := os.Getwd()
-	defer os.Chdir(oldWd)
+	oldWd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd() error = %v", err)
+	}
+	defer func() {
+		if err := os.Chdir(oldWd); err != nil {
+			t.Errorf("Chdir() error = %v", err)
+		}
+	}()
 
 	// Change to temp directory
-	os.Chdir(tmpDir)
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatalf("Chdir() error = %v", err)
+	}
 
 	// Create identity file in current directory
 	idFile := filepath.Join(tmpDir, "privage-key.txt")
-	_ = os.WriteFile(idFile, []byte("test key"), 0600)
+	if err := os.WriteFile(idFile, []byte("test key"), 0600); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
 
 	// Should find in current directory
 	path, err := FindIdentityFile()
@@ -122,11 +133,22 @@ func TestFindIdentityFile(t *testing.T) {
 	}
 
 	// Remove from current directory, create in home
-	os.Remove(idFile)
-	homeDir, _ := os.UserHomeDir()
+	if err := os.Remove(idFile); err != nil {
+		t.Fatalf("Remove() error = %v", err)
+	}
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatalf("UserHomeDir() error = %v", err)
+	}
 	homeIdFile := filepath.Join(homeDir, "privage-key.txt")
-	_ = os.WriteFile(homeIdFile, []byte("test key"), 0600)
-	defer os.Remove(homeIdFile)
+	if err := os.WriteFile(homeIdFile, []byte("test key"), 0600); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+	defer func() {
+		if err := os.Remove(homeIdFile); err != nil && !os.IsNotExist(err) {
+			t.Errorf("Remove() error = %v", err)
+		}
+	}()
 
 	// Should find in home directory
 	path, err = FindIdentityFile()
@@ -138,8 +160,10 @@ func TestFindIdentityFile(t *testing.T) {
 	}
 
 	// Remove both, should get error
-	os.Remove(homeIdFile)
-	path, err = FindIdentityFile()
+	if err := os.Remove(homeIdFile); err != nil && !os.IsNotExist(err) {
+		t.Fatalf("Remove() error = %v", err)
+	}
+	_, err = FindIdentityFile()
 	if err == nil {
 		t.Error("FindIdentityFile() expected error when no file exists")
 	}
@@ -147,17 +171,35 @@ func TestFindIdentityFile(t *testing.T) {
 
 func TestFindConfigFile(t *testing.T) {
 	tmpDir := t.TempDir()
-	oldWd, _ := os.Getwd()
-	defer os.Chdir(oldWd)
+	oldWd, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd() error = %v", err)
+	}
+	defer func() {
+		if err := os.Chdir(oldWd); err != nil {
+			t.Errorf("Chdir() error = %v", err)
+		}
+	}()
 
 	// Change to temp directory
-	os.Chdir(tmpDir)
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatalf("Chdir() error = %v", err)
+	}
 
 	// Create config file in home directory first (home has priority)
-	homeDir, _ := os.UserHomeDir()
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatalf("UserHomeDir() error = %v", err)
+	}
 	homeConfigFile := filepath.Join(homeDir, ".privage.conf")
-	_ = os.WriteFile(homeConfigFile, []byte("test config"), 0600)
-	defer os.Remove(homeConfigFile)
+	if err := os.WriteFile(homeConfigFile, []byte("test config"), 0600); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+	defer func() {
+		if err := os.Remove(homeConfigFile); err != nil && !os.IsNotExist(err) {
+			t.Errorf("Remove() error = %v", err)
+		}
+	}()
 
 	// Should find in home directory (priority)
 	path, err := FindConfigFile()
@@ -169,9 +211,13 @@ func TestFindConfigFile(t *testing.T) {
 	}
 
 	// Remove from home, create in current directory
-	os.Remove(homeConfigFile)
+	if err := os.Remove(homeConfigFile); err != nil && !os.IsNotExist(err) {
+		t.Fatalf("Remove() error = %v", err)
+	}
 	configFile := filepath.Join(tmpDir, ".privage.conf")
-	_ = os.WriteFile(configFile, []byte("test config"), 0600)
+	if err := os.WriteFile(configFile, []byte("test config"), 0600); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
 
 	// Should find in current directory
 	path, err = FindConfigFile()
@@ -183,8 +229,10 @@ func TestFindConfigFile(t *testing.T) {
 	}
 
 	// Remove both, should get error
-	os.Remove(configFile)
-	path, err = FindConfigFile()
+	if err := os.Remove(configFile); err != nil && !os.IsNotExist(err) {
+		t.Fatalf("Remove() error = %v", err)
+	}
+	_, err = FindConfigFile()
 	if err == nil {
 		t.Error("FindConfigFile() expected error when no file exists")
 	}
