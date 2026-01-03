@@ -50,8 +50,10 @@ func parseIdentity(f io.Reader, path string) Identity {
 	identities, err := age.ParseIdentities(f)
 	if err != nil {
 		identity.Err = err
+	} else if id, ok := identities[0].(*age.X25519Identity); ok {
+		identity.Id = id
 	} else {
-		identity.Id = identities[0].(*age.X25519Identity)
+		identity.Err = fmt.Errorf("expected X25519Identity, got %T", identities[0])
 	}
 
 	return identity
