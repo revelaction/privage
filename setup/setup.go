@@ -151,7 +151,15 @@ func identity(keyPath, pivSlot string) id.Identity {
 		if err != nil {
 			return id.Identity{Err: err}
 		}
-		defer f.Close()
+		defer func() {
+			if cerr := f.Close(); cerr != nil {
+				// TODO: Handle file close errors properly
+				// For read operations, close errors after successful read
+				// are less critical but should be logged or monitored
+				// Currently we acknowledge but don't propagate the error
+				_ = cerr
+			}
+		}()
 		return id.Load(f, keyPath)
 	}
 

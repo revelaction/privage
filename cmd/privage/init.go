@@ -26,7 +26,7 @@ const (
 // It generates a .gitignore file in the current directory if not existing.
 // It generates a .privage.conf file in the home directory, with the
 // identity and secret directory paths.
-func initCommand(opts setup.Options, args []string) error {
+func initCommand(opts setup.Options, args []string) (err error) {
 	fs := flag.NewFlagSet("init", flag.ContinueOnError)
 	var slot string
 	fs.StringVar(&slot, "piv-slot", "", "Use the yubikey slot key to encrypt the age private key")
@@ -92,7 +92,11 @@ func initCommand(opts setup.Options, args []string) error {
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer func() {
+			if cerr := f.Close(); cerr != nil && err == nil {
+				err = cerr
+			}
+		}()
 		err = id.New(f)
 		if err != nil {
 			return err
