@@ -33,13 +33,13 @@ login = "user"
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := strings.NewReader(tt.toml)
-			conf, err := Decode(r)
+			conf, err := decode(r)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Decode() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("decode() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !tt.wantErr && conf == nil {
-				t.Error("Decode() returned nil config without error")
+				t.Error("decode() returned nil config without error")
 			}
 		})
 	}
@@ -89,9 +89,9 @@ func TestValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.conf.Validate()
+			err := tt.conf.validate()
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -103,9 +103,9 @@ func TestExpandHome(t *testing.T) {
 		RepositoryPath: "~/repo",
 	}
 
-	err := conf.ExpandHome()
+	err := conf.expandHome()
 	if err != nil {
-		t.Fatalf("ExpandHome() error = %v", err)
+		t.Fatalf("expandHome() error = %v", err)
 	}
 
 	home, _ := os.UserHomeDir()
@@ -121,23 +121,23 @@ func TestNew(t *testing.T) {
 	tmpDir := t.TempDir()
 	idPath := filepath.Join(tmpDir, "id")
 	_ = os.WriteFile(idPath, []byte("id"), 0600)
-	
+
 	content := fmt.Sprintf(`
 identity_path = '%s'
 repository_path = '%s'
 `, idPath, tmpDir)
 
-	conf, err := Decode(strings.NewReader(content))
+	conf, err := decode(strings.NewReader(content))
 	if err != nil {
-		t.Fatalf("Decode() error = %v", err)
+		t.Fatalf("decode() error = %v", err)
 	}
 
-	if err := conf.ExpandHome(); err != nil {
-		t.Fatalf("ExpandHome() error = %v", err)
+	if err := conf.expandHome(); err != nil {
+		t.Fatalf("expandHome() error = %v", err)
 	}
 
-	if err := conf.Validate(); err != nil {
-		t.Fatalf("Validate() error = %v", err)
+	if err := conf.validate(); err != nil {
+		t.Fatalf("validate() error = %v", err)
 	}
 
 	if conf.IdentityPath != idPath {
@@ -171,5 +171,62 @@ func TestEncode(t *testing.T) {
 		if !strings.Contains(output, exp) {
 			t.Errorf("Encode() output missing expected string: %s\nOutput:\n%s", exp, output)
 		}
+	}
+}
+
+func TestLoad(t *testing.T) {
+	tmpDir := t.TempDir()
+	idPath := filepath.Join(tmpDir, "id")
+	_ = os.WriteFile(idPath, []byte("id"), 0600)
+
+	tests := []struct {
+		name    string
+		toml    string
+		wantErr bool
+	}{
+		{
+			name: "Valid config",
+			toml: fmt.Sprintf(`
+identity_path = '%s'
+repository_path = '%s'
+login = 'user'
+`, idPath, tmpDir),
+			wantErr: false,
+		},
+		{
+			name: "Valid config with ~/ paths",
+			toml: `
+identity_path = '~/test_id'
+repository_path = '~/test_repo'
+`,
+			wantErr: true, // Will fail because ~/ paths don't exist
+		},
+		{
+			name:    "Invalid TOML",
+			toml:    `identity_path = `,
+			wantErr: true,
+		},
+		{
+			name: "Missing required field",
+			toml: fmt.Sprintf(`
+identity_path = '%s'
+# missing repository_path
+`, idPath),
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := strings.NewReader(tt.toml)
+			conf, err := Load(r)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr && conf == nil {
+				t.Error("Load() returned nil config without error")
+			}
+		})
 	}
 }

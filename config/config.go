@@ -35,8 +35,8 @@ type Config struct {
 	Email string `toml:"email" comment:"Default email for new credentials"`
 }
 
-// Decode decodes a configuration from an io.Reader.
-func Decode(r io.Reader) (*Config, error) {
+// decode decodes a configuration from an io.Reader.
+func decode(r io.Reader) (*Config, error) {
 	var conf Config
 	dec := toml.NewDecoder(r)
 	if err := dec.Decode(&conf); err != nil {
@@ -45,15 +45,33 @@ func Decode(r io.Reader) (*Config, error) {
 	return &conf, nil
 }
 
+// Load decodes a configuration from an io.Reader, expands ~/ paths, and validates it.
+func Load(r io.Reader) (*Config, error) {
+	conf, err := decode(r)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := conf.expandHome(); err != nil {
+		return nil, err
+	}
+
+	if err := conf.validate(); err != nil {
+		return nil, err
+	}
+
+	return conf, nil
+}
+
 // Encode encodes the configuration to an io.Writer.
 func (c *Config) Encode(w io.Writer) error {
 	enc := toml.NewEncoder(w)
 	return enc.Encode(c)
 }
 
-// Validate ensures that the configuration has all required fields and that
+// validate ensures that the configuration has all required fields and that
 // referenced paths exist.
-func (c *Config) Validate() error {
+func (c *Config) validate() error {
 	if c.IdentityPath == "" {
 		return errors.New("identity_path is required")
 	}
@@ -71,11 +89,11 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// ExpandHome replaces "~/" prefixes in paths with the user's home directory.
-func (c *Config) ExpandHome() error {
+// expandHome replaces "~/" prefixes in paths with the user's home directory.
+func (c *Config) expandHome() error {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return errors.New("could not determine user home directory")
+		return fmt.Errorf("could not determine user home directory: %w", err)
 	}
 
 	if strings.HasPrefix(c.IdentityPath, "~/") {

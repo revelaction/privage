@@ -68,17 +68,9 @@ func NewFromConfigFile(path string) (s *Setup, err error) {
 		}
 	}()
 
-	conf, err := config.Decode(f)
+	conf, err := config.Load(f)
 	if err != nil {
 		return &Setup{}, fmt.Errorf("invalid configuration file %s: %w", path, err)
-	}
-
-	if err := conf.ExpandHome(); err != nil {
-		return &Setup{}, err
-	}
-
-	if err := conf.Validate(); err != nil {
-		return &Setup{}, fmt.Errorf("configuration validation failed for %s: %w", path, err)
 	}
 
 	conf.Path = path
