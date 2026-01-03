@@ -135,7 +135,11 @@ func initCommand(opts setup.Options, args []string) (err error) {
 	if err != nil {
 		return fmt.Errorf("could not create config file: %w", err)
 	}
-	defer f.Close()
+	defer func() {
+		if cerr := f.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}()
 
 	conf := &config.Config{
 		IdentityPath:    identityPath,
