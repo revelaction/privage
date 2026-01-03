@@ -58,15 +58,28 @@ func NewFromArgs(keyPath, repoPath, pivSlot string) (*Setup, error) {
 
 func NewFromConfigFile(path string) (*Setup, error) {
 
-	// validates the path, toml, and identiti, repo paths
-	conf, err := config.New(path)
+	f, err := os.Open(path)
 	if err != nil {
 		return &Setup{}, err
 	}
+	defer f.Close()
 
-	id := identity(conf.IdentityPath, conf.IdentityPivSlot)
+	conf, err := config.Decode(f)
+	if err != nil {
+		return &Setup{}, fmt.Errorf("invalid configuration file %s: %w", path, err)
+	}
 
-	return &Setup{C: conf, Id: id, Repository: conf.RepositoryPath}, nil
+	if err := conf.ExpandHome(); err != nil {
+		return &Setup{}, err
+	}
+
+	if err := conf.Validate(); err != nil {
+		return &Setup{}, fmt.Errorf("configuration validation failed for %s: %w", path, err)
+	}
+
+	conf.Path = path
+
+	return &Setup{C: conf, Id: identity(conf.IdentityPath, conf.IdentityPivSlot), Repository: conf.RepositoryPath}, nil
 }
 
 func identity(keyPath, pivSlot string) id.Identity {

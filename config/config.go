@@ -14,8 +14,6 @@ import (
 const (
 	// DefaultFileName is the default name for the privage configuration file.
 	DefaultFileName = ".privage.conf"
-
-	// Identity types
 )
 
 // A Config contains configuration data for the privage application.
@@ -53,34 +51,9 @@ func (c *Config) Encode(w io.Writer) error {
 	return enc.Encode(c)
 }
 
-// New reads, parses, and validates a configuration file from the given path.
-func New(path string) (*Config, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	conf, err := Decode(f)
-	if err != nil {
-		return nil, fmt.Errorf("invalid configuration file %s: %w", path, err)
-	}
-
-	if err := conf.ExpandHome(); err != nil {
-		return nil, err
-	}
-
-	if err := conf.validate(); err != nil {
-		return nil, fmt.Errorf("configuration validation failed for %s: %w", path, err)
-	}
-
-	conf.Path = path
-	return conf, nil
-}
-
-// validate ensures that the configuration has all required fields and that
+// Validate ensures that the configuration has all required fields and that
 // referenced paths exist.
-func (c *Config) validate() error {
+func (c *Config) Validate() error {
 	if c.IdentityPath == "" {
 		return errors.New("identity_path is required")
 	}
