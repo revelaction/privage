@@ -1,8 +1,10 @@
 package config
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,204 +13,159 @@ import (
 )
 
 const (
-	FileName = ".privage.conf"
+	// DefaultFileName is the default name for the privage configuration file.
+	DefaultFileName = ".privage.conf"
 
-	template = `# 
-# it supports  "~/" as home directory
-identity_path = "%s"
-# can be piv for yubikeys
-identity_type = "%s" 
-# string representation of the Hex value without 0x 0x9a -> 9a 
-identity_piv_slot = "%s"
-
-# unimplemented 
-#identity_piv_algo = ""
-
-# Repository path
-secrets_repository_path = "%s"
-
-# Default login/Username. Leave empty if you want to use email as login
-default_login = ""
-
-# Default email. If default_login does not exists, default_email is choosed as credential login
-default_email = ""
-`
+	// Identity types
 )
 
-// A Config contains configuration data found in the .toml config file (if it exists)
+// A Config contains configuration data for the privage application.
 type Config struct {
+	// Path is the filesystem path where the config was loaded from.
+	Path string `toml:"-"`
 
-	// The Path of the existing config file.
-	// If this is not empty, a config file was found
-	Path string
+	// Identity settings
+	IdentityPath    string `toml:"identity_path" comment:"Path to the age identity file (supports ~/)"`
+	IdentityType    string `toml:"identity_type" comment:"Type of identity: AGE or PIV"`
+	IdentityPivSlot string `toml:"identity_piv_slot" comment:"Hex string for the Yubikey PIV slot (e.g., 9a)"`
+	IdentityPivAlgo string `toml:"identity_piv_algo" comment:"[Reserved] Algorithm for PIV"`
 
-	//
-	// Identity
-	//
-	IdentityPath    string `toml:"identity_path"`
-	IdentityType    string `toml:"identity_type"`
-	IdentityPivSlot string `toml:"identity_piv_slot"`
-	IdentityPivAlgo string `toml:"identity_piv_algo"`
+	// Repository settings
+	RepositoryPath string `toml:"repository_path" comment:"Directory containing encrypted files (supports ~/)"`
 
-	// the repository for all credential and excripted files
-	RepositoryPath string `toml:"secrets_repository_path"`
-
-	// Default fields For credentials
-	Email string `toml:"default_email"`
-	Login string `toml:"default_login"`
+	// Default fields for credentials
+	Login string `toml:"login" comment:"Default username/login for new credentials"`
+	Email string `toml:"email" comment:"Default email for new credentials"`
 }
 
-// Search paths for a conf file
-// First in home
-// second in current
-func FindPath() (string, error) {
-
-	homePath, err := homeDirPath()
-	if err == nil {
-		return homePath, nil
+// Decode decodes a configuration from an io.Reader.
+func Decode(r io.Reader) (*Config, error) {
+	var conf Config
+	dec := toml.NewDecoder(r)
+	if err := dec.Decode(&conf); err != nil {
+		return nil, err
 	}
-
-	currentPath, err := currentDirPath()
-	if err == nil {
-		return currentPath, nil
-	}
-
-	return "", fmt.Errorf("could not find any configuration file %s", err)
+	return &conf, nil
 }
 
-// validate and build
+// New reads, parses, and validates a configuration file from the given path.
 func New(path string) (*Config, error) {
-	var conf *Config
-
-	// path exist
-	if !fileExists(path) {
-		return &Config{}, fmt.Errorf("file %s does not exists", path)
-	}
-
-	data, err := os.ReadFile(path)
+	f, err := os.Open(path)
 	if err != nil {
-		return &Config{}, err
+		return nil, err
 	}
+	defer f.Close()
 
-	// is valid toml
-	if err := toml.Unmarshal(data, &conf); err != nil {
-		return &Config{}, fmt.Errorf("file %s is not a valid .toml file", path)
-	}
-	// has key IdentityPath
-	if conf.IdentityPath == "" {
-		return &Config{}, fmt.Errorf("file %s does not have a IdentityPath (age key) field", path)
-	}
-
-	// expand ~/
-	conf, err = expandHome(conf)
+	conf, err := Decode(bufio.NewReader(f))
 	if err != nil {
-		return &Config{}, fmt.Errorf("could not expand home: %s", err)
+		return nil, fmt.Errorf("invalid configuration file %s: %w", path, err)
 	}
 
-	// IdentityPath exist
-	if !fileExists(conf.IdentityPath) {
-		return &Config{}, fmt.Errorf("age key %s does not exists", conf.IdentityPath)
+	if err := conf.ExpandHome(); err != nil {
+		return nil, err
 	}
 
-	// has key RepositoryPath
-	if conf.RepositoryPath == "" {
-		return &Config{}, fmt.Errorf("file %s does not have a RepositoryPath field", path)
-	}
-
-	// RepositoryPath exist
-	if !fileExists(conf.RepositoryPath) {
-		return &Config{}, fmt.Errorf("the RepositoryPath %s does not exists", conf.RepositoryPath)
+	if err := conf.Validate(); err != nil {
+		return nil, fmt.Errorf("configuration validation failed for %s: %w", path, err)
 	}
 
 	conf.Path = path
 	return conf, nil
 }
 
-func expandHome(conf *Config) (*Config, error) {
-
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return conf, errors.New("found no home dir")
+// Validate ensures that the configuration has all required fields and that
+// referenced paths exist.
+func (c *Config) Validate() error {
+	if c.IdentityPath == "" {
+		return errors.New("identity_path is required")
+	}
+	if !fileExists(c.IdentityPath) {
+		return fmt.Errorf("identity file %s does not exist", c.IdentityPath)
 	}
 
-	if strings.HasPrefix(conf.IdentityPath, "~/") {
-		conf.IdentityPath = filepath.Join(homeDir, conf.IdentityPath[2:])
+	if c.RepositoryPath == "" {
+		return errors.New("secrets_repository_path is required")
+	}
+	if !fileExists(c.RepositoryPath) {
+		return fmt.Errorf("repository directory %s does not exist", c.RepositoryPath)
 	}
 
-	if strings.HasPrefix(conf.RepositoryPath, "~/") {
-		conf.RepositoryPath = filepath.Join(homeDir, conf.RepositoryPath[2:])
-	}
-
-	return conf, nil
+	return nil
 }
 
-// homeDirPath returns the existent privage conf file in home
-// if not found, it returns an error
-func homeDirPath() (string, error) {
-	homeDir, err := os.UserHomeDir()
+// ExpandHome replaces "~/" prefixes in paths with the user's home directory.
+func (c *Config) ExpandHome() error {
+	home, err := os.UserHomeDir()
 	if err != nil {
-		return "", err
+		return errors.New("could not determine user home directory")
 	}
 
-	path := homeDir + "/" + FileName
-	if !fileExists(path) {
-		return "", fmt.Errorf("configuration file %s not found", path)
+	if strings.HasPrefix(c.IdentityPath, "~/") {
+		c.IdentityPath = filepath.Join(home, c.IdentityPath[2:])
 	}
 
-	return path, nil
+	if strings.HasPrefix(c.RepositoryPath, "~/") {
+		c.RepositoryPath = filepath.Join(home, c.RepositoryPath[2:])
+	}
+
+	return nil
 }
 
-func currentDirPath() (string, error) {
-	currentDir, err := os.Getwd()
-	if err != nil {
-		return "", err
+// FindPath searches for the configuration file in standard locations.
+func FindPath() (string, error) {
+	locations := []func() (string, error){
+		os.UserHomeDir,
+		os.Getwd,
 	}
 
-	path := currentDir + "/" + FileName
-	if !fileExists(path) {
-		return "", fmt.Errorf("configuration file %s not found", path)
+	for _, getDir := range locations {
+		dir, err := getDir()
+		if err != nil {
+			continue
+		}
+
+		path := filepath.Join(dir,DefaultFileName)
+		if fileExists(path) {
+			return path, nil
+		}
 	}
 
-	return path, nil
+	return "", fmt.Errorf("could not find configuration file %s in home or current directory",DefaultFileName)
 }
 
-// Create creates a config file.
+// Create generates a new configuration file at the default home location.
 func Create(identityPath, identityType, identityPivSlot, repositoryPath string) error {
-
-	// 1) try home
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		return err
 	}
 
-	homePath := homeDir + "/" + FileName
-	f, err := os.OpenFile(homePath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	conf := &Config{
+		IdentityPath:    identityPath,
+		IdentityType:    identityType,
+		IdentityPivSlot: identityPivSlot,
+		RepositoryPath:  repositoryPath,
+	}
+
+	path := filepath.Join(homeDir,DefaultFileName)
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
 	if err != nil {
 		return err
 	}
 
 	defer func() {
-		if err := f.Close(); err != nil {
-			return
-		}
+		_ = f.Close()
 	}()
 
-	content := fmt.Sprintf(template, identityPath, identityType, identityPivSlot, repositoryPath)
-
-	_, err = f.Write([]byte(content))
-	if err != nil {
-		return err
+	enc := toml.NewEncoder(f)
+	if err := enc.Encode(conf); err != nil {
+		return fmt.Errorf("could not encode configuration: %w", err)
 	}
 
 	return nil
 }
 
 func fileExists(path string) bool {
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		if err != nil {
-			return false
-		}
-	}
-
-	return true
+	_, err := os.Stat(path)
+	return err == nil
 }

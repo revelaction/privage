@@ -14,7 +14,7 @@ const (
 
 	// default privage secret key. It can be an age key of a PIV encoded age
 	// key.
-	FileName = "privage-key.txt"
+	DefaultFileName = "privage-key.txt"
 	TypePiv  = "PIV"
 	TypeAge  = "AGE"
 )
@@ -64,7 +64,7 @@ func Load(confPath string) Identity {
 		return Identity{Err: err}
 	}
 
-	currentPath := currentDir + "/" + FileName
+	currentPath := currentDir + "/" +DefaultFileName
 	fl, err := os.Open(currentPath)
 	if err == nil {
 		return parseIdentity(fl, currentPath)
@@ -81,7 +81,7 @@ func Load(confPath string) Identity {
 		return Identity{Err: err}
 	}
 
-	homePath := homeDir + "/" + FileName
+	homePath := homeDir + "/" +DefaultFileName
 	f, err := os.Open(homePath)
 	if err == nil {
 		return parseIdentity(f, homePath)
@@ -148,5 +148,5 @@ func Create(filePath string) error {
 func BackupFilePath(dir string) string {
 
 	now := time.Now().UTC().Format(time.RFC3339)
-	return fmt.Sprintf("%s/%s-%s.bak", dir, FileName, now)
+	return fmt.Sprintf("%s/%s-%s.bak", dir,DefaultFileName, now)
 }

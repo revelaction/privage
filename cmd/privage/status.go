@@ -32,7 +32,7 @@ func statusCommand(opts setup.Options, args []string) error {
 	fmt.Println()
 
 	if s.Id.Id != nil {
-		fmt.Printf("🔑 Found age key file %s in %s ✔️\n", id.FileName, s.Id.Path)
+		fmt.Printf("🔑 Found age key file %s in %s ✔️\n", id.DefaultFileName, s.Id.Path)
 	} else {
 		fmt.Println("🔑 🚫 Could not find an age key")
 	}
@@ -40,7 +40,7 @@ func statusCommand(opts setup.Options, args []string) error {
 	fmt.Printf("📂 The directory of the encrypted files is %s ✔️\n", s.Repository)
 
 	if len(s.C.Path) > 0 {
-		fmt.Printf("📑 Found config file %s in %s ✔️\n", config.FileName, s.C.Path)
+		fmt.Printf("📑 Found config file %s in %s ✔️\n", config.DefaultFileName, s.C.Path)
 
 		showUpdateMessage := false
 		if s.Id.Path != s.C.IdentityPath {
@@ -59,7 +59,7 @@ func statusCommand(opts setup.Options, args []string) error {
 
 		fmt.Println()
 	} else {
-		fmt.Printf("📑 A config file %s does not exists\n", config.FileName)
+		fmt.Printf("📑 A config file %s does not exists\n", config.DefaultFileName)
 		fmt.Println()
 
 	}

@@ -66,7 +66,7 @@ func initCommand(opts setup.Options, args []string) error {
 		return nil
 	}
 
-	identityPath := currentDir + "/" + id.FileName
+	identityPath := currentDir + "/" + id.DefaultFileName
 	identityType := id.TypeAge
 	identityAlgo := id.PivAlgoRsa2048 // only RSA2048 supported
 
@@ -120,7 +120,7 @@ func initCommand(opts setup.Options, args []string) error {
 		return fmt.Errorf("could not generate config file: %w", err)
 	}
 
-	fmt.Printf("📑 Generated config file %s ✔️\n", config.FileName)
+	fmt.Printf("📑 Generated config file %s ✔️\n", config.DefaultFileName)
 
 	return nil
 }
