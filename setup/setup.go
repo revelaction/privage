@@ -56,13 +56,17 @@ func NewFromArgs(keyPath, repoPath, pivSlot string) (*Setup, error) {
 	return &Setup{C: &config.Config{}, Id: id, Repository: repoPath}, nil
 }
 
-func NewFromConfigFile(path string) (*Setup, error) {
+func NewFromConfigFile(path string) (s *Setup, err error) {
 
 	f, err := os.Open(path)
 	if err != nil {
 		return &Setup{}, err
 	}
-	defer f.Close()
+	defer func() {
+		if cerr := f.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}()
 
 	conf, err := config.Decode(f)
 	if err != nil {
