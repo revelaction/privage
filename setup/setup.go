@@ -10,6 +10,7 @@ import (
 	"github.com/revelaction/privage/fs"
 
 	id "github.com/revelaction/privage/identity"
+	"github.com/revelaction/privage/identity/piv/yubikey"
 )
 
 // Setup contains the path of the secrets repository and the path of
@@ -168,6 +169,26 @@ func identity(keyPath, pivSlot string) id.Identity {
 		return id.Identity{Err: fmt.Errorf("could not convert slot %d to hex: %v", slot, err)}
 	}
 
-	return id.LoadPiv(keyPath, uint32(slot), "")
+	device, err := yubikey.New()
+	if err != nil {
+		return id.Identity{Err: fmt.Errorf("could not create yubikey device: %w", err)}
+	}
+	defer device.Close()
+
+	f, err := fs.OpenFile(keyPath)
+	if err != nil {
+		return id.Identity{Err: err}
+	}
+	defer func() {
+		if cerr := f.Close(); cerr != nil {
+			// TODO: Handle file close errors properly
+			// For read operations, close errors after successful read
+			// are less critical but should be logged or monitored
+			// Currently we acknowledge but don't propagate the error
+			_ = cerr
+		}
+	}()
+
+	return id.LoadPiv(f, keyPath, device, uint32(slot))
 }
 

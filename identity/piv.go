@@ -6,15 +6,23 @@ import (
 	"io"
 	"os"
 
-	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/ascii85"
 
-	"github.com/go-piv/piv-go/v2/piv"
+	pivlib "github.com/go-piv/piv-go/v2/piv"
 )
 
 const PivAlgoRsa2048 = "RSA2048"
+
+// Device represents a PIV-compatible hardware device that can perform
+// cryptographic operations like decryption.
+type Device interface {
+	// Decrypt decrypts ciphertext using the key in the specified slot.
+	Decrypt(ciphertext []byte, slot uint32) ([]byte, error)
+	// Close releases any resources associated with the device.
+	Close() error
+}
 
 // CreatePivRsa generates an age secret key and encrypts it using the yubikey
 // key at slot slot.
@@ -43,7 +51,7 @@ func CreatePivRsa(filePath string, slot uint32, algo string) error {
 	}
 	defer yubikey.Close()
 
-	retiredSlot, ok := piv.RetiredKeyManagementSlot(slot)
+	retiredSlot, ok := pivlib.RetiredKeyManagementSlot(slot)
 	if !ok {
 		return fmt.Errorf("could not access slot %x in the PIV device", slot)
 	}
@@ -65,17 +73,18 @@ func CreatePivRsa(filePath string, slot uint32, algo string) error {
 	return nil
 }
 
-// LoadPiv returns the age identity that is encrypted in the file at path,
-// by decrypting it with the key at the yubikey slot slot.
-func LoadPiv(path string, slot uint32, algo string) Identity {
-	raw, err := LoadRaw(path, slot, algo)
+// LoadPiv returns the age identity read from r that is encrypted with PIV.
+// The path parameter is used for error messages and tracking (no filesystem operations).
+// TODO: Revisit signature - consider whether path should be part of Identity struct.
+func LoadPiv(r io.Reader, path string, device Device, slot uint32) Identity {
+	raw, err := LoadRaw(r, device, slot)
 	if err != nil {
 		return Identity{Err: err}
 	}
 
 	identity, err := age.ParseX25519Identity(string(raw))
 	if err != nil {
-		return Identity{Err: fmt.Errorf("could not parse identity as age key: %v", err)}
+		return Identity{Err: fmt.Errorf("could not parse identity as age key: %w", err)}
 	}
 
 	ident := Identity{}
@@ -84,60 +93,24 @@ func LoadPiv(path string, slot uint32, algo string) Identity {
 	return ident
 }
 
-// LoadRaw returns the decrypted contents of the file at path, using the
-// key in the slot slot
-func LoadRaw(path string, slot uint32, algo string) ([]byte, error) {
-
-	f, err := os.Open(path)
+// LoadRaw returns the decrypted contents read from r, using the
+// PIV device to decrypt with the key in the specified slot.
+func LoadRaw(r io.Reader, device Device, slot uint32) ([]byte, error) {
+	decoded, err := io.ReadAll(ascii85.NewDecoder(r))
 	if err != nil {
-		return nil, fmt.Errorf("could not open file at path %s: %v", path, err)
-
+		return nil, fmt.Errorf("could not read message file: %w", err)
 	}
 
-	defer f.Close()
-
-	decoded, err := io.ReadAll(ascii85.NewDecoder(f))
+	decrypted, err := device.Decrypt(decoded, slot)
 	if err != nil {
-		return nil, fmt.Errorf("could not read message file: %v", err)
-	}
-
-	yubikey, err := yubikey()
-	if err != nil {
-		return nil, fmt.Errorf("could not open yubikey card: %v", err)
-	}
-	defer yubikey.Close()
-
-	retiredSlot, ok := piv.RetiredKeyManagementSlot(slot)
-	if !ok {
-		return nil, fmt.Errorf("could not access slot %x in the PIV device", slot)
-	}
-
-	cert, err := yubikey.Certificate(retiredSlot)
-	if err != nil {
-		return nil, fmt.Errorf("could not get certificate in slot %x: %v", slot, err)
-	}
-
-	// TODO Auth for list
-	priv, err := yubikey.PrivateKey(retiredSlot, cert.PublicKey, piv.KeyAuth{})
-	if err != nil {
-		return nil, fmt.Errorf("could not setup private key: %v", err)
-	}
-
-	decrypter, ok := priv.(crypto.Decrypter)
-	if !ok {
-		return nil, fmt.Errorf("priv does not implement Decrypter")
-	}
-
-	decrypted, err := decrypter.Decrypt(rand.Reader, decoded, nil)
-	if err != nil {
-		return nil, fmt.Errorf("could not decrypt key file: %v", err)
+		return nil, fmt.Errorf("could not decrypt key file: %w", err)
 	}
 
 	return decrypted, nil
 }
 
-func yubikey() (*piv.YubiKey, error) {
-	cards, err := piv.Cards()
+func yubikey() (*pivlib.YubiKey, error) {
+	cards, err := pivlib.Cards()
 	if err != nil {
 		return nil, fmt.Errorf("could not list cards: %v", err)
 	}
@@ -146,7 +119,7 @@ func yubikey() (*piv.YubiKey, error) {
 		return nil, fmt.Errorf("no Cards detected")
 	}
 
-	yubikey, err := piv.Open(cards[0])
+	yubikey, err := pivlib.Open(cards[0])
 	if err != nil {
 		return nil, fmt.Errorf("could not open card %s: %v", cards[0], err)
 	}
