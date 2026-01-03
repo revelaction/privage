@@ -90,3 +90,9 @@ func FindConfigFile() (string, error) {
 func OpenFile(path string) (io.ReadCloser, error) {
 	return os.Open(path)
 }
+
+// CreateFile creates a new file with exclusive access.
+// Returns an io.WriteCloser that should be closed by the caller.
+func CreateFile(path string, perm os.FileMode) (io.WriteCloser, error) {
+	return os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, perm)
+}

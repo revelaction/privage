@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -119,7 +120,13 @@ func rotate(s *setup.Setup, isClean bool, slot string) error {
 		if pivSlot > 0 {
 			err = id.CreatePivRsa(idRotatePath, pivSlot, id.PivAlgoRsa2048)
 		} else {
-			err = id.Create(idRotatePath)
+			var f io.WriteCloser
+			f, err = fs.CreateFile(idRotatePath, 0600)
+			if err != nil {
+				return fmt.Errorf("could not create key file %s: %w", idRotatePath, err)
+			}
+			defer f.Close()
+			err = id.New(f)
 		}
 
 		if err != nil {

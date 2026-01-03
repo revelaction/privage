@@ -3,7 +3,6 @@ package identity
 import (
 	"fmt"
 	"io"
-	"os"
 	"time"
 
 	"filippo.io/age"
@@ -67,28 +66,16 @@ func FmtType(slot string) string {
 	return "🔐 age key"
 }
 
-// Create generates a age Identity and writes it in the file at filePath
-func Create(filePath string) error {
-
-	f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if err := f.Close(); err != nil {
-			return
-		}
-	}()
-
+// New generates an age Identity and writes it to the writer.
+func New(w io.Writer) error {
 	k, err := age.GenerateX25519Identity()
 	if err != nil {
 		return err
 	}
 
-	fmt.Fprintf(f, "# created: %s\n", time.Now().Format(time.RFC3339))
-	fmt.Fprintf(f, "# public key: %s\n", k.Recipient())
-	fmt.Fprintf(f, "%s\n", k)
+	fmt.Fprintf(w, "# created: %s\n", time.Now().Format(time.RFC3339))
+	fmt.Fprintf(w, "# public key: %s\n", k.Recipient())
+	fmt.Fprintf(w, "%s\n", k)
 	return nil
 }
 

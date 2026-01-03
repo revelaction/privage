@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/revelaction/privage/config"
+	filesystem "github.com/revelaction/privage/fs"
 	id "github.com/revelaction/privage/identity"
 	"github.com/revelaction/privage/setup"
 )
@@ -87,7 +88,12 @@ func initCommand(opts setup.Options, args []string) error {
 		fmt.Printf("🔑 Generated encrypted age key file `%s` with PIV slot %s ✔️\n", identityPath, slot)
 	} else {
 		// normal age key
-		err = id.Create(identityPath)
+		f, err := filesystem.CreateFile(identityPath, 0600)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		err = id.New(f)
 		if err != nil {
 			return err
 		}
