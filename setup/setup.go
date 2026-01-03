@@ -104,20 +104,12 @@ func (s *Setup) Copy() *Setup {
 	return &Setup{C: conf, Repository: repo}
 }
 
-func NewFromArgs(keyPath, repoPath, pivSlot string) (*Setup, error) {
-
-	var id id.Identity
-	if keyPath == "" {
-		// Search for identity file
-		path, err := fs.FindIdentityFile()
-		if err != nil {
-			return &Setup{}, err
-		}
-		id = identity(path, pivSlot)
-	} else {
-		// Use exact path
-		id = identity(keyPath, pivSlot)
-	}
+// NewFromKeyRepoFlags creates a Setup from explicit key and repository paths.
+// Used when -k and -r flags are provided.
+func NewFromKeyRepoFlags(keyPath, repoPath, pivSlot string) (*Setup, error) {
+	// keyPath is never empty when called from WithKeyRepo() case
+	// (validated by Options.Validate())
+	id := identity(keyPath, pivSlot)
 
 	exists, err := fs.DirExists(repoPath)
 	if err != nil {

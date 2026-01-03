@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/revelaction/privage/config"
+	"github.com/revelaction/privage/fs"
+	"github.com/revelaction/privage/identity"
 	"github.com/revelaction/privage/setup"
 )
 
@@ -23,7 +25,7 @@ func setupEnv(opts setup.Options) (*setup.Setup, error) {
 	switch {
 	case opts.WithKeyRepo():
 		// Case 1: -k -r with optional -p
-		s, err := setup.NewFromArgs(opts.KeyFile, opts.RepoPath, opts.PivSlot)
+		s, err := setup.NewFromKeyRepoFlags(opts.KeyFile, opts.RepoPath, opts.PivSlot)
 		if err != nil {
 			return &setup.Setup{}, err
 		}
@@ -38,17 +40,40 @@ func setupEnv(opts setup.Options) (*setup.Setup, error) {
 		return s, nil
 
 	case opts.NoFlags():
-		// Case 3: Nothing - search for config file
-		path, err := findConfigPath()
-		if err != nil {
-			return &setup.Setup{}, err
+		// Case 3: Nothing - try config file first, then identity file
+		configPath, err := findConfigPath()
+		if err == nil {
+			// Config file found - use it
+			s, err := setup.NewFromConfigFile(configPath)
+			if err != nil {
+				return &setup.Setup{}, err
+			}
+			return s, nil
 		}
 
-		s, err := setup.NewFromConfigFile(path)
+		// No config file found - search for identity file
+		idPath, err := fs.FindIdentityFile()
 		if err != nil {
-			return &setup.Setup{}, err
+			return &setup.Setup{}, fmt.Errorf("no config or identity file found: %w", err)
 		}
-		return s, nil
+
+		// Use current directory as repository
+		repoPath, err := os.Getwd()
+		if err != nil {
+			return &setup.Setup{}, fmt.Errorf("could not get current directory: %w", err)
+		}
+
+		// Create setup with identity file and current directory as repo
+		id := identity.Load(idPath)
+		if id.Err != nil {
+			return &setup.Setup{}, id.Err
+		}
+
+		return &setup.Setup{
+			C:          &config.Config{},
+			Id:         id,
+			Repository: repoPath,
+		}, nil
 
 	default:
 		// This should never happen due to Validate()
