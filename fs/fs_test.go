@@ -99,3 +99,48 @@ func TestDirExists(t *testing.T) {
 		})
 	}
 }
+
+func TestFindIdentityFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	oldWd, _ := os.Getwd()
+	defer os.Chdir(oldWd)
+
+	// Change to temp directory
+	os.Chdir(tmpDir)
+
+	// Create identity file in current directory
+	idFile := filepath.Join(tmpDir, "privage-key.txt")
+	_ = os.WriteFile(idFile, []byte("test key"), 0600)
+
+	// Should find in current directory
+	path, err := FindIdentityFile()
+	if err != nil {
+		t.Errorf("FindIdentityFile() error = %v, expected no error", err)
+	}
+	if path != idFile {
+		t.Errorf("FindIdentityFile() = %v, want %v", path, idFile)
+	}
+
+	// Remove from current directory, create in home
+	os.Remove(idFile)
+	homeDir, _ := os.UserHomeDir()
+	homeIdFile := filepath.Join(homeDir, "privage-key.txt")
+	_ = os.WriteFile(homeIdFile, []byte("test key"), 0600)
+	defer os.Remove(homeIdFile)
+
+	// Should find in home directory
+	path, err = FindIdentityFile()
+	if err != nil {
+		t.Errorf("FindIdentityFile() error = %v, expected no error", err)
+	}
+	if path != homeIdFile {
+		t.Errorf("FindIdentityFile() = %v, want %v", path, homeIdFile)
+	}
+
+	// Remove both, should get error
+	os.Remove(homeIdFile)
+	path, err = FindIdentityFile()
+	if err == nil {
+		t.Error("FindIdentityFile() expected error when no file exists")
+	}
+}

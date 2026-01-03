@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,41 +14,46 @@ import (
 // the -c argument.  If no arguments provided, standard paths are searched for
 // a configuration file .privage.conf
 func setupEnv(opts setup.Options) (*setup.Setup, error) {
+	// Validate options first
+	if err := opts.Validate(); err != nil {
+		return &setup.Setup{}, err
+	}
 
-	if opts.KeyFile != "" {
-		if opts.ConfigFile != "" {
-			return &setup.Setup{}, errors.New("flags -c and -k are incompatible")
-		}
-
+	// Determine which case we're in using explicit methods
+	switch {
+	case opts.WithKeyRepo():
+		// Case 1: -k -r with optional -p
 		s, err := setup.NewFromArgs(opts.KeyFile, opts.RepoPath, opts.PivSlot)
 		if err != nil {
 			return &setup.Setup{}, err
 		}
-
 		return s, nil
-	}
 
-	if opts.ConfigFile != "" {
+	case opts.WithConfig():
+		// Case 2: -c only
 		s, err := setup.NewFromConfigFile(opts.ConfigFile)
 		if err != nil {
 			return &setup.Setup{}, err
 		}
-
 		return s, nil
+
+	case opts.NoFlags():
+		// Case 3: Nothing - search for config file
+		path, err := findConfigPath()
+		if err != nil {
+			return &setup.Setup{}, err
+		}
+
+		s, err := setup.NewFromConfigFile(path)
+		if err != nil {
+			return &setup.Setup{}, err
+		}
+		return s, nil
+
+	default:
+		// This should never happen due to Validate()
+		return &setup.Setup{}, fmt.Errorf("invalid option state")
 	}
-
-	path, err := findConfigPath()
-	if err != nil {
-		return &setup.Setup{}, err
-	}
-
-	s, err := setup.NewFromConfigFile(path)
-	if err != nil {
-		return &setup.Setup{}, err
-	}
-
-	return s, nil
-
 }
 
 func findConfigPath() (string, error) {

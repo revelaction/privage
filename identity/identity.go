@@ -38,61 +38,21 @@ type Identity struct {
 	Err error
 }
 
-// Load returns an Age identity
-//
-// it tries:
-// 1) the path given in the config file
-// 2) FILE in the current dir
-// 3) FILE in the user HOME
-// init method check if exist
-func Load(confPath string) Identity {
-
-	if len(confPath) > 0 {
-		ff, err := os.Open(confPath)
-		if err == nil {
-			return parseIdentity(ff, confPath)
-		}
-		defer ff.Close()
-
-		// no Path
-		return Identity{Err: err}
+// Load returns an Age identity from the exact path provided.
+// For searching identity files in standard locations, use fs.FindIdentityFile()
+// followed by identity.Load().
+func Load(path string) Identity {
+	if path == "" {
+		return Identity{Err: errors.New("identity path is empty")}
 	}
 
-	// try current dir
-	currentDir, err := os.Getwd()
+	f, err := os.Open(path)
 	if err != nil {
-		return Identity{Err: err}
-	}
-
-	currentPath := currentDir + "/" + DefaultFileName
-	fl, err := os.Open(currentPath)
-	if err == nil {
-		return parseIdentity(fl, currentPath)
-	}
-
-	if !errors.Is(err, os.ErrNotExist) {
-		return Identity{Err: err}
-	}
-	defer fl.Close()
-
-	// try home
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return Identity{Err: err}
-	}
-
-	homePath := homeDir + "/" + DefaultFileName
-	f, err := os.Open(homePath)
-	if err == nil {
-		return parseIdentity(f, homePath)
-	}
-
-	if !errors.Is(err, os.ErrNotExist) {
 		return Identity{Err: err}
 	}
 	defer f.Close()
 
-	return Identity{Err: err}
+	return parseIdentity(f, path)
 }
 
 func parseIdentity(f io.Reader, path string) Identity {
