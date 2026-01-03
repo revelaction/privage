@@ -13,6 +13,7 @@ import (
 
 	"github.com/revelaction/privage/fs"
 	id "github.com/revelaction/privage/identity"
+	"github.com/revelaction/privage/identity/piv/yubikey"
 	"github.com/revelaction/privage/setup"
 )
 
@@ -80,7 +81,19 @@ func rotate(s *setup.Setup, isClean bool, slot string) error {
 	}
 
 	if pivSlot > 0 {
-		idRotate = id.LoadPiv(idRotatePath, pivSlot, "")
+		device, err := yubikey.New()
+		if err != nil {
+			return fmt.Errorf("could not create yubikey device: %w", err)
+		}
+		defer device.Close()
+
+		f, err := fs.OpenFile(idRotatePath)
+		if err != nil {
+			return fmt.Errorf("could not open key file %s: %w", idRotatePath, err)
+		}
+		defer f.Close()
+
+		idRotate = id.LoadPiv(f, idRotatePath, device, pivSlot)
 	} else {
 		f, err := fs.OpenFile(idRotatePath)
 		if err != nil {
@@ -135,7 +148,19 @@ func rotate(s *setup.Setup, isClean bool, slot string) error {
 
 		// Load
 		if pivSlot > 0 {
-			idRotate = id.LoadPiv(idRotatePath, pivSlot, "")
+			device, err := yubikey.New()
+			if err != nil {
+				return fmt.Errorf("could not create yubikey device: %w", err)
+			}
+			defer device.Close()
+
+			f, err := fs.OpenFile(idRotatePath)
+			if err != nil {
+				return fmt.Errorf("could not open key file %s: %w", idRotatePath, err)
+			}
+			defer f.Close()
+
+			idRotate = id.LoadPiv(f, idRotatePath, device, pivSlot)
 		} else {
 			f, err := fs.OpenFile(idRotatePath)
 			if err != nil {
