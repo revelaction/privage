@@ -1,7 +1,6 @@
 package identity
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -38,21 +37,10 @@ type Identity struct {
 	Err error
 }
 
-// Load returns an Age identity from the exact path provided.
-// For searching identity files in standard locations, use fs.FindIdentityFile()
-// followed by identity.Load().
-func Load(path string) Identity {
-	if path == "" {
-		return Identity{Err: errors.New("identity path is empty")}
-	}
-
-	f, err := os.Open(path)
-	if err != nil {
-		return Identity{Err: err}
-	}
-	defer f.Close()
-
-	return parseIdentity(f, path)
+// Load returns an Age identity from an io.Reader.
+// The path parameter is used for error messages and tracking.
+func Load(r io.Reader, path string) Identity {
+	return parseIdentity(r, path)
 }
 
 func parseIdentity(f io.Reader, path string) Identity {

@@ -10,6 +10,7 @@ import (
 
 	"filippo.io/age"
 
+	"github.com/revelaction/privage/fs"
 	id "github.com/revelaction/privage/identity"
 	"github.com/revelaction/privage/setup"
 )
@@ -80,7 +81,12 @@ func rotate(s *setup.Setup, isClean bool, slot string) error {
 	if pivSlot > 0 {
 		idRotate = id.LoadPiv(idRotatePath, pivSlot, "")
 	} else {
-		idRotate = id.Load(idRotatePath)
+		f, err := fs.OpenFile(idRotatePath)
+		if err != nil {
+			return fmt.Errorf("could not open key file %s: %w", idRotatePath, err)
+		}
+		defer f.Close()
+		idRotate = id.Load(f, idRotatePath)
 	}
 
 	numFilesRotate := 0
@@ -124,7 +130,12 @@ func rotate(s *setup.Setup, isClean bool, slot string) error {
 		if pivSlot > 0 {
 			idRotate = id.LoadPiv(idRotatePath, pivSlot, "")
 		} else {
-			idRotate = id.Load(idRotatePath)
+			f, err := fs.OpenFile(idRotatePath)
+			if err != nil {
+				return fmt.Errorf("could not open key file %s: %w", idRotatePath, err)
+			}
+			defer f.Close()
+			idRotate = id.Load(f, idRotatePath)
 		}
 
 		fmt.Printf("🔑 Created new age key file %s✔️\n", idRotate.Path)

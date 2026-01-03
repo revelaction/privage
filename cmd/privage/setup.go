@@ -62,7 +62,13 @@ func setupEnv(opts setup.Options) (*setup.Setup, error) {
 		}
 
 		// Create setup with identity file and current directory as repo
-		id := identity.Load(idPath)
+		f, err := fs.OpenFile(idPath)
+		if err != nil {
+			return &setup.Setup{}, err
+		}
+		defer f.Close()
+
+		id := identity.Load(f, idPath)
 		if id.Err != nil {
 			return &setup.Setup{}, id.Err
 		}

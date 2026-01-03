@@ -147,7 +147,12 @@ func NewFromConfigFile(path string) (s *Setup, err error) {
 func identity(keyPath, pivSlot string) id.Identity {
 
 	if pivSlot == "" {
-		return id.Load(keyPath)
+		f, err := fs.OpenFile(keyPath)
+		if err != nil {
+			return id.Identity{Err: err}
+		}
+		defer f.Close()
+		return id.Load(f, keyPath)
 	}
 
 	slot, err := strconv.ParseUint(pivSlot, 16, 32)

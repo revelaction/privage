@@ -2,6 +2,7 @@ package fs
 
 import (
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 )
@@ -82,4 +83,10 @@ func FindConfigFile() (string, error) {
 	}
 
 	return "", errors.New("config file not found in home or current directory")
+}
+
+// OpenFile opens a file for reading.
+// Returns an io.ReadCloser that should be closed by the caller.
+func OpenFile(path string) (io.ReadCloser, error) {
+	return os.Open(path)
 }
