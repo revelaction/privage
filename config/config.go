@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/revelaction/privage/fs"
 	"github.com/pelletier/go-toml/v2"
 )
 
@@ -75,14 +76,22 @@ func (c *Config) validate() error {
 	if c.IdentityPath == "" {
 		return errors.New("identity_path is required")
 	}
-	if !fileExists(c.IdentityPath) {
+	exists, err := fs.FileExists(c.IdentityPath)
+	if err != nil {
+		return fmt.Errorf("cannot access identity file %s: %w", c.IdentityPath, err)
+	}
+	if !exists {
 		return fmt.Errorf("identity file %s does not exist", c.IdentityPath)
 	}
 
 	if c.RepositoryPath == "" {
 		return errors.New("repository_path is required")
 	}
-	if !fileExists(c.RepositoryPath) {
+	exists, err = fs.DirExists(c.RepositoryPath)
+	if err != nil {
+		return fmt.Errorf("cannot access repository directory %s: %w", c.RepositoryPath, err)
+	}
+	if !exists {
 		return fmt.Errorf("repository directory %s does not exist", c.RepositoryPath)
 	}
 
@@ -105,9 +114,4 @@ func (c *Config) expandHome() error {
 	}
 
 	return nil
-}
-
-func fileExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
 }

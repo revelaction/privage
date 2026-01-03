@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/revelaction/privage/config"
+	"github.com/revelaction/privage/fs"
 
 	id "github.com/revelaction/privage/identity"
 )
@@ -48,9 +49,12 @@ func NewFromArgs(keyPath, repoPath, pivSlot string) (*Setup, error) {
 
 	id := identity(keyPath, pivSlot)
 
-	_, err := directoryExists(repoPath)
+	exists, err := fs.DirExists(repoPath)
 	if err != nil {
 		return &Setup{}, err
+	}
+	if !exists {
+		return &Setup{}, fmt.Errorf("repository directory %s does not exist", repoPath)
 	}
 
 	return &Setup{C: &config.Config{}, Id: id, Repository: repoPath}, nil
@@ -92,16 +96,3 @@ func identity(keyPath, pivSlot string) id.Identity {
 	return id.LoadPiv(keyPath, uint32(slot), "")
 }
 
-func directoryExists(path string) (bool, error) {
-
-	stat, err := os.Stat(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		} else {
-			return false, err
-		}
-	}
-
-	return stat.IsDir(), nil
-}
