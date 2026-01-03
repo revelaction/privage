@@ -2,6 +2,9 @@ package main
 
 import (
 	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/revelaction/privage/config"
 	"github.com/revelaction/privage/setup"
@@ -35,7 +38,7 @@ func setupEnv(opts setup.Options) (*setup.Setup, error) {
 		return s, nil
 	}
 
-	path, err := config.FindPath()
+	path, err := findConfigPath()
 	if err != nil {
 		return &setup.Setup{}, err
 	}
@@ -47,4 +50,25 @@ func setupEnv(opts setup.Options) (*setup.Setup, error) {
 
 	return s, nil
 
+}
+
+func findConfigPath() (string, error) {
+	locations := []func() (string, error){
+		os.UserHomeDir,
+		os.Getwd,
+	}
+
+	for _, getDir := range locations {
+		dir, err := getDir()
+		if err != nil {
+			continue
+		}
+
+		path := filepath.Join(dir, config.DefaultFileName)
+		if _, err := os.Stat(path); err == nil {
+			return path, nil
+		}
+	}
+
+	return "", fmt.Errorf("could not find configuration file %s in home or current directory", config.DefaultFileName)
 }

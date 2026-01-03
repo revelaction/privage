@@ -70,7 +70,7 @@ func New(path string) (*Config, error) {
 		return nil, err
 	}
 
-	if err := conf.Validate(); err != nil {
+	if err := conf.validate(); err != nil {
 		return nil, fmt.Errorf("configuration validation failed for %s: %w", path, err)
 	}
 
@@ -78,9 +78,9 @@ func New(path string) (*Config, error) {
 	return conf, nil
 }
 
-// Validate ensures that the configuration has all required fields and that
+// validate ensures that the configuration has all required fields and that
 // referenced paths exist.
-func (c *Config) Validate() error {
+func (c *Config) validate() error {
 	if c.IdentityPath == "" {
 		return errors.New("identity_path is required")
 	}
@@ -89,7 +89,7 @@ func (c *Config) Validate() error {
 	}
 
 	if c.RepositoryPath == "" {
-		return errors.New("secrets_repository_path is required")
+		return errors.New("repository_path is required")
 	}
 	if !fileExists(c.RepositoryPath) {
 		return fmt.Errorf("repository directory %s does not exist", c.RepositoryPath)
@@ -116,33 +116,7 @@ func (c *Config) ExpandHome() error {
 	return nil
 }
 
-// FindPath searches for the configuration file in standard locations.
-func FindPath() (string, error) {
-	locations := []func() (string, error){
-		os.UserHomeDir,
-		os.Getwd,
-	}
-
-	for _, getDir := range locations {
-		dir, err := getDir()
-		if err != nil {
-			continue
-		}
-
-		path := filepath.Join(dir, DefaultFileName)
-		if fileExists(path) {
-			return path, nil
-		}
-	}
-
-	return "", fmt.Errorf("could not find configuration file %s in home or current directory", DefaultFileName)
-
-}
-
 func fileExists(path string) bool {
-
 	_, err := os.Stat(path)
-
 	return err == nil
-
 }
