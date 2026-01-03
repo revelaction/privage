@@ -1,7 +1,6 @@
 package config
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -48,6 +47,12 @@ func Decode(r io.Reader) (*Config, error) {
 	return &conf, nil
 }
 
+// Encode encodes the configuration to an io.Writer.
+func (c *Config) Encode(w io.Writer) error {
+	enc := toml.NewEncoder(w)
+	return enc.Encode(c)
+}
+
 // New reads, parses, and validates a configuration file from the given path.
 func New(path string) (*Config, error) {
 	f, err := os.Open(path)
@@ -56,7 +61,7 @@ func New(path string) (*Config, error) {
 	}
 	defer f.Close()
 
-	conf, err := Decode(bufio.NewReader(f))
+	conf, err := Decode(f)
 	if err != nil {
 		return nil, fmt.Errorf("invalid configuration file %s: %w", path, err)
 	}
@@ -124,48 +129,20 @@ func FindPath() (string, error) {
 			continue
 		}
 
-		path := filepath.Join(dir,DefaultFileName)
+		path := filepath.Join(dir, DefaultFileName)
 		if fileExists(path) {
 			return path, nil
 		}
 	}
 
-	return "", fmt.Errorf("could not find configuration file %s in home or current directory",DefaultFileName)
-}
+	return "", fmt.Errorf("could not find configuration file %s in home or current directory", DefaultFileName)
 
-// Create generates a new configuration file at the default home location.
-func Create(identityPath, identityType, identityPivSlot, repositoryPath string) error {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return err
-	}
-
-	conf := &Config{
-		IdentityPath:    identityPath,
-		IdentityType:    identityType,
-		IdentityPivSlot: identityPivSlot,
-		RepositoryPath:  repositoryPath,
-	}
-
-	path := filepath.Join(homeDir,DefaultFileName)
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		_ = f.Close()
-	}()
-
-	enc := toml.NewEncoder(f)
-	if err := enc.Encode(conf); err != nil {
-		return fmt.Errorf("could not encode configuration: %w", err)
-	}
-
-	return nil
 }
 
 func fileExists(path string) bool {
+
 	_, err := os.Stat(path)
+
 	return err == nil
+
 }

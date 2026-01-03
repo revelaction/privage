@@ -3,8 +3,8 @@ package identity
 import (
 	"filippo.io/age"
 	"fmt"
-	"os"
 	"io"
+	"os"
 
 	"crypto"
 	"crypto/rand"

@@ -32,8 +32,8 @@ func TestCompleteAction_Subcommands(t *testing.T) {
 	}{
 		{
 			name:     "Empty args",
-			args:     []string{"--", "privage"}, 
-			contains: []string{},               
+			args:     []string{"--", "privage"},
+			contains: []string{},
 		},
 		{
 			name:     "Command completion (empty)",
@@ -165,7 +165,7 @@ func TestComplete_Values(t *testing.T) {
 
 func TestComplete_Errors(t *testing.T) {
 	// If getting headers fails, we should handle it gracefully (e.g. return nil or partial)
-	
+
 	// Case 1: Show command - expects headers. If error, returns nil/empty.
 	args := []string{"--", "privage", "show", ""}
 	completions, err := getCompletions(args, errorHeaders, noFiles)
@@ -217,7 +217,7 @@ func TestFilesForAddCmd(t *testing.T) {
 		"file1.txt",
 		"file2.log",
 	}
-	
+
 	if len(files) != len(expected) {
 		t.Errorf("expected %d files, got %d: %v", len(expected), len(files), files)
 	}
@@ -225,7 +225,7 @@ func TestFilesForAddCmd(t *testing.T) {
 	for _, exp := range expected {
 		assertContains(t, files, exp)
 	}
-	
+
 	for _, f := range files {
 		if filepath.Base(f) == ".hidden" {
 			t.Error("should not contain dot files")

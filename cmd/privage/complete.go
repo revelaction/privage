@@ -31,17 +31,17 @@ var commands = []string{
 // completeAction handles the autocompletion requests triggered by the bash completion script.
 //
 // Understanding the Argument Flow:
-// 1. Bash triggers the completion function and executes:
-//    privage complete -- "${COMP_WORDS[@]}"
+//  1. Bash triggers the completion function and executes:
+//     privage complete -- "${COMP_WORDS[@]}"
 //
-// 2. In main.go, flag.Parse() is called. Since "complete" is the first positional 
-//    argument, flag.Parse() stops there. It does NOT consume the "--" separator 
-//    because the separator appears after the "complete" command token.
+//  2. In main.go, flag.Parse() is called. Since "complete" is the first positional
+//     argument, flag.Parse() stops there. It does NOT consume the "--" separator
+//     because the separator appears after the "complete" command token.
 //
 // 3. main.go passes flag.Args()[1:] to this function.
-//    - args[0]: "--" (The separator inserted by bash.go)
-//    - args[1]: "privage" (The first element of COMP_WORDS, the binary name)
-//    - args[2...]: The actual command line arguments typed by the user.
+//   - args[0]: "--" (The separator inserted by bash.go)
+//   - args[1]: "privage" (The first element of COMP_WORDS, the binary name)
+//   - args[2...]: The actual command line arguments typed by the user.
 //
 // Example: User types 'privage -k key.txt show [TAB]'
 // - COMP_WORDS: ["privage", "-k", "key.txt", "show", ""]
@@ -49,8 +49,8 @@ var commands = []string{
 // - commandIndex starts at 2, skips "-k" and "key.txt", and identifies "show" at index 4.
 func completeCommand(opts setup.Options, args []string) error {
 
-    // Decouple the completion logic from file system and encryption
-    // dependencies by injecting dependencies via functions
+	// Decouple the completion logic from file system and encryption
+	// dependencies by injecting dependencies via functions
 	listHeaders := func() ([]*header.Header, error) {
 		s, err := setupEnv(opts)
 		if err != nil {

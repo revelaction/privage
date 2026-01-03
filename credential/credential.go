@@ -157,7 +157,6 @@ func ValidateFile(filePath string) (err error) {
 	return Validate(f)
 }
 
-
 // GeneratePassword generates a random password
 func GeneratePassword() (string, error) {
 

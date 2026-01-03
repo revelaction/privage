@@ -115,9 +115,27 @@ func initCommand(opts setup.Options, args []string) error {
 	//
 	// config file
 	//
-	err = config.Create(identityPath, identityType, slot, currentDir)
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return fmt.Errorf("could not generate config file: %w", err)
+		return err
+	}
+
+	confPath := homeDir + "/" + config.DefaultFileName
+	f, err := os.OpenFile(confPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if err != nil {
+		return fmt.Errorf("could not create config file: %w", err)
+	}
+	defer f.Close()
+
+	conf := &config.Config{
+		IdentityPath:    identityPath,
+		IdentityType:    identityType,
+		IdentityPivSlot: slot,
+		RepositoryPath:  currentDir,
+	}
+
+	if err := conf.Encode(f); err != nil {
+		return fmt.Errorf("could not encode config file: %w", err)
 	}
 
 	fmt.Printf("📑 Generated config file %s ✔️\n", config.DefaultFileName)

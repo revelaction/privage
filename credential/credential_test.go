@@ -206,8 +206,8 @@ func TestValidateFile(t *testing.T) {
 
 func TestCredential_GetField(t *testing.T) {
 	cred := &Credential{
-		Login:    "lipo",
-		ApiKey:   "key123",
+		Login:  "lipo",
+		ApiKey: "key123",
 		Others: map[string]any{
 			"pin": "4444",
 		},
@@ -237,4 +237,3 @@ func TestCredential_GetField(t *testing.T) {
 		})
 	}
 }
-
