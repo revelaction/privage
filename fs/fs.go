@@ -56,3 +56,30 @@ func FindIdentityFile() (string, error) {
 
 	return "", errors.New("identity file not found in current or home directory")
 }
+
+// FindConfigFile searches for the config file in standard locations.
+// It searches in order:
+// 1. Home directory: ~/.privage.conf
+// 2. Current directory: ./.privage.conf
+// Returns the path if found, or an error if not found.
+func FindConfigFile() (string, error) {
+	// Try home directory first
+	homeDir, err := os.UserHomeDir()
+	if err == nil {
+		homePath := filepath.Join(homeDir, ".privage.conf")
+		if exists, _ := FileExists(homePath); exists {
+			return homePath, nil
+		}
+	}
+
+	// Try current directory
+	currentDir, err := os.Getwd()
+	if err == nil {
+		currentPath := filepath.Join(currentDir, ".privage.conf")
+		if exists, _ := FileExists(currentPath); exists {
+			return currentPath, nil
+		}
+	}
+
+	return "", errors.New("config file not found in home or current directory")
+}

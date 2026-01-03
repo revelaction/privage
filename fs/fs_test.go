@@ -144,3 +144,48 @@ func TestFindIdentityFile(t *testing.T) {
 		t.Error("FindIdentityFile() expected error when no file exists")
 	}
 }
+
+func TestFindConfigFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	oldWd, _ := os.Getwd()
+	defer os.Chdir(oldWd)
+
+	// Change to temp directory
+	os.Chdir(tmpDir)
+
+	// Create config file in home directory first (home has priority)
+	homeDir, _ := os.UserHomeDir()
+	homeConfigFile := filepath.Join(homeDir, ".privage.conf")
+	_ = os.WriteFile(homeConfigFile, []byte("test config"), 0600)
+	defer os.Remove(homeConfigFile)
+
+	// Should find in home directory (priority)
+	path, err := FindConfigFile()
+	if err != nil {
+		t.Errorf("FindConfigFile() error = %v, expected no error", err)
+	}
+	if path != homeConfigFile {
+		t.Errorf("FindConfigFile() = %v, want %v", path, homeConfigFile)
+	}
+
+	// Remove from home, create in current directory
+	os.Remove(homeConfigFile)
+	configFile := filepath.Join(tmpDir, ".privage.conf")
+	_ = os.WriteFile(configFile, []byte("test config"), 0600)
+
+	// Should find in current directory
+	path, err = FindConfigFile()
+	if err != nil {
+		t.Errorf("FindConfigFile() error = %v, expected no error", err)
+	}
+	if path != configFile {
+		t.Errorf("FindConfigFile() = %v, want %v", path, configFile)
+	}
+
+	// Remove both, should get error
+	os.Remove(configFile)
+	path, err = FindConfigFile()
+	if err == nil {
+		t.Error("FindConfigFile() expected error when no file exists")
+	}
+}

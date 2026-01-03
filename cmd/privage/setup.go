@@ -3,9 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
-	"github.com/revelaction/privage/config"
 	"github.com/revelaction/privage/fs"
 	"github.com/revelaction/privage/identity"
 	"github.com/revelaction/privage/setup"
@@ -41,7 +39,7 @@ func setupEnv(opts setup.Options) (*setup.Setup, error) {
 
 	case opts.NoFlags():
 		// Case 3: Nothing - try config file first, then identity file
-		configPath, err := findConfigPath()
+		configPath, err := fs.FindConfigFile()
 		if err == nil {
 			// Config file found - use it
 			s, err := setup.NewFromConfigFile(configPath)
@@ -70,7 +68,7 @@ func setupEnv(opts setup.Options) (*setup.Setup, error) {
 		}
 
 		return &setup.Setup{
-			C:          &config.Config{},
+			C:          nil, // No config when using auto-discovery
 			Id:         id,
 			Repository: repoPath,
 		}, nil
@@ -79,25 +77,4 @@ func setupEnv(opts setup.Options) (*setup.Setup, error) {
 		// This should never happen due to Validate()
 		return &setup.Setup{}, fmt.Errorf("invalid option state")
 	}
-}
-
-func findConfigPath() (string, error) {
-	locations := []func() (string, error){
-		os.UserHomeDir,
-		os.Getwd,
-	}
-
-	for _, getDir := range locations {
-		dir, err := getDir()
-		if err != nil {
-			continue
-		}
-
-		path := filepath.Join(dir, config.DefaultFileName)
-		if _, err := os.Stat(path); err == nil {
-			return path, nil
-		}
-	}
-
-	return "", fmt.Errorf("could not find configuration file %s in home or current directory", config.DefaultFileName)
 }
