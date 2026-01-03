@@ -5,7 +5,6 @@ go 1.24.0
 require (
 	filippo.io/age v1.3.1
 	github.com/atotto/clipboard v0.1.4
-	github.com/go-piv/piv-go v1.11.0
 	github.com/go-piv/piv-go/v2 v2.4.0
 	github.com/pelletier/go-toml/v2 v2.2.4
 )

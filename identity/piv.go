@@ -11,7 +11,7 @@ import (
 	"crypto/rsa"
 	"encoding/ascii85"
 
-	"github.com/go-piv/piv-go/piv"
+	"github.com/go-piv/piv-go/v2/piv"
 )
 
 const PivAlgoRsa2048 = "RSA2048"
