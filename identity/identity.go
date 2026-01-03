@@ -75,9 +75,15 @@ func New(w io.Writer) error {
 		return err
 	}
 
-	fmt.Fprintf(w, "# created: %s\n", time.Now().Format(time.RFC3339))
-	fmt.Fprintf(w, "# public key: %s\n", k.Recipient())
-	fmt.Fprintf(w, "%s\n", k)
+	if _, err := fmt.Fprintf(w, "# created: %s\n", time.Now().Format(time.RFC3339)); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(w, "# public key: %s\n", k.Recipient()); err != nil {
+		return err
+	}
+	if _, err := fmt.Fprintf(w, "%s\n", k); err != nil {
+		return err
+	}
 	return nil
 }
 
