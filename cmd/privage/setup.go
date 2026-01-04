@@ -76,7 +76,7 @@ func setupEnv(opts setup.Options) (*setup.Setup, error) {
 		}
 		defer f.Close()
 
-		id := identity.Load(f, idPath)
+		id := identity.LoadAge(f, idPath)
 		if id.Err != nil {
 			return &setup.Setup{}, id.Err
 		}

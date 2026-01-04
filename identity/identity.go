@@ -36,9 +36,9 @@ type Identity struct {
 	Err error
 }
 
-// Load returns an Age identity from an io.Reader.
+// LoadAge returns an Age identity from an io.Reader.
 // The path parameter is used for error messages and tracking.
-func Load(r io.Reader, path string) Identity {
+func LoadAge(r io.Reader, path string) Identity {
 	return parseIdentity(r, path)
 }
 
@@ -68,8 +68,8 @@ func FmtType(slot string) string {
 	return "🔐 age key"
 }
 
-// New generates an age Identity and writes it to the writer.
-func New(w io.Writer) error {
+// GenerateAge generates an age Identity and writes it to the writer.
+func GenerateAge(w io.Writer) error {
 	k, err := age.GenerateX25519Identity()
 	if err != nil {
 		return err

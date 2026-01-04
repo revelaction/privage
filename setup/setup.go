@@ -161,7 +161,7 @@ func identity(keyPath, pivSlot string) id.Identity {
 				_ = cerr
 			}
 		}()
-		return id.Load(f, keyPath)
+		return id.LoadAge(f, keyPath)
 	}
 
 	slot, err := strconv.ParseUint(pivSlot, 16, 32)

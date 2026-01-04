@@ -51,7 +51,7 @@ func keyCommand(opts setup.Options, args []string) error {
 	}
 	defer f.Close()
 
-	ageKey, err := id.LoadRaw(f, device, uint32(ps))
+	ageKey, err := id.DecryptPiv(f, device, uint32(ps))
 	if err != nil {
 		return fmt.Errorf("could not decrypt age key: %w", err)
 	}

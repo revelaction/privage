@@ -10,8 +10,8 @@ import (
 	"filippo.io/age"
 )
 
-// TestLoad_ValidIdentity tests that Load correctly parses a valid age identity
-func TestLoad_ValidIdentity(t *testing.T) {
+// TestLoadAge_ValidIdentity tests that LoadAge correctly parses a valid age identity
+func TestLoadAge_ValidIdentity(t *testing.T) {
 	// Generate a real age identity
 	id, err := age.GenerateX25519Identity()
 	if err != nil {
@@ -25,26 +25,26 @@ func TestLoad_ValidIdentity(t *testing.T) {
 	fmt.Fprintf(&buf, "%s\n", id)
 
 	// Load from the buffer
-	result := Load(&buf, "test-path.txt")
+	result := LoadAge(&buf, "test-path.txt")
 
 	// Verify
 	if result.Err != nil {
-		t.Errorf("Load returned error for valid identity: %v", result.Err)
+		t.Errorf("LoadAge returned error for valid identity: %v", result.Err)
 	}
 	if result.Path != "test-path.txt" {
-		t.Errorf("Load path mismatch: got %q, want %q", result.Path, "test-path.txt")
+		t.Errorf("LoadAge path mismatch: got %q, want %q", result.Path, "test-path.txt")
 	}
 	if result.Id == nil {
-		t.Error("Load returned nil identity for valid input")
+		t.Error("LoadAge returned nil identity for valid input")
 	}
 }
 
-// TestLoad_InvalidData tests that Load returns error for malformed input
-func TestLoad_InvalidData(t *testing.T) {
+// TestLoadAge_InvalidData tests that LoadAge returns error for malformed input
+func TestLoadAge_InvalidData(t *testing.T) {
 	invalidData := "not a valid age key\n"
 	reader := strings.NewReader(invalidData)
 
-	result := Load(reader, "invalid.txt")
+	result := LoadAge(reader, "invalid.txt")
 
 	if result.Err == nil {
 		t.Error("Expected error for invalid age key data, got nil")
@@ -57,24 +57,24 @@ func TestLoad_InvalidData(t *testing.T) {
 	}
 }
 
-// TestLoad_EmptyReader tests that Load handles empty input
-func TestLoad_EmptyReader(t *testing.T) {
+// TestLoadAge_EmptyReader tests that LoadAge handles empty input
+func TestLoadAge_EmptyReader(t *testing.T) {
 	emptyReader := strings.NewReader("")
 
-	result := Load(emptyReader, "empty.txt")
+	result := LoadAge(emptyReader, "empty.txt")
 
 	if result.Err == nil {
 		t.Error("Expected error for empty reader, got nil")
 	}
 }
 
-// TestNew_Success tests that New generates and writes a valid age identity
-func TestNew_Success(t *testing.T) {
+// TestGenerateAge_Success tests that GenerateAge generates and writes a valid age identity
+func TestGenerateAge_Success(t *testing.T) {
 	var buf bytes.Buffer
 
-	err := New(&buf)
+	err := GenerateAge(&buf)
 	if err != nil {
-		t.Fatalf("New failed: %v", err)
+		t.Fatalf("GenerateAge failed: %v", err)
 	}
 
 	// Verify the output format
@@ -102,7 +102,7 @@ func TestNew_Success(t *testing.T) {
 
 	// Verify we can parse what we generated
 	reader := strings.NewReader(output)
-	result := Load(reader, "test-new.txt")
+	result := LoadAge(reader, "test-new.txt")
 	if result.Err != nil {
 		t.Errorf("Failed to parse generated identity: %v", result.Err)
 	}
@@ -111,12 +111,12 @@ func TestNew_Success(t *testing.T) {
 	}
 }
 
-// TestNew_WriterError tests that New propagates writer errors
-func TestNew_WriterError(t *testing.T) {
+// TestGenerateAge_WriterError tests that GenerateAge propagates writer errors
+func TestGenerateAge_WriterError(t *testing.T) {
 	// Create a writer that always fails
 	errWriter := &errorWriter{}
 
-	err := New(errWriter)
+	err := GenerateAge(errWriter)
 	if err == nil {
 		t.Error("Expected error from failing writer, got nil")
 	}
