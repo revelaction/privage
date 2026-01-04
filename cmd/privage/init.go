@@ -10,6 +10,7 @@ import (
 	"github.com/revelaction/privage/config"
 	filesystem "github.com/revelaction/privage/fs"
 	id "github.com/revelaction/privage/identity"
+	"github.com/revelaction/privage/identity/piv/yubikey"
 	"github.com/revelaction/privage/setup"
 )
 
@@ -69,7 +70,6 @@ func initCommand(opts setup.Options, args []string) (err error) {
 
 	identityPath := currentDir + "/" + id.DefaultFileName
 	identityType := id.TypeAge
-	identityAlgo := id.PivAlgoRsa2048 // only RSA2048 supported
 
 	// piv key
 	if len(slot) > 0 {
@@ -80,7 +80,23 @@ func initCommand(opts setup.Options, args []string) (err error) {
 			return fmt.Errorf("could not convert slot %s to hex: %v", slot, err)
 		}
 
-		err = id.CreatePivRsa(identityPath, uint32(identitySlot), identityAlgo)
+		f, err := filesystem.CreateFile(identityPath, 0600)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if cerr := f.Close(); cerr != nil && err == nil {
+				err = cerr
+			}
+		}()
+
+		yk, err := yubikey.New()
+		if err != nil {
+			return fmt.Errorf("could not connect to yubikey: %w", err)
+		}
+		defer yk.Close()
+
+		err = id.GeneratePiv(f, yk, uint32(identitySlot))
 		if err != nil {
 			return fmt.Errorf("error creating encrypted age key in slot %s: %w", slot, err)
 		}
