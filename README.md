@@ -62,7 +62,7 @@ sudo apt-get -y install pkg-config libpcsclite-dev libpcsclite1 pcscd pcsc-tools
 ## privage
 
 ```console
- go install github.com/revelaction/privage/cmd...@v0.9.1-beta
+ go install github.com/revelaction/privage/cmd...@v0.24.0
 ```
 
 ### Build without Yubikey support
