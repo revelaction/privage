@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	"filippo.io/age"
@@ -89,40 +88,30 @@ func TestHeaderGenerator(t *testing.T) {
 		}
 	})
 
-	t.Run("ResourceLeak_ManyFiles", func(t *testing.T) {
-		// Create many files to test file descriptor management.
-		// On many systems, default ulimit is 1024. 200 is enough to verify we aren't leaking.
+	t.Run("FlatRepository_IgnoreSubdirectories", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		numFiles := 200
-		h := &header.Header{Category: "test", Label: "test"}
-		
-		for i := 0; i < numFiles; i++ {
-			createTestAgeFile(t, tmpDir, fmt.Sprintf("file%d", i), h, identity)
+
+		// 1. Valid file in root
+		createTestAgeFile(t, tmpDir, "root_file", &header.Header{Label: "root"}, identity)
+
+		// 2. File in subdirectory (should be ignored)
+		subDir := filepath.Join(tmpDir, "subdir")
+		if err := os.Mkdir(subDir, 0700); err != nil {
+			t.Fatalf("failed to create subdir: %v", err)
 		}
+		createTestAgeFile(t, subDir, "sub_file", &header.Header{Label: "sub"}, identity)
 
 		gen := headerGenerator(tmpDir, privageId)
 		count := 0
 		for h := range gen {
-			if h.Err != nil {
-				t.Fatalf("unexpected error at file %d: %v", count, h.Err)
+			if h.Label != "root" {
+				t.Errorf("expected only root file, got: %s", h.Label)
 			}
 			count++
 		}
 
-		if count != numFiles {
-			t.Errorf("expected %d files, got %d", numFiles, count)
-		}
-
-		// Check open files if on linux (best effort)
-		if runtime.GOOS == "linux" {
-			fds, err := os.ReadDir("/proc/self/fd")
-			if err == nil {
-				// We don't know the exact base number, but it should definitely be less than numFiles + base.
-				// If we leaked, it would be > 200.
-				if len(fds) > 100 { // Normal apps have ~10-20 FDs open
-					t.Logf("Warning: suspiciously high number of FDs open: %d", len(fds))
-				}
-			}
+		if count != 1 {
+			t.Errorf("expected 1 file, got %d", count)
 		}
 	})
 

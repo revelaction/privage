@@ -18,42 +18,65 @@ const AgeExtension = ".age"
 
 // headerGenerator iterates all .age file in the repository directory and
 // yields the decrypted header.
+//
+// The repository is expected to be flat; subdirectories are ignored.
 func headerGenerator(repoDir string, identity id.Identity) <-chan *header.Header {
 
 	ch := make(chan *header.Header)
 
 	go func() {
-		for _, path := range filesWithExt(repoDir, AgeExtension) {
-			h := &header.Header{}
-			h.Path = path
+
+		err := filepath.WalkDir(repoDir, func(path string, d fs.DirEntry, err error) error {
+
+			if err != nil {
+				// If WalkDir encounters an error accessing a path (e.g. permission denied),
+				// returning the error here will abort the entire walk.
+				return err
+			}
+
+			// Flat repository: skip subdirectories
+			if d.IsDir() {
+				if path != repoDir {
+					return filepath.SkipDir
+				}
+				// In a WalkDir callback, 'return nil' is the equivalent of 'continue'
+				// in a standard for loop, moving to the next entry.
+				return nil
+			}
+
+			// Only process .age files
+			if filepath.Ext(d.Name()) != AgeExtension {
+				return nil
+			}
+
+			h := &header.Header{Path: path}
 
 			f, err := os.Open(path)
 			if err != nil {
 				h.Err = fmt.Errorf("could not open file %s: %w", path, err)
-
 				ch <- h
-				continue
+				return nil
 			}
 
 			// 1. Read the header
 			headerBlock := make([]byte, header.BlockSize)
-			_, err = io.ReadFull(f, headerBlock)
+			_, readErr := io.ReadFull(f, headerBlock)
 
 			// 2. Always capture the close error
 			closeErr := f.Close()
 
 			// 3. Prioritize the read error if it exists
-			if err != nil {
-				h.Err = fmt.Errorf("could not read header in file %s: %w", path, err)
+			if readErr != nil {
+				h.Err = fmt.Errorf("could not read header in file %s: %w", path, readErr)
 				ch <- h
-				continue
+				return nil
 			}
 
 			// 4. If read succeeded, check if the close failed
 			if closeErr != nil {
 				h.Err = fmt.Errorf("could not close file %s: %w", path, closeErr)
 				ch <- h
-				continue
+				return nil
 			}
 
 			// first remove the pad
@@ -61,7 +84,7 @@ func headerGenerator(repoDir string, identity id.Identity) <-chan *header.Header
 			if err != nil {
 				h.Err = fmt.Errorf("could not unpad header in file %s: %w", path, err)
 				ch <- h
-				continue
+				return nil
 			}
 
 			uReader := bytes.NewReader(unpadded)
@@ -69,20 +92,27 @@ func headerGenerator(repoDir string, identity id.Identity) <-chan *header.Header
 			if err != nil {
 				h.Err = fmt.Errorf("could not Decrypt header in file %s with identity %s: %w", path, identity.Path, err)
 				ch <- h
-				continue
+				return nil
 			}
 
 			out := &bytes.Buffer{}
 			if _, err := io.Copy(out, r); err != nil {
 				h.Err = fmt.Errorf("could not copy to buffer the header in file %s: %w", path, err)
 				ch <- h
-				continue
+				return nil
 			}
 
 			h = header.Parse(out.Bytes())
 			h.Path = path
 
 			ch <- h
+			return nil
+		})
+
+		if err != nil {
+			// To maintain original semantics where directory-level errors were silent,
+			// we acknowledge the WalkDir error but do not propagate it to the channel.
+			_ = err
 		}
 
 		close(ch)
@@ -108,19 +138,4 @@ func contentReader(h *header.Header, identity id.Identity) (io.Reader, error) {
 	}
 
 	return r, nil
-}
-
-// filesWithExt returns all files with extension ext under the directory root.
-func filesWithExt(root, ext string) []string {
-	var a []string
-	filepath.WalkDir(root, func(s string, d fs.DirEntry, e error) error {
-		if e != nil {
-			return e
-		}
-		if filepath.Ext(d.Name()) == ext {
-			a = append(a, s)
-		}
-		return nil
-	})
-	return a
 }

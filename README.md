@@ -362,6 +362,10 @@ The first encrypted payload (the header) contains the file name and a category
 
 The second encrypted payload contains the file contents.
 
+`privage` uses a **flat repository structure**: all encrypted `.age` files are
+stored directly in the repository directory. Subdirectories are not supported
+and are ignored during scanning.
+
 When listing the encrypted files, `privage` scans all encrypted files, retrieves the
 encrypted header payload and decrypts it, presenting the header.
 
