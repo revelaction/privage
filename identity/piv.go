@@ -9,8 +9,6 @@ import (
 	"filippo.io/age"
 )
 
-const PivAlgoRsa2048 = "RSA2048"
-
 // Device represents a PIV-compatible hardware device that can perform
 // cryptographic operations like decryption.
 type Device interface {
