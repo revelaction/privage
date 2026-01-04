@@ -94,7 +94,11 @@ func initCommand(opts setup.Options, args []string) (err error) {
 		if err != nil {
 			return fmt.Errorf("could not connect to yubikey: %w", err)
 		}
-		defer yk.Close()
+		defer func() {
+			if cerr := yk.Close(); cerr != nil && err == nil {
+				err = cerr
+			}
+		}()
 
 		err = id.GeneratePiv(f, yk, uint32(identitySlot))
 		if err != nil {

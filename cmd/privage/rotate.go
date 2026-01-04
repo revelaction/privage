@@ -24,7 +24,7 @@ const (
 
 // rotateCommand generates a new age key and reencrypts all present encrypted
 // fields with the new key.
-func rotateCommand(opts setup.Options, args []string) error {
+func rotateCommand(opts setup.Options, args []string) (err error) {
 	fs := flag.NewFlagSet("rotate", flag.ContinueOnError)
 	var isClean bool
 	var slot string
@@ -40,7 +40,7 @@ func rotateCommand(opts setup.Options, args []string) error {
 		fs.PrintDefaults()
 	}
 
-	if err := fs.Parse(args); err != nil {
+	if err = fs.Parse(args); err != nil {
 		return err
 	}
 
@@ -52,7 +52,7 @@ func rotateCommand(opts setup.Options, args []string) error {
 	return rotate(s, isClean, slot)
 }
 
-func rotate(s *setup.Setup, isClean bool, slot string) error {
+func rotate(s *setup.Setup, isClean bool, slot string) (err error) {
 
 	if s.Id.Id == nil {
 		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
@@ -69,7 +69,6 @@ func rotate(s *setup.Setup, isClean bool, slot string) error {
 	var idRotate id.Identity
 	idRotatePath := s.Repository + "/" + fileNameRotate
 	var pivSlot uint32
-	var err error
 
 	if len(slot) > 0 {
 		ps, err := strconv.ParseUint(slot, 16, 32)
@@ -85,13 +84,21 @@ func rotate(s *setup.Setup, isClean bool, slot string) error {
 		if err != nil {
 			return fmt.Errorf("could not create yubikey device: %w", err)
 		}
-		defer device.Close()
+		defer func() {
+			if cerr := device.Close(); cerr != nil && err == nil {
+				err = cerr
+			}
+		}()
 
 		f, err := fs.OpenFile(idRotatePath)
 		if err != nil {
 			return fmt.Errorf("could not open key file %s: %w", idRotatePath, err)
 		}
-		defer f.Close()
+		defer func() {
+			if cerr := f.Close(); cerr != nil && err == nil {
+				err = cerr
+			}
+		}()
 
 		idRotate = id.LoadPiv(f, idRotatePath, device, pivSlot)
 	} else {
@@ -99,7 +106,11 @@ func rotate(s *setup.Setup, isClean bool, slot string) error {
 		if err != nil {
 			return fmt.Errorf("could not open key file %s: %w", idRotatePath, err)
 		}
-		defer f.Close()
+		defer func() {
+			if cerr := f.Close(); cerr != nil && err == nil {
+				err = cerr
+			}
+		}()
 		idRotate = id.LoadAge(f, idRotatePath)
 	}
 
@@ -145,7 +156,11 @@ func rotate(s *setup.Setup, isClean bool, slot string) error {
 			if err != nil {
 				return fmt.Errorf("could not create yubikey device: %w", err)
 			}
-			defer device.Close()
+			defer func() {
+				if cerr := device.Close(); cerr != nil && err == nil {
+					err = cerr
+				}
+			}()
 
 			err = id.GeneratePiv(f, device, pivSlot)
 		} else {
@@ -154,7 +169,11 @@ func rotate(s *setup.Setup, isClean bool, slot string) error {
 			if err != nil {
 				return fmt.Errorf("could not create key file %s: %w", idRotatePath, err)
 			}
-			defer f.Close()
+			defer func() {
+				if cerr := f.Close(); cerr != nil && err == nil {
+					err = cerr
+				}
+			}()
 			err = id.GenerateAge(f)
 		}
 
@@ -168,13 +187,21 @@ func rotate(s *setup.Setup, isClean bool, slot string) error {
 			if err != nil {
 				return fmt.Errorf("could not create yubikey device: %w", err)
 			}
-			defer device.Close()
+			defer func() {
+				if cerr := device.Close(); cerr != nil && err == nil {
+					err = cerr
+				}
+			}()
 
 			f, err := fs.OpenFile(idRotatePath)
 			if err != nil {
 				return fmt.Errorf("could not open key file %s: %w", idRotatePath, err)
 			}
-			defer f.Close()
+			defer func() {
+				if cerr := f.Close(); cerr != nil && err == nil {
+					err = cerr
+				}
+			}()
 
 			idRotate = id.LoadPiv(f, idRotatePath, device, pivSlot)
 		} else {
@@ -182,7 +209,11 @@ func rotate(s *setup.Setup, isClean bool, slot string) error {
 			if err != nil {
 				return fmt.Errorf("could not open key file %s: %w", idRotatePath, err)
 			}
-			defer f.Close()
+			defer func() {
+				if cerr := f.Close(); cerr != nil && err == nil {
+					err = cerr
+				}
+			}()
 			idRotate = id.LoadAge(f, idRotatePath)
 		}
 

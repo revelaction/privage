@@ -12,7 +12,7 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-func keyCommand(opts setup.Options, args []string) error {
+func keyCommand(opts setup.Options, args []string) (err error) {
 	flagSet := flag.NewFlagSet("key", flag.ContinueOnError)
 	flagSet.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s key\n", os.Args[0])
@@ -20,7 +20,7 @@ func keyCommand(opts setup.Options, args []string) error {
 		fmt.Fprintf(os.Stderr, "  Decrypt the age private key with the PIV key defined in the .privage.conf file.\n")
 	}
 
-	if err := flagSet.Parse(args); err != nil {
+	if err = flagSet.Parse(args); err != nil {
 		return err
 	}
 
@@ -43,13 +43,21 @@ func keyCommand(opts setup.Options, args []string) error {
 	if err != nil {
 		return fmt.Errorf("could not create yubikey device: %w", err)
 	}
-	defer device.Close()
+	defer func() {
+		if cerr := device.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}()
 
 	f, err := fs.OpenFile(s.Id.Path)
 	if err != nil {
 		return fmt.Errorf("could not open key file: %w", err)
 	}
-	defer f.Close()
+	defer func() {
+		if cerr := f.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}()
 
 	ageKey, err := id.DecryptPiv(f, device, uint32(ps))
 	if err != nil {

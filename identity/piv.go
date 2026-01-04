@@ -23,14 +23,18 @@ type Device interface {
 
 // GeneratePiv generates a new age identity, encrypts it using the PIV device
 // at the specified slot, and writes the ascii85-encoded result to w.
-func GeneratePiv(w io.Writer, device Device, slot uint32) error {
+func GeneratePiv(w io.Writer, device Device, slot uint32) (err error) {
 	k, err := age.GenerateX25519Identity()
 	if err != nil {
 		return fmt.Errorf("could not generate age identity: %w", err)
 	}
 
 	encoder := ascii85.NewEncoder(w)
-	defer encoder.Close()
+	defer func() {
+		if cerr := encoder.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}()
 
 	if err := device.Encrypt(encoder, []byte(k.String()), slot); err != nil {
 		return fmt.Errorf("could not encrypt identity: %w", err)

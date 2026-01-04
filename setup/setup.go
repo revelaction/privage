@@ -145,7 +145,7 @@ func NewFromConfigFile(path string) (s *Setup, err error) {
 	return &Setup{C: conf, Id: identity(conf.IdentityPath, conf.IdentityPivSlot), Repository: conf.RepositoryPath}, nil
 }
 
-func identity(keyPath, pivSlot string) id.Identity {
+func identity(keyPath, pivSlot string) (ident id.Identity) {
 
 	if pivSlot == "" {
 		f, err := fs.OpenFile(keyPath)
@@ -153,12 +153,8 @@ func identity(keyPath, pivSlot string) id.Identity {
 			return id.Identity{Err: err}
 		}
 		defer func() {
-			if cerr := f.Close(); cerr != nil {
-				// TODO: Handle file close errors properly
-				// For read operations, close errors after successful read
-				// are less critical but should be logged or monitored
-				// Currently we acknowledge but don't propagate the error
-				_ = cerr
+			if cerr := f.Close(); cerr != nil && ident.Err == nil {
+				ident.Err = cerr
 			}
 		}()
 		return id.LoadAge(f, keyPath)
@@ -173,19 +169,19 @@ func identity(keyPath, pivSlot string) id.Identity {
 	if err != nil {
 		return id.Identity{Err: fmt.Errorf("could not create yubikey device: %w", err)}
 	}
-	defer device.Close()
+	defer func() {
+		if cerr := device.Close(); cerr != nil && ident.Err == nil {
+			ident.Err = cerr
+		}
+	}()
 
 	f, err := fs.OpenFile(keyPath)
 	if err != nil {
 		return id.Identity{Err: err}
 	}
 	defer func() {
-		if cerr := f.Close(); cerr != nil {
-			// TODO: Handle file close errors properly
-			// For read operations, close errors after successful read
-			// are less critical but should be logged or monitored
-			// Currently we acknowledge but don't propagate the error
-			_ = cerr
+		if cerr := f.Close(); cerr != nil && ident.Err == nil {
+			ident.Err = cerr
 		}
 	}()
 

@@ -119,8 +119,12 @@ func TestDecryptPiv_Success(t *testing.T) {
 	// Ascii85 encode
 	var buf bytes.Buffer
 	enc := ascii85.NewEncoder(&buf)
-	enc.Write(encrypted)
-	enc.Close()
+	if _, err := enc.Write(encrypted); err != nil {
+		t.Fatalf("Failed to write to ascii85 encoder: %v", err)
+	}
+	if err := enc.Close(); err != nil {
+		t.Fatalf("Failed to close ascii85 encoder: %v", err)
+	}
 
 	// 2. Test
 	mock := &mockDevice{}
@@ -171,7 +175,9 @@ func TestLoadPiv_Success(t *testing.T) {
 
 	// (This is a dummy key format, but let's use a generated one to be safe)
 	var buf bytes.Buffer
-	GenerateAge(&buf) // This writes headers ("# created: ...") which might fail ParseX25519Identity if passed directly.
+	if err := GenerateAge(&buf); err != nil {
+		t.Fatalf("GenerateAge failed: %v", err)
+	}
 	// LoadPiv calls age.ParseX25519Identity(string(raw)).
 	// age.ParseX25519Identity expects just the "AGE-SECRET-KEY-..." string.
 	// GenerateAge writes headers which might fail ParseX25519Identity if passed directly.
@@ -187,7 +193,9 @@ func TestLoadPiv_Success(t *testing.T) {
 	// but we need a valid key for the final parse step to succeed.
 	// Let's use the helper to get one.
 	tmpBuf := &bytes.Buffer{}
-	GenerateAge(tmpBuf)
+	if err := GenerateAge(tmpBuf); err != nil {
+		t.Fatalf("GenerateAge failed: %v", err)
+	}
 	// Parse out just the key line
 	lines := strings.Split(tmpBuf.String(), "\n")
 	var realKey string
@@ -208,8 +216,12 @@ func TestLoadPiv_Success(t *testing.T) {
 	}
 	encodedBuf := &bytes.Buffer{}
 	enc := ascii85.NewEncoder(encodedBuf)
-	enc.Write(encrypted)
-	enc.Close()
+	if _, err := enc.Write(encrypted); err != nil {
+		t.Fatalf("Failed to write to ascii85 encoder: %v", err)
+	}
+	if err := enc.Close(); err != nil {
+		t.Fatalf("Failed to close ascii85 encoder: %v", err)
+	}
 
 	// 3. Test
 	mock := &mockDevice{}
@@ -241,8 +253,12 @@ func TestLoadPiv_ParseError(t *testing.T) {
 	}
 	encodedBuf := &bytes.Buffer{}
 	enc := ascii85.NewEncoder(encodedBuf)
-	enc.Write(encrypted)
-	enc.Close()
+	if _, err := enc.Write(encrypted); err != nil {
+		t.Fatalf("Failed to write to ascii85 encoder: %v", err)
+	}
+	if err := enc.Close(); err != nil {
+		t.Fatalf("Failed to close ascii85 encoder: %v", err)
+	}
 
 	mock := &mockDevice{}
 	ident := LoadPiv(encodedBuf, "test", mock, 0x9a)
