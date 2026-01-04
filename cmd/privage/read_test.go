@@ -134,14 +134,16 @@ func TestHeaderGenerator(t *testing.T) {
 
 		// 2. Malformed file (too short)
 		shortPath := filepath.Join(tmpDir, "short"+AgeExtension)
-		os.WriteFile(shortPath, []byte("too short"), 0600)
+		if err := os.WriteFile(shortPath, []byte("too short"), 0600); err != nil {
+			t.Fatalf("failed to write short test file: %v", err)
+		}
 
 		// 3. Wrong identity file
 		otherIdentity, _ := age.GenerateX25519Identity()
 		createTestAgeFile(t, tmpDir, "wrong_key", &header.Header{Label: "wrong"}, otherIdentity)
 
 		gen := headerGenerator(tmpDir, privageId)
-		
+
 		results := make(map[string]*header.Header)
 		for h := range gen {
 			results[filepath.Base(h.Path)] = h
@@ -170,15 +172,14 @@ func TestHeaderGenerator(t *testing.T) {
 			t.Errorf("unexpected error message for wrong_key file: %v", results["wrong_key.age"].Err)
 		}
 	})
-	
+
 	t.Run("PermissionDenied", func(t *testing.T) {
-		if runtime.GOOS == "windows" {
-			t.Skip("Skipping permission test on Windows")
-		}
 		tmpDir := t.TempDir()
 		path := filepath.Join(tmpDir, "unreadable"+AgeExtension)
-		os.WriteFile(path, []byte("data"), 0000) // No permissions
-		
+		if err := os.WriteFile(path, []byte("data"), 0000); err != nil { // No permissions
+			t.Fatalf("failed to write unreadable test file: %v", err)
+		}
+
 		gen := headerGenerator(tmpDir, privageId)
 		h := <-gen
 		if h == nil {
