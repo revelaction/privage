@@ -72,7 +72,7 @@ func clipboard(label string, s *setup.Setup) (err error) {
 				}
 			}()
 
-			r, err := contentRead(f, s.Id)
+			r, err := contentReader(f, s.Id)
 			if err != nil {
 				return err
 			}

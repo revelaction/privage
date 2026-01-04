@@ -114,7 +114,7 @@ func addCredential(h *header.Header, s *setup.Setup) error {
 	}
 
 	readContent := func(r io.Reader) (io.Reader, error) {
-		return contentRead(r, s.Id)
+		return contentReader(r, s.Id)
 	}
 
 	if err := show(h.Label, "", streamHeaders, readContent, os.Stdout); err != nil {

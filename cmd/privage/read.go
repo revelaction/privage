@@ -121,9 +121,9 @@ func headerGenerator(repoDir string, identity id.Identity) <-chan *header.Header
 	return ch
 }
 
-// contentRead returns an `age` reader that provides the decrypted content
+// contentReader returns an `age` reader that provides the decrypted content
 // from an existing reader by skipping the privage header.
-func contentRead(src io.Reader, identity id.Identity) (io.Reader, error) {
+func contentReader(src io.Reader, identity id.Identity) (io.Reader, error) {
 
 	// skip header
 	if _, err := io.CopyN(io.Discard, src, header.BlockSize); err != nil {

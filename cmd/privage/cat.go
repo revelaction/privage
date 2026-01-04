@@ -48,7 +48,7 @@ func catCommand(opts setup.Options, args []string) error {
 	}
 
 	readContent := func(r io.Reader) (io.Reader, error) {
-		return contentRead(r, s.Id)
+		return contentReader(r, s.Id)
 	}
 
 	return cat(label, streamHeaders, readContent, os.Stdout)

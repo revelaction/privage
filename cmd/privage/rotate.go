@@ -247,7 +247,7 @@ func rotate(s *setup.Setup, isClean bool, slot string) (err error) {
 				}
 			}()
 
-			r, err := contentRead(f, s.Id)
+			r, err := contentReader(f, s.Id)
 			if err != nil {
 				return err
 			}
