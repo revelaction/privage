@@ -131,7 +131,23 @@ func rotate(s *setup.Setup, isClean bool, slot string) error {
 
 		// Create
 		if pivSlot > 0 {
-			err = id.CreatePivRsa(idRotatePath, pivSlot, id.PivAlgoRsa2048)
+			f, err := fs.CreateFile(idRotatePath, 0600)
+			if err != nil {
+				return fmt.Errorf("could not create key file %s: %w", idRotatePath, err)
+			}
+			defer func() {
+				if cerr := f.Close(); cerr != nil && err == nil {
+					err = cerr
+				}
+			}()
+
+			device, err := yubikey.New()
+			if err != nil {
+				return fmt.Errorf("could not create yubikey device: %w", err)
+			}
+			defer device.Close()
+
+			err = id.GeneratePiv(f, device, pivSlot)
 		} else {
 			var f io.WriteCloser
 			f, err = fs.CreateFile(idRotatePath, 0600)
