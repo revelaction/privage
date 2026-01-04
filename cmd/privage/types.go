@@ -10,9 +10,9 @@ import (
 // Used for injecting header scanning logic.
 type HeaderStreamFunc func() <-chan *header.Header
 
-// ContentOpenFunc represents a function that opens the content for a given header.
-// Used for injecting content reading/decryption logic.
-type ContentOpenFunc func(*header.Header) (io.Reader, error)
+// ContentReaderFunc represents a function that returns a reader for the content
+// from an existing reader. Used for injecting content decryption logic.
+type ContentReaderFunc func(io.Reader) (io.Reader, error)
 
 // FileCreateFunc represents a function that creates a file writer.
 // Used for injecting file system write operations.

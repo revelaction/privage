@@ -236,16 +236,28 @@ func rotate(s *setup.Setup, isClean bool, slot string) (err error) {
 			return h.Err
 		}
 
-		r, err := contentReader(h, s.Id)
-		if err != nil {
+		err = func() (err error) {
+			f, err := os.Open(h.Path)
+			if err != nil {
+				return err
+			}
+			defer func() {
+				if cerr := f.Close(); cerr != nil && err == nil {
+					err = cerr
+				}
+			}()
 
-			return err
-		}
+			r, err := contentRead(f, s.Id)
+			if err != nil {
+				return err
+			}
 
-		// Need a setup with the repo and the new idRotate
-		sRotate := s.Copy()
-		sRotate.Id = idRotate
-		err = encryptSave(h, suffix, r, sRotate)
+			// Need a setup with the repo and the new idRotate
+			sRotate := s.Copy()
+			sRotate.Id = idRotate
+			return encryptSave(h, suffix, r, sRotate)
+		}()
+
 		if err != nil {
 			return err
 		}

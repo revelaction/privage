@@ -121,21 +121,14 @@ func headerGenerator(repoDir string, identity id.Identity) <-chan *header.Header
 	return ch
 }
 
-// contentReader returns an `age` reader that provides the decrypted content
-func contentReader(h *header.Header, identity id.Identity) (io.Reader, error) {
-
-	f, _ := os.Open(h.Path)
+// contentRead returns an `age` reader that provides the decrypted content
+// from an existing reader by skipping the privage header.
+func contentRead(src io.Reader, identity id.Identity) (io.Reader, error) {
 
 	// skip header
-	_, err := f.Seek(header.BlockSize, io.SeekStart)
-	if err != nil {
+	if _, err := io.CopyN(io.Discard, src, header.BlockSize); err != nil {
 		return nil, err
 	}
 
-	r, err := age.Decrypt(f, identity.Id)
-	if err != nil {
-		return nil, err
-	}
-
-	return r, nil
+	return age.Decrypt(src, identity.Id)
 }

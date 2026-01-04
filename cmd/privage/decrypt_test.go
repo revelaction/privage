@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"os"
 	"strings"
 	"testing"
 
@@ -25,23 +26,26 @@ func TestDecrypt_Logic(t *testing.T) {
 	targetLabel := "target.txt"
 	secretContent := "decrypted payload"
 
+	// Create a temp file to satisfy os.Open
+	tmpFile := t.TempDir() + "/target.age"
+	if err := os.WriteFile(tmpFile, []byte("dummy data"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
 	// 2. Mock Scanner (HeaderStreamFunc)
 	mockStreamHeaders := func() <-chan *header.Header {
 		ch := make(chan *header.Header)
 		go func() {
 			ch <- &header.Header{Label: "other.txt"}
-			ch <- &header.Header{Label: targetLabel}
+			ch <- &header.Header{Label: targetLabel, Path: tmpFile}
 			close(ch)
 		}()
 		return ch
 	}
 
-	// 3. Mock Opener (ContentOpenFunc)
-	mockOpenContent := func(h *header.Header) (io.Reader, error) {
-		if h.Label == targetLabel {
-			return strings.NewReader(secretContent), nil
-		}
-		return nil, errors.New("unexpected header")
+	// 3. Mock Reader (ContentReaderFunc)
+	mockReadContent := func(r io.Reader) (io.Reader, error) {
+		return strings.NewReader(secretContent), nil
 	}
 
 	// 4. Mock File Creator (FileCreateFunc)
@@ -57,7 +61,7 @@ func TestDecrypt_Logic(t *testing.T) {
 	// var outBuf bytes.Buffer
 
 	// Run
-	err := decrypt(targetLabel, mockStreamHeaders, mockOpenContent, mockCreateFile)
+	err := decrypt(targetLabel, mockStreamHeaders, mockReadContent, mockCreateFile)
 
 	// Assert
 	if err != nil {
@@ -83,7 +87,7 @@ func TestDecrypt_NotFound(t *testing.T) {
 		return ch
 	}
 
-	mockOpenContent := func(h *header.Header) (io.Reader, error) {
+	mockReadContent := func(r io.Reader) (io.Reader, error) {
 		return nil, errors.New("should not be called")
 	}
 
@@ -91,7 +95,7 @@ func TestDecrypt_NotFound(t *testing.T) {
 		return nil, errors.New("should not be called")
 	}
 
-	err := decrypt("missing", mockStreamHeaders, mockOpenContent, mockCreateFile)
+	err := decrypt("missing", mockStreamHeaders, mockReadContent, mockCreateFile)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
@@ -104,16 +108,22 @@ func TestDecrypt_NotFound(t *testing.T) {
 func TestDecrypt_CreateError(t *testing.T) {
 	targetLabel := "fail_create"
 
+	// Create a temp file to satisfy os.Open
+	tmpFile := t.TempDir() + "/fail_create.age"
+	if err := os.WriteFile(tmpFile, []byte("dummy data"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
 	mockStreamHeaders := func() <-chan *header.Header {
 		ch := make(chan *header.Header)
 		go func() {
-			ch <- &header.Header{Label: targetLabel}
+			ch <- &header.Header{Label: targetLabel, Path: tmpFile}
 			close(ch)
 		}()
 		return ch
 	}
 
-	mockOpenContent := func(h *header.Header) (io.Reader, error) {
+	mockReadContent := func(r io.Reader) (io.Reader, error) {
 		return strings.NewReader("content"), nil
 	}
 
@@ -122,7 +132,7 @@ func TestDecrypt_CreateError(t *testing.T) {
 		return nil, errors.New("permission denied")
 	}
 
-	err := decrypt(targetLabel, mockStreamHeaders, mockOpenContent, mockCreateFile)
+	err := decrypt(targetLabel, mockStreamHeaders, mockReadContent, mockCreateFile)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")

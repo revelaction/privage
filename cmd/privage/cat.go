@@ -47,20 +47,30 @@ func catCommand(opts setup.Options, args []string) error {
 		return headerGenerator(s.Repository, s.Id)
 	}
 
-	openContent := func(h *header.Header) (io.Reader, error) {
-		return contentReader(h, s.Id)
+	readContent := func(r io.Reader) (io.Reader, error) {
+		return contentRead(r, s.Id)
 	}
 
-	return cat(label, streamHeaders, openContent, os.Stdout)
+	return cat(label, streamHeaders, readContent, os.Stdout)
 }
 
-func cat(label string, streamHeaders HeaderStreamFunc, openContent ContentOpenFunc, out io.Writer) error {
+func cat(label string, streamHeaders HeaderStreamFunc, readContent ContentReaderFunc, out io.Writer) (err error) {
 
 	for h := range streamHeaders() {
 
 		if h.Label == label {
 
-			r, err := openContent(h)
+			f, err := os.Open(h.Path)
+			if err != nil {
+				return err
+			}
+			defer func() {
+				if cerr := f.Close(); cerr != nil && err == nil {
+					err = cerr
+				}
+			}()
+
+			r, err := readContent(f)
 			if err != nil {
 				return err
 			}

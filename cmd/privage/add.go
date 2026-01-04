@@ -113,11 +113,11 @@ func addCredential(h *header.Header, s *setup.Setup) error {
 		return headerGenerator(s.Repository, s.Id)
 	}
 
-	openContent := func(h *header.Header) (io.Reader, error) {
-		return contentReader(h, s.Id)
+	readContent := func(r io.Reader) (io.Reader, error) {
+		return contentRead(r, s.Id)
 	}
 
-	if err := show(h.Label, "", streamHeaders, openContent, os.Stdout); err != nil {
+	if err := show(h.Label, "", streamHeaders, readContent, os.Stdout); err != nil {
 		return err
 	}
 

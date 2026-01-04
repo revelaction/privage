@@ -20,7 +20,7 @@ import (
 //
 // It saves the concatenated encrypted payloads on an age file. The name of the
 // file is a hash of the header (label and category) and the public age key.
-func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Setup) error {
+func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Setup) (err error) {
 
 	// age io.Writer
 	buf := new(bytes.Buffer)
@@ -48,8 +48,8 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 	}
 
 	defer func() {
-		if err := f.Close(); err != nil {
-			return
+		if cerr := f.Close(); cerr != nil && err == nil {
+			err = cerr
 		}
 	}()
 	_, err = f.Write(headerPadded)

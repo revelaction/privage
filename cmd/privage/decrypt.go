@@ -51,15 +51,15 @@ func decryptCommand(opts setup.Options, args []string) error {
 		return headerGenerator(s.Repository, s.Id)
 	}
 
-	openContent := func(h *header.Header) (io.Reader, error) {
-		return contentReader(h, s.Id)
+	readContent := func(r io.Reader) (io.Reader, error) {
+		return contentRead(r, s.Id)
 	}
 
 	createFile := func(name string) (io.WriteCloser, error) {
 		return os.Create(filepath.Join(s.Repository, name))
 	}
 
-	if err := decrypt(label, streamHeaders, openContent, createFile); err != nil {
+	if err := decrypt(label, streamHeaders, readContent, createFile); err != nil {
 		if errors.Is(err, ErrHeaderNotFound) {
 			return fmt.Errorf("file %q not found in repository", label)
 		}
@@ -76,7 +76,7 @@ func decryptCommand(opts setup.Options, args []string) error {
 
 // decrypt creates a decrypted copy of an encrypted file contents. It saves the
 // copy in the repository directory under the file name label
-func decrypt(label string, streamHeaders HeaderStreamFunc, openContent ContentOpenFunc, createFile FileCreateFunc) (retErr error) {
+func decrypt(label string, streamHeaders HeaderStreamFunc, readContent ContentReaderFunc, createFile FileCreateFunc) (retErr error) {
 
 	for h := range streamHeaders() {
 
@@ -92,7 +92,17 @@ func decrypt(label string, streamHeaders HeaderStreamFunc, openContent ContentOp
 				}
 			}()
 
-			r, err := openContent(h)
+			f, err := os.Open(h.Path)
+			if err != nil {
+				return err
+			}
+			defer func() {
+				if cerr := f.Close(); cerr != nil && retErr == nil {
+					retErr = cerr
+				}
+			}()
+
+			r, err := readContent(f)
 			if err != nil {
 				return err
 			}

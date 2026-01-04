@@ -55,20 +55,30 @@ func showCommand(opts setup.Options, args []string) error {
 		return headerGenerator(s.Repository, s.Id)
 	}
 
-	openContent := func(h *header.Header) (io.Reader, error) {
-		return contentReader(h, s.Id)
+	readContent := func(r io.Reader) (io.Reader, error) {
+		return contentRead(r, s.Id)
 	}
 
-	return show(label, fieldName, streamHeaders, openContent, os.Stdout)
+	return show(label, fieldName, streamHeaders, readContent, os.Stdout)
 }
 
-func show(label string, fieldName string, streamHeaders HeaderStreamFunc, openContent ContentOpenFunc, out io.Writer) error {
+func show(label string, fieldName string, streamHeaders HeaderStreamFunc, readContent ContentReaderFunc, out io.Writer) (err error) {
 
 	for h := range streamHeaders() {
 
 		if h.Label == label {
 
-			r, err := openContent(h)
+			f, err := os.Open(h.Path)
+			if err != nil {
+				return err
+			}
+			defer func() {
+				if cerr := f.Close(); cerr != nil && err == nil {
+					err = cerr
+				}
+			}()
+
+			r, err := readContent(f)
 			if err != nil {
 				return err
 			}

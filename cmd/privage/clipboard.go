@@ -56,13 +56,23 @@ func clipboardCommand(opts setup.Options, args []string) error {
 	return clipboard(label, s)
 }
 
-func clipboard(label string, s *setup.Setup) error {
+func clipboard(label string, s *setup.Setup) (err error) {
 
 	for h := range headerGenerator(s.Repository, s.Id) {
 
 		if h.Label == label {
 
-			r, err := contentReader(h, s.Id)
+			f, err := os.Open(h.Path)
+			if err != nil {
+				return err
+			}
+			defer func() {
+				if cerr := f.Close(); cerr != nil && err == nil {
+					err = cerr
+				}
+			}()
+
+			r, err := contentRead(f, s.Id)
 			if err != nil {
 				return err
 			}

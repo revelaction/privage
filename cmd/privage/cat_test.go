@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"os"
 	"strings"
 	"testing"
 
@@ -15,32 +16,34 @@ func TestCat_Logic(t *testing.T) {
 	targetLabel := "target"
 	secretContent := "secret payload"
 
+	// Create a temp file to satisfy os.Open
+	tmpFile := t.TempDir() + "/target.age"
+	if err := os.WriteFile(tmpFile, []byte("dummy header data and content"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
 	// 2. Mock Scanner (HeaderStreamFunc)
 	// Returns a channel with a non-matching header and then the matching one
 	mockStreamHeaders := func() <-chan *header.Header {
 		ch := make(chan *header.Header)
 		go func() {
 			ch <- &header.Header{Label: "other"}
-			ch <- &header.Header{Label: targetLabel}
+			ch <- &header.Header{Label: targetLabel, Path: tmpFile}
 			close(ch)
 		}()
 		return ch
 	}
 
-	// 3. Mock Opener (ContentOpenFunc)
-	// Returns content only for the target label
-	mockOpenContent := func(h *header.Header) (io.Reader, error) {
-		if h.Label == targetLabel {
-			return strings.NewReader(secretContent), nil
-		}
-		return nil, errors.New("unexpected header")
+	// 3. Mock Reader (ContentReaderFunc)
+	mockReadContent := func(r io.Reader) (io.Reader, error) {
+		return strings.NewReader(secretContent), nil
 	}
 
 	// 4. Capture Output
 	var buf bytes.Buffer
 
 	// Run
-	err := cat(targetLabel, mockStreamHeaders, mockOpenContent, &buf)
+	err := cat(targetLabel, mockStreamHeaders, mockReadContent, &buf)
 
 	// Assert
 	if err != nil {
@@ -64,13 +67,13 @@ func TestCat_NotFound(t *testing.T) {
 		return ch
 	}
 
-	// Mock Opener: Should not be called for the target
-	mockOpenContent := func(h *header.Header) (io.Reader, error) {
+	// Mock Reader: Should not be called for the target
+	mockReadContent := func(r io.Reader) (io.Reader, error) {
 		return nil, errors.New("should not be called")
 	}
 
 	var buf bytes.Buffer
-	err := cat("missing_label", mockStreamHeaders, mockOpenContent, &buf)
+	err := cat("missing_label", mockStreamHeaders, mockReadContent, &buf)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -83,22 +86,28 @@ func TestCat_NotFound(t *testing.T) {
 func TestCat_OpenError(t *testing.T) {
 	targetLabel := "broken"
 
+	// Create a temp file to satisfy os.Open
+	tmpFile := t.TempDir() + "/broken.age"
+	if err := os.WriteFile(tmpFile, []byte("dummy data"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
 	mockStreamHeaders := func() <-chan *header.Header {
 		ch := make(chan *header.Header)
 		go func() {
-			ch <- &header.Header{Label: targetLabel}
+			ch <- &header.Header{Label: targetLabel, Path: tmpFile}
 			close(ch)
 		}()
 		return ch
 	}
 
-	// Mock Opener: Returns an error
-	mockOpenContent := func(h *header.Header) (io.Reader, error) {
+	// Mock Reader: Returns an error
+	mockReadContent := func(r io.Reader) (io.Reader, error) {
 		return nil, errors.New("decrypt failed")
 	}
 
 	var buf bytes.Buffer
-	err := cat(targetLabel, mockStreamHeaders, mockOpenContent, &buf)
+	err := cat(targetLabel, mockStreamHeaders, mockReadContent, &buf)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
