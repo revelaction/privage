@@ -39,7 +39,13 @@ jobs:
           fi
 
           go build -o "$DIR/privage" -ldflags "-X main.BuildTag=$VERSION -X main.BuildCommit=$COMMIT" -trimpath ./cmd/...
-          tar -cvzf "privage-$VERSION-$GOOS-$GOARCH.tar.gz" -C "$DIR" privage  
+          tar -cvzf "privage-$VERSION-$GOOS-$GOARCH.tar.gz" -C "$DIR" privage
+
+          # Build noyubikey version (CGO_ENABLED=0)
+          DIR_NOYK="$(mktemp -d)"
+          mkdir "$DIR_NOYK/privage"
+          CGO_ENABLED=0 go build -tags noyubikey -o "$DIR_NOYK/privage" -ldflags "-X main.BuildTag=$VERSION -X main.BuildCommit=$COMMIT" -trimpath ./cmd/...
+          tar -cvzf "privage-$VERSION-noyubikey-$GOOS-$GOARCH.tar.gz" -C "$DIR_NOYK" privage
         env:
           CGO_ENABLED: 1
           GOOS: ${{ matrix.GOOS }}

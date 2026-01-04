@@ -65,6 +65,16 @@ sudo apt-get -y install pkg-config libpcsclite-dev libpcsclite1 pcscd pcsc-tools
  go install github.com/revelaction/privage/cmd...@v0.9.1-beta
 ```
 
+### Build without Yubikey support
+
+If you do not need Yubikey support and want to avoid the dependency on `piv-go` (which requires CGO and PCSC libraries), you can build `privage` with the `noyubikey` tag:
+
+```console
+go build -tags noyubikey ./cmd/privage
+```
+
+This will produce a binary that does not require `libpcsclite-dev` and can be built with `CGO_ENABLED=0`. Attempting to use Yubikey-related features in such a build will result in an error message.
+
 # Usage
 
 ## Initialize a repository for your credentials and other encrypted files

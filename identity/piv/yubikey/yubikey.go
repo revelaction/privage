@@ -1,3 +1,5 @@
+//go:build !noyubikey
+
 // Package yubikey provides YubiKey PIV device integration for privage.
 //
 // CRYPTOGRAPHIC ARCHITECTURE:
