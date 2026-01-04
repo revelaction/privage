@@ -74,7 +74,9 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 		fatal(err)
 	}
 
-	bufFile.Flush()
+	if err = bufFile.Flush(); err != nil {
+		return err
+	}
 
 	return nil
 }
