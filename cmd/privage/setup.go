@@ -40,7 +40,12 @@ func setupEnv(opts setup.Options) (*setup.Setup, error) {
 	case opts.NoFlags():
 		// Case 3: Nothing - try config file first, then identity file
 		configPath, err := fs.FindConfigFile()
-		if err == nil {
+		if err != nil {
+			// A real system error occurred (permission denied, etc)
+			return &setup.Setup{}, fmt.Errorf("error finding config file: %w", err)
+		}
+
+		if configPath != "" {
 			// Config file found - use it
 			s, err := setup.NewFromConfigFile(configPath)
 			if err != nil {
@@ -49,10 +54,13 @@ func setupEnv(opts setup.Options) (*setup.Setup, error) {
 			return s, nil
 		}
 
-		// No config file found - search for identity file
+		// No config file found (and no error) - search for identity file
 		idPath, err := fs.FindIdentityFile()
 		if err != nil {
-			return &setup.Setup{}, fmt.Errorf("no config or identity file found: %w", err)
+			return &setup.Setup{}, fmt.Errorf("error finding identity file: %w", err)
+		}
+		if idPath == "" {
+			return &setup.Setup{}, fmt.Errorf("no config or identity file found")
 		}
 
 		// Use current directory as repository
