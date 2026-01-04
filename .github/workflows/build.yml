@@ -28,7 +28,8 @@ jobs:
       - name: Build binary
         run: |        
           VERSION="$(git describe --tags)"
-          echo "tag is $VERSION"
+          COMMIT="$(git rev-parse --short HEAD)"
+          echo "tag is $VERSION, commit is $COMMIT"
           DIR="$(mktemp -d)"
           mkdir "$DIR/privage"
           
@@ -37,7 +38,7 @@ jobs:
             sudo apt-get -y install pkg-config build-essential libpcsclite-dev
           fi
 
-          go build -o "$DIR/privage" -ldflags "-X main.Version=$VERSION" -trimpath ./cmd/...
+          go build -o "$DIR/privage" -ldflags "-X main.BuildTag=$VERSION -X main.BuildCommit=$COMMIT" -trimpath ./cmd/...
           tar -cvzf "privage-$VERSION-$GOOS-$GOARCH.tar.gz" -C "$DIR" privage  
         env:
           CGO_ENABLED: 1
