@@ -29,8 +29,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/revelaction/privage/identity"
 	"github.com/go-piv/piv-go/v2/piv"
+	"github.com/revelaction/privage/identity"
 )
 
 // yubiDevice implements the piv.Device interface for YubiKey hardware.
@@ -128,14 +128,14 @@ func (d *yubiDevice) Encrypt(w io.Writer, plaintext []byte, slot uint32) error {
 	if !ok {
 		return fmt.Errorf("slot %x contains %T key, but RSA key is required for encryption. "+
 			"Privage only supports RSA keys because they allow 'encrypt-once, decrypt-later' pattern. "+
-			"X25519 (key agreement) and ECDSA (signing only) are not suitable for this use case", 
+			"X25519 (key agreement) and ECDSA (signing only) are not suitable for this use case",
 			slot, cert.PublicKey)
 	}
 
 	// Additional validation: check RSA key size
 	keySize := rsaPub.N.BitLen()
 	if keySize < 2048 {
-		return fmt.Errorf("RSA key in slot %x is only %d bits, minimum 2048 bits required for security", 
+		return fmt.Errorf("RSA key in slot %x is only %d bits, minimum 2048 bits required for security",
 			slot, keySize)
 	}
 

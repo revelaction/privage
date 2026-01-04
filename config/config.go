@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/revelaction/privage/fs"
 	"github.com/pelletier/go-toml/v2"
+	"github.com/revelaction/privage/fs"
 )
 
 const (

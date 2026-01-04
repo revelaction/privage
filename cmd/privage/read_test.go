@@ -54,7 +54,7 @@ func TestHeaderGenerator(t *testing.T) {
 
 	t.Run("Success_MultipleFiles", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		
+
 		headers := []*header.Header{
 			{Category: "cat1", Label: "label1"},
 			{Category: "cat2", Label: "label2"},

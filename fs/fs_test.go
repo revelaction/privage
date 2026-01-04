@@ -15,10 +15,10 @@ func TestFileExists(t *testing.T) {
 	_ = os.Mkdir(existingDir, 0755)
 
 	tests := []struct {
-		name     string
-		path     string
-		want     bool
-		wantErr  bool
+		name    string
+		path    string
+		want    bool
+		wantErr bool
 	}{
 		{
 			name:    "Existing file",
@@ -62,10 +62,10 @@ func TestDirExists(t *testing.T) {
 	_ = os.Mkdir(existingDir, 0755)
 
 	tests := []struct {
-		name     string
-		path     string
-		want     bool
-		wantErr  bool
+		name    string
+		path    string
+		want    bool
+		wantErr bool
 	}{
 		{
 			name:    "Existing directory",
@@ -229,7 +229,7 @@ func TestFindConfigFile(t *testing.T) {
 // AND does not already exist. If it violates either, the test fails immediately.
 func requireSafePath(t *testing.T, path, baseDir string) {
 	t.Helper()
-	
+
 	// Safety Check 1: Must be inside the temp directory
 	if !strings.HasPrefix(path, baseDir) {
 		t.Fatalf("SAFETY CHECK FAILED: Path %s is NOT within allowed temp dir %s. Aborting.", path, baseDir)

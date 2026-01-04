@@ -35,17 +35,17 @@ type Setup struct {
 //
 // Priority of options (checked in order):
 // 1. WithKeyRepo(): -k and -r flags (with optional -p)
-//    - KeyFile and RepoPath must both be set
-//    - ConfigFile must be empty
-//    - PivSlot is optional
+//   - KeyFile and RepoPath must both be set
+//   - ConfigFile must be empty
+//   - PivSlot is optional
 //
 // 2. WithConfig(): -c flag only
-//    - ConfigFile must be set
-//    - KeyFile and RepoPath must be empty
+//   - ConfigFile must be set
+//   - KeyFile and RepoPath must be empty
 //
 // 3. NoFlags(): no flags specified
-//    - All fields empty
-//    - Will search for config file in standard locations
+//   - All fields empty
+//   - Will search for config file in standard locations
 //
 // Use Validate() to check option validity and the helper methods
 // (WithKeyRepo(), WithConfig(), NoFlags()) to determine which case applies.
@@ -187,4 +187,3 @@ func identity(keyPath, pivSlot string) (ident id.Identity) {
 
 	return id.LoadPiv(f, keyPath, device, uint32(slot))
 }
-

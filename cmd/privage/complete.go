@@ -31,6 +31,7 @@ var commands = []string{
 // completeAction handles the autocompletion requests triggered by the bash completion script.
 //
 // Understanding the Argument Flow:
+//
 //  1. Bash triggers the completion function and executes:
 //     privage complete -- "${COMP_WORDS[@]}"
 //
