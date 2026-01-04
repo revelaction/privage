@@ -35,13 +35,23 @@ func headerGenerator(repoDir string, identity id.Identity) <-chan *header.Header
 				continue
 			}
 
-			defer f.Close()
-
-			// Header
+			// 1. Read the header
 			headerBlock := make([]byte, header.BlockSize)
 			_, err = io.ReadFull(f, headerBlock)
+
+			// 2. Always capture the close error
+			closeErr := f.Close()
+
+			// 3. Prioritize the read error if it exists
 			if err != nil {
 				h.Err = fmt.Errorf("could not read header in file %s: %w", path, err)
+				ch <- h
+				continue
+			}
+
+			// 4. If read succeeded, check if the close failed
+			if closeErr != nil {
+				h.Err = fmt.Errorf("could not close file %s: %w", path, closeErr)
 				ch <- h
 				continue
 			}
