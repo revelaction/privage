@@ -26,7 +26,6 @@ type Config struct {
 	IdentityPath    string `toml:"identity_path" comment:"Path to the age identity file (supports ~/)"`
 	IdentityType    string `toml:"identity_type" comment:"Type of identity: AGE or PIV"`
 	IdentityPivSlot string `toml:"identity_piv_slot" comment:"Hex string for the Yubikey PIV slot (e.g., 9a)"`
-	IdentityPivAlgo string `toml:"identity_piv_algo" comment:"[Reserved] Algorithm for PIV"`
 
 	// Repository settings
 	RepositoryPath string `toml:"repository_path" comment:"Directory containing encrypted files (supports ~/)"`
