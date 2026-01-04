@@ -100,7 +100,7 @@ func rotate(s *setup.Setup, isClean bool, slot string) error {
 			return fmt.Errorf("could not open key file %s: %w", idRotatePath, err)
 		}
 		defer f.Close()
-		idRotate = id.Load(f, idRotatePath)
+		idRotate = id.LoadAge(f, idRotatePath)
 	}
 
 	numFilesRotate := 0
@@ -155,7 +155,7 @@ func rotate(s *setup.Setup, isClean bool, slot string) error {
 				return fmt.Errorf("could not create key file %s: %w", idRotatePath, err)
 			}
 			defer f.Close()
-			err = id.New(f)
+			err = id.GenerateAge(f)
 		}
 
 		if err != nil {
@@ -183,7 +183,7 @@ func rotate(s *setup.Setup, isClean bool, slot string) error {
 				return fmt.Errorf("could not open key file %s: %w", idRotatePath, err)
 			}
 			defer f.Close()
-			idRotate = id.Load(f, idRotatePath)
+			idRotate = id.LoadAge(f, idRotatePath)
 		}
 
 		fmt.Printf("🔑 Created new age key file %s✔️\n", idRotate.Path)

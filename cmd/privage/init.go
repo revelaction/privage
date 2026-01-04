@@ -113,7 +113,7 @@ func initCommand(opts setup.Options, args []string) (err error) {
 				err = cerr
 			}
 		}()
-		err = id.New(f)
+		err = id.GenerateAge(f)
 		if err != nil {
 			return err
 		}

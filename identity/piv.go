@@ -45,7 +45,7 @@ func GeneratePiv(w io.Writer, device Device, slot uint32) error {
 // The path parameter is used for error messages and tracking (no filesystem operations).
 // TODO: Revisit signature - consider whether path should be part of Identity struct.
 func LoadPiv(r io.Reader, path string, device Device, slot uint32) Identity {
-	raw, err := LoadRaw(r, device, slot)
+	raw, err := DecryptPiv(r, device, slot)
 	if err != nil {
 		return Identity{Err: err}
 	}
@@ -61,9 +61,9 @@ func LoadPiv(r io.Reader, path string, device Device, slot uint32) Identity {
 	return ident
 }
 
-// LoadRaw returns the decrypted contents read from r, using the
+// DecryptPiv returns the decrypted contents read from r, using the
 // PIV device to decrypt with the key in the specified slot.
-func LoadRaw(r io.Reader, device Device, slot uint32) ([]byte, error) {
+func DecryptPiv(r io.Reader, device Device, slot uint32) ([]byte, error) {
 	decoded, err := io.ReadAll(ascii85.NewDecoder(r))
 	if err != nil {
 		return nil, fmt.Errorf("could not read message file: %w", err)
