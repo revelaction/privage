@@ -59,8 +59,8 @@ func rotate(s *setup.Setup, isClean bool, slot string, ui UI) (err error) {
 		return fmt.Errorf("found no encrypted files with key %s", s.Id.Path)
 	}
 
-	fmt.Fprintf(ui.Out, "Found %d files encrypted with key %s\n", numFiles, s.Id.Path)
-	fmt.Fprintln(ui.Out)
+	fmt.Fprintf(ui.Err, "Found %d files encrypted with key %s\n", numFiles, s.Id.Path)
+	fmt.Fprintln(ui.Err)
 
 	var idRotate id.Identity
 	idRotatePath := s.Repository + "/" + fileNameRotate
@@ -113,7 +113,7 @@ func rotate(s *setup.Setup, isClean bool, slot string, ui UI) (err error) {
 	numFilesRotate := 0
 	if idRotate.Err == nil {
 		numFilesRotate = numFilesForIdentity(s.Repository, idRotate)
-		fmt.Fprintf(ui.Out, "Found %d files encrypted with the rotated key %s\n", numFilesRotate, idRotate.Path)
+		fmt.Fprintf(ui.Err, "Found %d files encrypted with the rotated key %s\n", numFilesRotate, idRotate.Path)
 
 		if numFiles == numFilesRotate {
 
@@ -127,9 +127,9 @@ func rotate(s *setup.Setup, isClean bool, slot string, ui UI) (err error) {
 				return nil
 			}
 
-			fmt.Fprintln(ui.Out)
-			fmt.Fprintln(ui.Out, "rotate is completed ✔️")
-			fmt.Fprintln(ui.Out, "(Use \"privage rotate --clean\" to clean up old encrypted files and rename the new ones.)")
+			fmt.Fprintln(ui.Err)
+			fmt.Fprintln(ui.Err, "rotate is completed ✔️")
+			fmt.Fprintln(ui.Err, "(Use \"privage rotate --clean\" to clean up old encrypted files and rename the new ones.)")
 			return nil
 		}
 	}
@@ -213,7 +213,7 @@ func rotate(s *setup.Setup, isClean bool, slot string, ui UI) (err error) {
 			idRotate = id.LoadAge(f, idRotatePath)
 		}
 
-		fmt.Fprintf(ui.Out, "🔑 Created new age key file %s✔️\n", idRotate.Path)
+		fmt.Fprintf(ui.Err, "🔑 Created new age key file %s✔️\n", idRotate.Path)
 	}
 
 	// iterate all encrypted files with the current key and reencrypt.
@@ -260,12 +260,12 @@ func rotate(s *setup.Setup, isClean bool, slot string, ui UI) (err error) {
 		numReencrypted++
 	}
 
-	fmt.Fprintf(ui.Out, "🔐  Reencrypted %d files with new key %s\n", numReencrypted, idRotate.Path)
-	fmt.Fprintln(ui.Out)
-	fmt.Fprintln(ui.Out, "rotate is completed ✔️")
+	fmt.Fprintf(ui.Err, "🔐  Reencrypted %d files with new key %s\n", numReencrypted, idRotate.Path)
+	fmt.Fprintln(ui.Err)
+	fmt.Fprintln(ui.Err, "rotate is completed ✔️")
 
 	if !isClean {
-		fmt.Fprintln(ui.Out, "(Use \"privage rotate --clean\" to clean up old encrypted files and rename the new ones.)")
+		fmt.Fprintln(ui.Err, "(Use \"privage rotate --clean\" to clean up old encrypted files and rename the new ones.)")
 		return nil
 	}
 
@@ -282,9 +282,9 @@ func rotate(s *setup.Setup, isClean bool, slot string, ui UI) (err error) {
 // it also renames the keys (old and new).
 func cleanRotate(s *setup.Setup, idRotate id.Identity, slot string, ui UI) error {
 
-	fmt.Fprintln(ui.Out)
-	fmt.Fprintln(ui.Out, "Cleaning files...")
-	fmt.Fprintln(ui.Out)
+	fmt.Fprintln(ui.Err)
+	fmt.Fprintln(ui.Err, "Cleaning files...")
+	fmt.Fprintln(ui.Err)
 
 	// 1) remove all age encrypted fields of old key
 	numDeleted := 0
@@ -300,15 +300,15 @@ func cleanRotate(s *setup.Setup, idRotate id.Identity, slot string, ui UI) error
 
 		err := os.Remove(h.Path)
 		if err != nil {
-			fmt.Fprintf(ui.Out, "%8s Error while deleting h.Path %s: %s\n", "", h.Path, err)
+			fmt.Fprintf(ui.Err, "%8s Error while deleting h.Path %s: %s\n", "", h.Path, err)
 			return err
 		}
 
 		numDeleted++
 	}
 
-	fmt.Fprintf(ui.Out, "Deleted %d files encrypted with key %s\n", numDeleted, s.Id.Path)
-	fmt.Fprintln(ui.Out)
+	fmt.Fprintf(ui.Err, "Deleted %d files encrypted with key %s\n", numDeleted, s.Id.Path)
+	fmt.Fprintln(ui.Err)
 
 	// 2) rename
 	numRenamed := 0
@@ -316,7 +316,7 @@ func cleanRotate(s *setup.Setup, idRotate id.Identity, slot string, ui UI) error
 		if h.Err != nil {
 			var e *age.NoIdentityMatchError
 			if errors.As(h.Err, &e) {
-				fmt.Fprintf(ui.Out, "NoIdentityMatchError: Could not decrupt with curreent key %s\n", h.Err)
+				fmt.Fprintf(ui.Err, "NoIdentityMatchError: Could not decrupt with curreent key %s\n", h.Err)
 				continue
 			}
 
@@ -332,8 +332,8 @@ func cleanRotate(s *setup.Setup, idRotate id.Identity, slot string, ui UI) error
 		numRenamed++
 	}
 
-	fmt.Fprintf(ui.Out, "Renamed %d rotated files to %s extension\n", numRenamed, AgeExtension)
-	fmt.Fprintln(ui.Out)
+	fmt.Fprintf(ui.Err, "Renamed %d rotated files to %s extension\n", numRenamed, AgeExtension)
+	fmt.Fprintln(ui.Err)
 
 	// 3) rename old key to back
 	backupKeyPath := id.BackupFilePath(s.Repository)
@@ -342,30 +342,30 @@ func cleanRotate(s *setup.Setup, idRotate id.Identity, slot string, ui UI) error
 		return err
 	}
 
-	fmt.Fprintf(ui.Out, "Renamed old key %s to %s\n", s.Id.Path, backupKeyPath)
-	fmt.Fprintln(ui.Out)
+	fmt.Fprintf(ui.Err, "Renamed old key %s to %s\n", s.Id.Path, backupKeyPath)
+	fmt.Fprintln(ui.Err)
 
 	// 4) rename new key
 	err = os.Rename(idRotate.Path, s.Id.Path)
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(ui.Out, "Renamed new key %s to %s\n", idRotate.Path, s.Id.Path)
-	fmt.Fprintln(ui.Out)
+	fmt.Fprintf(ui.Err, "Renamed new key %s to %s\n", idRotate.Path, s.Id.Path)
+	fmt.Fprintln(ui.Err)
 
-	fmt.Fprintf(ui.Out, "The new key is a %s\n", id.FmtType(slot))
-	fmt.Fprintf(ui.Out, "⚠ Make sure the config file %s has these lines:\n", s.C.Path)
-	fmt.Fprintln(ui.Out)
+	fmt.Fprintf(ui.Err, "The new key is a %s\n", id.FmtType(slot))
+	fmt.Fprintf(ui.Err, "⚠ Make sure the config file %s has these lines:\n", s.C.Path)
+	fmt.Fprintln(ui.Err)
 	if len(slot) > 0 {
-		fmt.Fprintln(ui.Out, "    identity_type = \"PIV\"")
-		fmt.Fprintf(ui.Out, "    identity_piv_slot = \"%s\"\n", slot)
+		fmt.Fprintln(ui.Err, "    identity_type = \"PIV\"")
+		fmt.Fprintf(ui.Err, "    identity_piv_slot = \"%s\"\n", slot)
 	} else {
-		fmt.Fprintln(ui.Out, "    identity_type = \"\"")
-		fmt.Fprintln(ui.Out, "    identity_piv_slot = \"\"")
+		fmt.Fprintln(ui.Err, "    identity_type = \"\"")
+		fmt.Fprintln(ui.Err, "    identity_piv_slot = \"\"")
 	}
-	fmt.Fprintln(ui.Out)
+	fmt.Fprintln(ui.Err)
 
-	fmt.Fprintln(ui.Out, "cleaning is completed ✔️")
+	fmt.Fprintln(ui.Err, "cleaning is completed ✔️")
 
 	return nil
 }

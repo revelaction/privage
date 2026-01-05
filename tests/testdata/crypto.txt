@@ -19,7 +19,7 @@ rm secret.txt
 
 # Decrypt
 exec privage decrypt secret.txt
-stdout 'decrypted in the directory'
+stderr 'decrypted in the directory'
 exists secret.txt
 
 # Verify content matches input

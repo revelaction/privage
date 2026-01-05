@@ -56,17 +56,17 @@ func reencrypt(s *setup.Setup, isForce, isClean bool, ui UI) error {
 	}
 
 	if len(toEncrypt) == 0 {
-		fmt.Fprintln(ui.Out, "Found no files to reencrypt.")
+		fmt.Fprintln(ui.Err, "Found no files to reencrypt.")
 		return nil
 	}
 
 	// show only, if not force
 	if !isForce && !isClean {
 
-		fmt.Fprintln(ui.Out, "Found the following files to be reencrypted:")
+		fmt.Fprintln(ui.Err, "Found the following files to be reencrypted:")
 		logFilesToBeProcessed(toEncrypt, ui)
-		fmt.Fprintln(ui.Out, "(Use \"privage reencrypt --force\" to reencrypt all decrypted files)")
-		fmt.Fprintln(ui.Out, "(Use \"privage reencrypt --clean\" to reencrypt and delete all decrypted files)")
+		fmt.Fprintln(ui.Err, "(Use \"privage reencrypt --force\" to reencrypt all decrypted files)")
+		fmt.Fprintln(ui.Err, "(Use \"privage reencrypt --clean\" to reencrypt and delete all decrypted files)")
 		return nil
 	}
 
@@ -96,7 +96,7 @@ func reencrypt(s *setup.Setup, isForce, isClean bool, ui UI) error {
 			}
 	}
 
-	fmt.Fprintln(ui.Out, "The following files were reencrypted:")
+	fmt.Fprintln(ui.Err, "The following files were reencrypted:")
 	logFilesToBeProcessed(toEncrypt, ui)
 
 	if isClean {
@@ -123,16 +123,16 @@ func clean(s *setup.Setup, isForce bool, ui UI) error {
 	}
 
 	if len(toClean) == 0 {
-		fmt.Fprintln(ui.Out, "There are no decrypted files to de deleted.")
+		fmt.Fprintln(ui.Err, "There are no decrypted files to de deleted.")
 		return nil
 	}
 
 	if !isForce {
 
-		fmt.Fprintln(ui.Out, "The following decrypted files will be deleted because they already exist as encrypted:")
+		fmt.Fprintln(ui.Err, "The following decrypted files will be deleted because they already exist as encrypted:")
 		logFilesToBeProcessed(toClean, ui)
 
-		fmt.Fprintln(ui.Out, "Use `privage clean --force` to clean")
+		fmt.Fprintln(ui.Err, "Use `privage clean --force` to clean")
 		return nil
 	}
 
@@ -145,17 +145,17 @@ func clean(s *setup.Setup, isForce bool, ui UI) error {
 			}
 	}
 
-	fmt.Fprintln(ui.Out, "The following files were deleted:")
+	fmt.Fprintln(ui.Err, "The following files were deleted:")
 	logFilesToBeProcessed(toClean, ui)
 
 	return nil
 }
 
 func logFilesToBeProcessed(toEncrypt []*header.Header, ui UI) {
-	fmt.Fprintln(ui.Out)
+	fmt.Fprintln(ui.Err)
 	for _, h := range toEncrypt {
-		fmt.Fprintf(ui.Out, "%8s%s\n", "", h)
+		fmt.Fprintf(ui.Err, "%8s%s\n", "", h)
 	}
 
-	fmt.Fprintln(ui.Out)
+	fmt.Fprintln(ui.Err)
 }

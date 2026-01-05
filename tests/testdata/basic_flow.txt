@@ -4,7 +4,7 @@ stdout 'privage version'
 
 # Test init
 exec privage init
-stdout 'Generated age key file'
+stderr 'Generated age key file'
 exists .privage.conf
 exists privage-key.txt
 exists .gitignore

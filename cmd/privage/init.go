@@ -51,7 +51,7 @@ func initCommand(opts setup.Options, args []string, ui UI) (err error) {
 		return fmt.Errorf("error searching for config file: %w", err)
 	}
 	if configPath != "" {
-		fmt.Fprintf(ui.Out, "📑 Config file already exists: %s... Exiting\n", configPath)
+		fmt.Fprintf(ui.Err, "📑 Config file already exists: %s... Exiting\n", configPath)
 		return nil
 	}
 
@@ -61,7 +61,7 @@ func initCommand(opts setup.Options, args []string, ui UI) (err error) {
 		return fmt.Errorf("error searching for identity file: %w", err)
 	}
 	if idPath != "" {
-		fmt.Fprintf(ui.Out, "🔑 privage key file already exists: %s... Exiting.\n", idPath)
+		fmt.Fprintf(ui.Err, "🔑 privage key file already exists: %s... Exiting.\n", idPath)
 		return nil
 	}
 
@@ -110,7 +110,7 @@ func initCommand(opts setup.Options, args []string, ui UI) (err error) {
 			return fmt.Errorf("error creating encrypted age key in slot %s: %w", slot, err)
 		}
 
-		fmt.Fprintf(ui.Out, "🔑 Generated encrypted age key file `%s` with PIV slot %s ✔️\n", identityPath, slot)
+		fmt.Fprintf(ui.Err, "🔑 Generated encrypted age key file `%s` with PIV slot %s ✔️\n", identityPath, slot)
 	} else {
 		// normal age key
 		f, err := filesystem.CreateFile(identityPath, 0600)
@@ -127,7 +127,7 @@ func initCommand(opts setup.Options, args []string, ui UI) (err error) {
 			return err
 		}
 
-		fmt.Fprintf(ui.Out, "🔑 Generated age key file `%s` ✔️\n", identityPath)
+		fmt.Fprintf(ui.Err, "🔑 Generated age key file `%s` ✔️\n", identityPath)
 	}
 
 	//
@@ -141,11 +141,11 @@ func initCommand(opts setup.Options, args []string, ui UI) (err error) {
 			return err
 		}
 
-		fmt.Fprintf(ui.Out, "📒 .gitignore file already exists: %s... Exiting\n", gitignorePath)
+		fmt.Fprintf(ui.Err, "📒 .gitignore file already exists: %s... Exiting\n", gitignorePath)
 		return nil
 	}
 
-	fmt.Fprintf(ui.Out, "📒 Generated `%s` file ✔️\n", gitignorePath)
+	fmt.Fprintf(ui.Err, "📒 Generated `%s` file ✔️\n", gitignorePath)
 
 	//
 	// config file
@@ -177,7 +177,7 @@ func initCommand(opts setup.Options, args []string, ui UI) (err error) {
 		return fmt.Errorf("could not encode config file: %w", err)
 	}
 
-	fmt.Fprintf(ui.Out, "📑 Generated config file %s ✔️\n", confPath)
+	fmt.Fprintf(ui.Err, "📑 Generated config file %s ✔️\n", confPath)
 
 	return nil
 }

@@ -61,7 +61,7 @@ func clipboardCommand(s *setup.Setup, args []string, ui UI) (err error) {
 				return err
 			}
 
-			fmt.Fprintf(ui.Out, "The password for `%s` is in the clipboard\n", label)
+			fmt.Fprintf(ui.Err, "The password for `%s` is in the clipboard\n", label)
 
 			return nil
 		}

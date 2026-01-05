@@ -91,10 +91,10 @@ func decryptCommand(s *setup.Setup, args []string, ui UI) (retErr error) {
 		return fmt.Errorf("file %q not found in repository", label)
 	}
 
-	fmt.Fprintf(ui.Out, "The file %s was decrypted in the directory %s.\n", label, s.Repository)
-	fmt.Fprintln(ui.Out)
-	fmt.Fprintln(ui.Out, "(Use \"privage reencrypt --force\" to reencrypt all decrypted files)")
-	fmt.Fprintln(ui.Out, "(Use \"privage reencrypt --clean\" to reencrypt and delete all decrypted files)")
+	fmt.Fprintf(ui.Err, "The file %s was decrypted in the directory %s.\n", label, s.Repository)
+	fmt.Fprintln(ui.Err)
+	fmt.Fprintln(ui.Err, "(Use \"privage reencrypt --force\" to reencrypt all decrypted files)")
+	fmt.Fprintln(ui.Err, "(Use \"privage reencrypt --clean\" to reencrypt and delete all decrypted files)")
 
 	return nil
 }
