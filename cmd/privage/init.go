@@ -176,7 +176,7 @@ func initCommand(opts setup.Options, args []string) (err error) {
 		return fmt.Errorf("could not encode config file: %w", err)
 	}
 
-	fmt.Printf("📑 Generated config file %s ✔️\n", config.DefaultFileName)
+	fmt.Printf("📑 Generated config file %s ✔️\n", confPath)
 
 	return nil
 }
