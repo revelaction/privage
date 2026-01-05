@@ -11,55 +11,51 @@ import (
 
 // statusCommand prints on the terminal a status of the privage command
 // configuration
-func statusCommand(opts setup.Options, args []string) error {
+func statusCommand(s *setup.Setup, args []string, ui UI) error {
 	fs := flag.NewFlagSet("status", flag.ContinueOnError)
+	fs.SetOutput(ui.Err)
 	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s status\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "\nDescription:\n")
-		fmt.Fprintf(os.Stderr, "  Provide information about the current configuration.\n")
+		fmt.Fprintf(ui.Err, "Usage: %s status\n", os.Args[0])
+		fmt.Fprintf(ui.Err, "\nDescription:\n")
+		fmt.Fprintf(ui.Err, "  Provide information about the current configuration.\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 
-	s, err := setupEnv(opts)
-	if err != nil {
-		return fmt.Errorf("unable to setup environment configuration: %s", err)
-	}
-
-	fmt.Println()
+	fmt.Fprintln(ui.Out)
 
 	if s.Id.Id != nil {
-		fmt.Printf("🔑 Found age key file in %s ✔️\n", s.Id.Path)
+		fmt.Fprintf(ui.Out, "🔑 Found age key file in %s ✔️\n", s.Id.Path)
 	} else {
-		fmt.Println("🔑 🚫 Could not find an age key")
+		fmt.Fprintln(ui.Out, "🔑 🚫 Could not find an age key")
 	}
 
-	fmt.Printf("📂 The directory of the encrypted files is %s ✔️\n", s.Repository)
+	fmt.Fprintf(ui.Out, "📂 The directory of the encrypted files is %s ✔️\n", s.Repository)
 
 	if s.C != nil && len(s.C.Path) > 0 {
-		fmt.Printf("📑 Found config file in %s ✔️\n", s.C.Path)
+		fmt.Fprintf(ui.Out, "📑 Found config file in %s ✔️\n", s.C.Path)
 
 		showUpdateMessage := false
 		if s.Id.Path != s.C.IdentityPath {
 
-			fmt.Printf("%4s ⚠ The identity path does not match the identity path in the config file: %s.\n", "", s.C.IdentityPath)
+			fmt.Fprintf(ui.Out, "%4s ⚠ The identity path does not match the identity path in the config file: %s.\n", "", s.C.IdentityPath)
 			showUpdateMessage = true
 		}
 
-		fmt.Println()
+		fmt.Fprintln(ui.Out)
 		if showUpdateMessage {
 
-			fmt.Printf("%4s You may want to edit the config file %s\n", "", s.C.Path)
+			fmt.Fprintf(ui.Out, "%4s You may want to edit the config file %s\n", "", s.C.Path)
 		} else {
-			fmt.Printf("%4s The configuration file %s is up to date\n", "", s.C.Path)
+			fmt.Fprintf(ui.Out, "%4s The configuration file %s is up to date\n", "", s.C.Path)
 		}
 
-		fmt.Println()
+		fmt.Fprintln(ui.Out)
 	} else {
-		fmt.Printf("📑 A config file %s does not exists\n", config.DefaultFileName)
-		fmt.Println()
+		fmt.Fprintf(ui.Out, "📑 A config file %s does not exists\n", config.DefaultFileName)
+		fmt.Fprintln(ui.Out)
 
 	}
 
@@ -69,7 +65,7 @@ func statusCommand(opts setup.Options, args []string) error {
 			cnt++
 		}
 
-		fmt.Printf("🔐  Found %d encrypted files for the age key %s\n", cnt, s.Id.Path)
+		fmt.Fprintf(ui.Out, "🔐  Found %d encrypted files for the age key %s\n", cnt, s.Id.Path)
 	}
 
 	return nil

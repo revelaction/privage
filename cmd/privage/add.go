@@ -5,7 +5,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/revelaction/privage/credential"
@@ -21,15 +20,16 @@ import (
 // the second one (label) is:
 // - a label for credentials
 // - a existing file in the current directory
-func addCommand(opts setup.Options, args []string) error {
+func addCommand(s *setup.Setup, args []string, ui UI) error {
 	fs := flag.NewFlagSet("add", flag.ContinueOnError)
+	fs.SetOutput(ui.Err)
 	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s add [category] [label]\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "\nDescription:\n")
-		fmt.Fprintf(os.Stderr, "  Add a new encrypted file.\n")
-		fmt.Fprintf(os.Stderr, "\nArguments:\n")
-		fmt.Fprintf(os.Stderr, "  category  A category (e.g., 'credential' or any custom string)\n")
-		fmt.Fprintf(os.Stderr, "  label     A label for credentials, or an existing file path\n")
+		fmt.Fprintf(ui.Err, "Usage: %s add [category] [label]\n", os.Args[0])
+		fmt.Fprintf(ui.Err, "\nDescription:\n")
+		fmt.Fprintf(ui.Err, "  Add a new encrypted file.\n")
+		fmt.Fprintf(ui.Err, "\nArguments:\n")
+		fmt.Fprintf(ui.Err, "  category  A category (e.g., 'credential' or any custom string)\n")
+		fmt.Fprintf(ui.Err, "  label     A label for credentials, or an existing file path\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -40,11 +40,6 @@ func addCommand(opts setup.Options, args []string) error {
 
 	if len(args) != 2 {
 		return errors.New("add command needs two arguments: <category> <label>")
-	}
-
-	s, err := setupEnv(opts)
-	if err != nil {
-		return fmt.Errorf("unable to setup environment configuration: %s", err)
 	}
 
 	if s.Id.Id == nil {
@@ -71,7 +66,7 @@ func addCommand(opts setup.Options, args []string) error {
 	switch cat {
 	case header.CategoryCredential:
 		h.Category = header.CategoryCredential
-		if err := addCredential(h, s); err != nil {
+		if err := addCredential(h, s, ui); err != nil {
 			return err
 		}
 	default:
@@ -92,7 +87,7 @@ func addCommand(opts setup.Options, args []string) error {
 // addCredential creates a encrypted credential file in the repository directory.
 //
 // credential files are toml files
-func addCredential(h *header.Header, s *setup.Setup) error {
+func addCredential(h *header.Header, s *setup.Setup, ui UI) error {
 
 	cred, err := credential.New(s.C)
 	if err != nil {
@@ -109,24 +104,16 @@ func addCredential(h *header.Header, s *setup.Setup) error {
 		return err
 	}
 
-	streamHeaders := func() <-chan *header.Header {
-		return headerGenerator(s.Repository, s.Id)
-	}
-
-	readContent := func(r io.Reader) (io.Reader, error) {
-		return contentReader(r, s.Id)
-	}
-
-	if err := show(h.Label, "", streamHeaders, readContent, os.Stdout); err != nil {
+	if err := showCommand(s, []string{h.Label}, ui); err != nil {
 		return err
 	}
 
-	fmt.Println("You can edit the credentials file by running these commands:")
-	fmt.Println()
-	fmt.Printf("   privage decrypt %s\n", h.Label)
-	fmt.Printf("   vim %s # or your favorite editor\n", h.Label)
-	fmt.Println("   privage reencrypt")
-	fmt.Println()
+	fmt.Fprintln(ui.Err, "You can edit the credentials file by running these commands:")
+	fmt.Fprintln(ui.Err)
+	fmt.Fprintf(ui.Err, "   privage decrypt %s\n", h.Label)
+	fmt.Fprintf(ui.Err, "   vim %s # or your favorite editor\n", h.Label)
+	fmt.Fprintln(ui.Err, "   privage reencrypt")
+	fmt.Fprintln(ui.Err)
 
 	return nil
 }

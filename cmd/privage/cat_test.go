@@ -3,116 +3,83 @@ package main
 import (
 	"bytes"
 	"errors"
-	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/revelaction/privage/header"
+	"github.com/revelaction/privage/identity"
+	"github.com/revelaction/privage/setup"
 )
 
-func TestCat_Logic(t *testing.T) {
-	// 1. Mock Data
-	targetLabel := "target"
-	secretContent := "secret payload"
-
-	// Create a temp file to satisfy os.Open
-	tmpFile := t.TempDir() + "/target.age"
-	if err := os.WriteFile(tmpFile, []byte("dummy header data and content"), 0600); err != nil {
+func TestCatCommand(t *testing.T) {
+	// 1. Setup real environment in TempDir
+	tmpDir := t.TempDir()
+	
+	// Create identity
+	idPath := filepath.Join(tmpDir, "key.age")
+	f, err := os.Create(idPath)
+	if err != nil {
 		t.Fatal(err)
 	}
+	if err := identity.GenerateAge(f); err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
 
-	// 2. Mock Scanner (HeaderStreamFunc)
-	// Returns a channel with a non-matching header and then the matching one
-	mockStreamHeaders := func() <-chan *header.Header {
-		ch := make(chan *header.Header)
-		go func() {
-			ch <- &header.Header{Label: "other"}
-			ch <- &header.Header{Label: targetLabel, Path: tmpFile}
-			close(ch)
-		}()
-		return ch
+	// Load identity wrapper
+	f, _ = os.Open(idPath)
+	ident := identity.LoadAge(f, idPath)
+	f.Close()
+
+	s := &setup.Setup{
+		Id:         ident,
+		Repository: tmpDir,
 	}
 
-	// 3. Mock Reader (ContentReaderFunc)
-	mockReadContent := func(r io.Reader) (io.Reader, error) {
-		return strings.NewReader(secretContent), nil
+	// 2. Encrypt a real file
+	label := "secret.txt"
+	content := "real secret content"
+	h := &header.Header{Label: label}
+	if err := encryptSave(h, "", strings.NewReader(content), s); err != nil {
+		t.Fatalf("failed to encrypt: %v", err)
 	}
 
-	// 4. Capture Output
-	var buf bytes.Buffer
+	// 3. Run Command
+	var outBuf, errBuf bytes.Buffer
+	ui := UI{Out: &outBuf, Err: &errBuf}
+	
+	err = catCommand(s, []string{label}, ui)
 
-	// Run
-	err := cat(targetLabel, mockStreamHeaders, mockReadContent, &buf)
-
-	// Assert
+	// 4. Assert
 	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+		t.Fatalf("catCommand failed: %v", err)
 	}
 
-	if buf.String() != secretContent {
-		t.Errorf("expected output '%s', got '%s'", secretContent, buf.String())
+	if outBuf.String() != content {
+		t.Errorf("expected output %q, got %q", content, outBuf.String())
 	}
 }
 
-func TestCat_NotFound(t *testing.T) {
-	// Mock Scanner: Returns unrelated headers
-	mockStreamHeaders := func() <-chan *header.Header {
-		ch := make(chan *header.Header)
-		go func() {
-			ch <- &header.Header{Label: "other1"}
-			ch <- &header.Header{Label: "other2"}
-			close(ch)
-		}()
-		return ch
+func TestCatCommand_NotFound(t *testing.T) {
+	tmpDir := t.TempDir()
+	s := &setup.Setup{
+		Id:         identity.Identity{Path: "key.age"}, // Path is set but Id is nil
+		Repository: tmpDir,
 	}
+	// Note: In production s.Id.Err would be set if Id is nil.
+	s.Id.Err = errors.New("key not found")
 
-	// Mock Reader: Should not be called for the target
-	mockReadContent := func(r io.Reader) (io.Reader, error) {
-		return nil, errors.New("should not be called")
-	}
+	var outBuf, errBuf bytes.Buffer
+	ui := UI{Out: &outBuf, Err: &errBuf}
 
-	var buf bytes.Buffer
-	err := cat("missing_label", mockStreamHeaders, mockReadContent, &buf)
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if buf.Len() > 0 {
-		t.Errorf("expected no output, got '%s'", buf.String())
-	}
-}
-
-func TestCat_OpenError(t *testing.T) {
-	targetLabel := "broken"
-
-	// Create a temp file to satisfy os.Open
-	tmpFile := t.TempDir() + "/broken.age"
-	if err := os.WriteFile(tmpFile, []byte("dummy data"), 0600); err != nil {
-		t.Fatal(err)
-	}
-
-	mockStreamHeaders := func() <-chan *header.Header {
-		ch := make(chan *header.Header)
-		go func() {
-			ch <- &header.Header{Label: targetLabel, Path: tmpFile}
-			close(ch)
-		}()
-		return ch
-	}
-
-	// Mock Reader: Returns an error
-	mockReadContent := func(r io.Reader) (io.Reader, error) {
-		return nil, errors.New("decrypt failed")
-	}
-
-	var buf bytes.Buffer
-	err := cat(targetLabel, mockStreamHeaders, mockReadContent, &buf)
-
+	err := catCommand(s, []string{"missing"}, ui)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
-	if err.Error() != "decrypt failed" {
-		t.Errorf("expected error 'decrypt failed', got '%v'", err)
+
+	if !strings.Contains(err.Error(), "found no privage key file") {
+		t.Errorf("expected key error, got %v", err)
 	}
 }

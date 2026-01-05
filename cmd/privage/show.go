@@ -4,7 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/revelaction/privage/credential"
@@ -14,16 +13,17 @@ import (
 
 // showCommand prints in the terminal partially/all the contents of an encrypted
 // file.
-func showCommand(opts setup.Options, args []string) error {
+func showCommand(s *setup.Setup, args []string, ui UI) (err error) {
 	fs := flag.NewFlagSet("show", flag.ContinueOnError)
+	fs.SetOutput(ui.Err)
 	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s show [label] [field]\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "\nDescription:\n")
-		fmt.Fprintf(os.Stderr, "  Show the contents of an encrypted file (formatted if it's a credential).\n")
-		fmt.Fprintf(os.Stderr, "  If a field name is provided, only that field's value is printed.\n")
-		fmt.Fprintf(os.Stderr, "\nArguments:\n")
-		fmt.Fprintf(os.Stderr, "  label  The label of the file to show\n")
-		fmt.Fprintf(os.Stderr, "  field  Optional: specific TOML field to show (e.g., api_key)\n")
+		fmt.Fprintf(ui.Err, "Usage: %s show [label] [field]\n", os.Args[0])
+		fmt.Fprintf(ui.Err, "\nDescription:\n")
+		fmt.Fprintf(ui.Err, "  Show the contents of an encrypted file (formatted if it's a credential).\n")
+		fmt.Fprintf(ui.Err, "  If a field name is provided, only that field's value is printed.\n")
+		fmt.Fprintf(ui.Err, "\nArguments:\n")
+		fmt.Fprintf(ui.Err, "  label  The label of the file to show\n")
+		fmt.Fprintf(ui.Err, "  field  Optional: specific TOML field to show (e.g., api_key)\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -36,11 +36,6 @@ func showCommand(opts setup.Options, args []string) error {
 		return errors.New("show command needs at least one argument (label)")
 	}
 
-	s, err := setupEnv(opts)
-	if err != nil {
-		return fmt.Errorf("unable to setup environment configuration: %s", err)
-	}
-
 	if s.Id.Id == nil {
 		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}
@@ -51,23 +46,8 @@ func showCommand(opts setup.Options, args []string) error {
 		fieldName = args[1]
 	}
 
-	streamHeaders := func() <-chan *header.Header {
-		return headerGenerator(s.Repository, s.Id)
-	}
-
-	readContent := func(r io.Reader) (io.Reader, error) {
-		return contentReader(r, s.Id)
-	}
-
-	return show(label, fieldName, streamHeaders, readContent, os.Stdout)
-}
-
-func show(label string, fieldName string, streamHeaders HeaderStreamFunc, readContent ContentReaderFunc, out io.Writer) (err error) {
-
-	for h := range streamHeaders() {
-
+	for h := range headerGenerator(s.Repository, s.Id) {
 		if h.Label == label {
-
 			f, err := os.Open(h.Path)
 			if err != nil {
 				return err
@@ -78,7 +58,7 @@ func show(label string, fieldName string, streamHeaders HeaderStreamFunc, readCo
 				}
 			}()
 
-			r, err := readContent(f)
+			r, err := contentReader(f, s.Id)
 			if err != nil {
 				return err
 			}
@@ -97,13 +77,13 @@ func show(label string, fieldName string, streamHeaders HeaderStreamFunc, readCo
 				if !ok {
 					return fmt.Errorf("field '%s' not found in credential '%s'", fieldName, label)
 				}
-				if _, err := fmt.Fprint(out, val); err != nil {
+				if _, err := fmt.Fprint(ui.Out, val); err != nil {
 					return err
 				}
 				return nil
 			}
 
-			return cred.FprintBasic(out)
+			return cred.FprintBasic(ui.Out)
 		}
 	}
 

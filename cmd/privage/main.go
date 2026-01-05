@@ -6,6 +6,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/revelaction/privage/setup"
@@ -18,6 +19,13 @@ var (
 	BuildTag       string
 	YubikeySupport string
 )
+
+// UI contains the output streams for the application.
+// Used for injecting buffers during testing.
+type UI struct {
+	Out io.Writer
+	Err io.Writer
+}
 
 func main() {
 
@@ -41,15 +49,15 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  help, h    Show help for a command.\n")
 		fmt.Fprintf(os.Stderr, "\nGlobal Options:\n")
 		fmt.Fprintf(os.Stderr, "  -h, --help\n")
-		fmt.Fprintf(os.Stderr, "    	Show help for privage\n")
+		fmt.Fprintf(os.Stderr, "    \tShow help for privage\n")
 		fmt.Fprintf(os.Stderr, "  -c, -conf string\n")
-		fmt.Fprintf(os.Stderr, "    	Use file as privage configuration file\n")
+		fmt.Fprintf(os.Stderr, "    \tUse file as privage configuration file\n")
 		fmt.Fprintf(os.Stderr, "  -k, -key string\n")
-		fmt.Fprintf(os.Stderr, "    	Use file path for private key\n")
+		fmt.Fprintf(os.Stderr, "    \tUse file path for private key\n")
 		fmt.Fprintf(os.Stderr, "  -p, -piv-slot string\n")
-		fmt.Fprintf(os.Stderr, "    	The PIV slot for decryption of the age key\n")
+		fmt.Fprintf(os.Stderr, "    \tThe PIV slot for decryption of the age key\n")
 		fmt.Fprintf(os.Stderr, "  -r, -repository string\n")
-		fmt.Fprintf(os.Stderr, "    	Use file path as path for the repository\n")
+		fmt.Fprintf(os.Stderr, "    \tUse file path as path for the repository\n")
 		fmt.Fprintf(os.Stderr, "\nVersion: %s, commit %s, yubikey %s\n", BuildTag, BuildCommit, YubikeySupport)
 	}
 
@@ -81,49 +89,61 @@ func main() {
 }
 
 func runCommand(cmd string, args []string, opts setup.Options) error {
-	var err error
+	ui := UI{Out: os.Stdout, Err: os.Stderr}
+
 	switch cmd {
-	case "init":
-		err = initCommand(opts, args)
-	case "key":
-		err = keyCommand(opts, args)
-	case "status":
-		err = statusCommand(opts, args)
-	case "add":
-		err = addCommand(opts, args)
-	case "delete":
-		err = deleteCommand(opts, args)
-	case "list":
-		err = listCommand(opts, args)
-	case "show":
-		err = showCommand(opts, args)
-	case "cat":
-		err = catCommand(opts, args)
-	case "clipboard":
-		err = clipboardCommand(opts, args)
-	case "decrypt":
-		err = decryptCommand(opts, args)
-	case "reencrypt":
-		err = reencryptCommand(opts, args)
-	case "rotate":
-		err = rotateCommand(opts, args)
-	case "bash":
-		err = bashCommand(opts, args)
+	// 1. Utility commands (No setup needed)
 	case "version":
-		err = versionCommand(opts, args)
+		return versionCommand(ui)
+	case "bash":
+		return bashCommand(ui)
 	case "complete":
-		err = completeCommand(opts, args)
+		return completeCommand(opts, args) // needs raw opts for sub-dispatch
 	case "help", "h":
 		if len(args) > 0 {
 			return runCommand(args[0], []string{"--help"}, opts)
 		}
 		flag.Usage()
 		return nil
-	default:
-		return fmt.Errorf("unknown command: %s", cmd)
+
+	// 2. Bootstrap commands (Needs raw Options, not Setup)
+	case "init":
+		return initCommand(opts, args, ui)
+
+	// 3. Operational commands (Require full Setup)
+	case "key", "status", "add", "delete", "list", "show", "cat", "clipboard", "decrypt", "reencrypt", "rotate":
+		s, err := setupEnv(opts)
+			if err != nil {
+				return fmt.Errorf("unable to setup environment configuration: %w", err)
+			}
+
+			switch cmd {
+			case "key":
+				return keyCommand(s, args, ui)
+			case "status":
+				return statusCommand(s, args, ui)
+			case "add":
+				return addCommand(s, args, ui)
+			case "delete":
+				return deleteCommand(s, args, ui)
+			case "list":
+				return listCommand(s, args, ui)
+			case "show":
+				return showCommand(s, args, ui)
+			case "cat":
+				return catCommand(s, args, ui)
+			case "clipboard":
+				return clipboardCommand(s, args, ui)
+			case "decrypt":
+				return decryptCommand(s, args, ui)
+			case "reencrypt":
+				return reencryptCommand(s, args, ui)
+			case "rotate":
+				return rotateCommand(s, args, ui)
+			}
 	}
 
-	return err
+	return fmt.Errorf("unknown command: %s", cmd)
 }
 
 func fatal(err error) {

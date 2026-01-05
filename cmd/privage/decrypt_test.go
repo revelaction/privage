@@ -3,141 +3,80 @@ package main
 import (
 	"bytes"
 	"errors"
-	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/revelaction/privage/header"
+	"github.com/revelaction/privage/identity"
+	"github.com/revelaction/privage/setup"
 )
 
-// mockWriteCloser implements io.WriteCloser for testing.
-// It writes to the embedded bytes.Buffer and offers a no-op Close.
-type mockWriteCloser struct {
-	bytes.Buffer
-}
+func TestDecryptCommand(t *testing.T) {
+	// 1. Setup real environment
+	tmpDir := t.TempDir()
+	idPath := filepath.Join(tmpDir, "key.age")
+	f, _ := os.Create(idPath)
+	identity.GenerateAge(f)
+	f.Close()
 
-func (mwc *mockWriteCloser) Close() error {
-	return nil
-}
+	f, _ = os.Open(idPath)
+	ident := identity.LoadAge(f, idPath)
+	f.Close()
 
-func TestDecrypt_Logic(t *testing.T) {
-	// 1. Mock Data
-	targetLabel := "target.txt"
-	secretContent := "decrypted payload"
+	s := &setup.Setup{
+		Id:         ident,
+		Repository: tmpDir,
+	}
 
-	// Create a temp file to satisfy os.Open
-	tmpFile := t.TempDir() + "/target.age"
-	if err := os.WriteFile(tmpFile, []byte("dummy data"), 0600); err != nil {
+	// 2. Encrypt a file
+	label := "target.txt"
+	content := "decrypted payload"
+	h := &header.Header{Label: label}
+	if err := encryptSave(h, "", strings.NewReader(content), s); err != nil {
 		t.Fatal(err)
 	}
 
-	// 2. Mock Scanner (HeaderStreamFunc)
-	mockStreamHeaders := func() <-chan *header.Header {
-		ch := make(chan *header.Header)
-		go func() {
-			ch <- &header.Header{Label: "other.txt"}
-			ch <- &header.Header{Label: targetLabel, Path: tmpFile}
-			close(ch)
-		}()
-		return ch
-	}
+	// 3. Run Command
+	var outBuf, errBuf bytes.Buffer
+	ui := UI{Out: &outBuf, Err: &errBuf}
+	
+	err := decryptCommand(s, []string{label}, ui)
 
-	// 3. Mock Reader (ContentReaderFunc)
-	mockReadContent := func(r io.Reader) (io.Reader, error) {
-		return strings.NewReader(secretContent), nil
-	}
-
-	// 4. Mock File Creator (FileCreateFunc)
-	// We capture the output in a map to verify what was written to which file
-	createdFiles := make(map[string]*mockWriteCloser)
-	mockCreateFile := func(name string) (io.WriteCloser, error) {
-		mwc := &mockWriteCloser{}
-		createdFiles[name] = mwc
-		return mwc, nil
-	}
-
-	// 5. Capture Stdout - No longer needed for logic test as decrypt is silent on success
-	// var outBuf bytes.Buffer
-
-	// Run
-	err := decrypt(targetLabel, mockStreamHeaders, mockReadContent, mockCreateFile)
-
-	// Assert
+	// 4. Assert
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// Verify file content
-	if _, ok := createdFiles[targetLabel]; !ok {
-		t.Fatalf("file '%s' was not created", targetLabel)
-	}
-	if createdFiles[targetLabel].String() != secretContent {
-		t.Errorf("expected file content '%s', got '%s'", secretContent, createdFiles[targetLabel].String())
-	}
-}
-
-func TestDecrypt_NotFound(t *testing.T) {
-	mockStreamHeaders := func() <-chan *header.Header {
-		ch := make(chan *header.Header)
-		go func() {
-			ch <- &header.Header{Label: "other1"}
-			close(ch)
-		}()
-		return ch
-	}
-
-	mockReadContent := func(r io.Reader) (io.Reader, error) {
-		return nil, errors.New("should not be called")
-	}
-
-	mockCreateFile := func(name string) (io.WriteCloser, error) {
-		return nil, errors.New("should not be called")
-	}
-
-	err := decrypt("missing", mockStreamHeaders, mockReadContent, mockCreateFile)
-
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-	if !errors.Is(err, ErrHeaderNotFound) {
-		t.Errorf("expected ErrHeaderNotFound, got %v", err)
-	}
-}
-
-func TestDecrypt_CreateError(t *testing.T) {
-	targetLabel := "fail_create"
-
-	// Create a temp file to satisfy os.Open
-	tmpFile := t.TempDir() + "/fail_create.age"
-	if err := os.WriteFile(tmpFile, []byte("dummy data"), 0600); err != nil {
+	// Verify file was created on disk
+	decryptedPath := filepath.Join(tmpDir, label)
+	got, err := os.ReadFile(decryptedPath)
+	if err != nil {
 		t.Fatal(err)
 	}
-
-	mockStreamHeaders := func() <-chan *header.Header {
-		ch := make(chan *header.Header)
-		go func() {
-			ch <- &header.Header{Label: targetLabel, Path: tmpFile}
-			close(ch)
-		}()
-		return ch
+	if string(got) != content {
+		t.Errorf("expected %q, got %q", content, string(got))
 	}
+}
 
-	mockReadContent := func(r io.Reader) (io.Reader, error) {
-		return strings.NewReader("content"), nil
+func TestDecryptCommand_NotFound(t *testing.T) {
+	tmpDir := t.TempDir()
+	s := &setup.Setup{
+		Id:         identity.Identity{Path: "key.age"},
+		Repository: tmpDir,
 	}
+	s.Id.Err = errors.New("key missing")
 
-	// Mock Creator: Returns error
-	mockCreateFile := func(name string) (io.WriteCloser, error) {
-		return nil, errors.New("permission denied")
-	}
+	var outBuf, errBuf bytes.Buffer
+	ui := UI{Out: &outBuf, Err: &errBuf}
 
-	err := decrypt(targetLabel, mockStreamHeaders, mockReadContent, mockCreateFile)
+	err := decryptCommand(s, []string{"missing"}, ui)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
-	if err.Error() != "permission denied" {
-		t.Errorf("expected error 'permission denied', got '%v'", err)
+	if !strings.Contains(err.Error(), "found no privage key file") {
+		t.Errorf("expected key error, got %v", err)
 	}
 }

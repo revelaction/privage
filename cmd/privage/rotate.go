@@ -24,8 +24,9 @@ const (
 
 // rotateCommand generates a new age key and reencrypts all present encrypted
 // fields with the new key.
-func rotateCommand(opts setup.Options, args []string) (err error) {
+func rotateCommand(s *setup.Setup, args []string, ui UI) (err error) {
 	fs := flag.NewFlagSet("rotate", flag.ContinueOnError)
+	fs.SetOutput(ui.Err)
 	var isClean bool
 	var slot string
 	fs.BoolVar(&isClean, "clean", false, "Delete old Key's encrypted files. Rename new encrypted files and the new key")
@@ -33,10 +34,10 @@ func rotateCommand(opts setup.Options, args []string) (err error) {
 	fs.StringVar(&slot, "piv-slot", "", "Use the yubikey slot to encrypt the age private key with the RSA Key")
 	fs.StringVar(&slot, "p", "", "alias for -piv-slot")
 	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s rotate [options]\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "\nDescription:\n")
-		fmt.Fprintf(os.Stderr, "  Create a new age key and reencrypt every file with the new key.\n")
-		fmt.Fprintf(os.Stderr, "\nOptions:\n")
+		fmt.Fprintf(ui.Err, "Usage: %s rotate [options]\n", os.Args[0])
+		fmt.Fprintf(ui.Err, "\nDescription:\n")
+		fmt.Fprintf(ui.Err, "  Create a new age key and reencrypt every file with the new key.\n")
+		fmt.Fprintf(ui.Err, "\nOptions:\n")
 		fs.PrintDefaults()
 	}
 
@@ -44,15 +45,10 @@ func rotateCommand(opts setup.Options, args []string) (err error) {
 		return err
 	}
 
-	s, err := setupEnv(opts)
-	if err != nil {
-		return fmt.Errorf("unable to setup environment configuration: %s", err)
-	}
-
-	return rotate(s, isClean, slot)
+	return rotate(s, isClean, slot, ui)
 }
 
-func rotate(s *setup.Setup, isClean bool, slot string) (err error) {
+func rotate(s *setup.Setup, isClean bool, slot string, ui UI) (err error) {
 
 	if s.Id.Id == nil {
 		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
@@ -63,8 +59,8 @@ func rotate(s *setup.Setup, isClean bool, slot string) (err error) {
 		return fmt.Errorf("found no encrypted files with key %s", s.Id.Path)
 	}
 
-	fmt.Printf("Found %d files encrypted with key %s\n", numFiles, s.Id.Path)
-	fmt.Println()
+	fmt.Fprintf(ui.Out, "Found %d files encrypted with key %s\n", numFiles, s.Id.Path)
+	fmt.Fprintln(ui.Out)
 
 	var idRotate id.Identity
 	idRotatePath := s.Repository + "/" + fileNameRotate
@@ -117,13 +113,13 @@ func rotate(s *setup.Setup, isClean bool, slot string) (err error) {
 	numFilesRotate := 0
 	if idRotate.Err == nil {
 		numFilesRotate = numFilesForIdentity(s.Repository, idRotate)
-		fmt.Printf("Found %d files encrypted with the rotated key %s\n", numFilesRotate, idRotate.Path)
+		fmt.Fprintf(ui.Out, "Found %d files encrypted with the rotated key %s\n", numFilesRotate, idRotate.Path)
 
 		if numFiles == numFilesRotate {
 
 			// the rotate process is completed. Run clean if flag
 			if isClean {
-				err = cleanRotate(s, idRotate, slot)
+				err = cleanRotate(s, idRotate, slot, ui)
 				if err != nil {
 					return err
 				}
@@ -131,9 +127,9 @@ func rotate(s *setup.Setup, isClean bool, slot string) (err error) {
 				return nil
 			}
 
-			fmt.Println()
-			fmt.Println("rotate is completed ✔️")
-			fmt.Println("(Use \"privage rotate --clean\" to clean up old encrypted files and rename the new ones.)")
+			fmt.Fprintln(ui.Out)
+			fmt.Fprintln(ui.Out, "rotate is completed ✔️")
+			fmt.Fprintln(ui.Out, "(Use \"privage rotate --clean\" to clean up old encrypted files and rename the new ones.)")
 			return nil
 		}
 	}
@@ -217,7 +213,7 @@ func rotate(s *setup.Setup, isClean bool, slot string) (err error) {
 			idRotate = id.LoadAge(f, idRotatePath)
 		}
 
-		fmt.Printf("🔑 Created new age key file %s✔️\n", idRotate.Path)
+		fmt.Fprintf(ui.Out, "🔑 Created new age key file %s✔️\n", idRotate.Path)
 	}
 
 	// iterate all encrypted files with the current key and reencrypt.
@@ -264,16 +260,16 @@ func rotate(s *setup.Setup, isClean bool, slot string) (err error) {
 		numReencrypted++
 	}
 
-	fmt.Printf("🔐  Reencrypted %d files with new key %s\n", numReencrypted, idRotate.Path)
-	fmt.Println()
-	fmt.Println("rotate is completed ✔️")
+	fmt.Fprintf(ui.Out, "🔐  Reencrypted %d files with new key %s\n", numReencrypted, idRotate.Path)
+	fmt.Fprintln(ui.Out)
+	fmt.Fprintln(ui.Out, "rotate is completed ✔️")
 
 	if !isClean {
-		fmt.Println("(Use \"privage rotate --clean\" to clean up old encrypted files and rename the new ones.)")
+		fmt.Fprintln(ui.Out, "(Use \"privage rotate --clean\" to clean up old encrypted files and rename the new ones.)")
 		return nil
 	}
 
-	err = cleanRotate(s, idRotate, slot)
+	err = cleanRotate(s, idRotate, slot, ui)
 	if err != nil {
 		return err
 	}
@@ -284,11 +280,11 @@ func rotate(s *setup.Setup, isClean bool, slot string) (err error) {
 // cleanRotate removes all encrypted files with the old key
 // it also renames all age encrypted files of new key to standard form (without rotated suffix)
 // it also renames the keys (old and new).
-func cleanRotate(s *setup.Setup, idRotate id.Identity, slot string) error {
+func cleanRotate(s *setup.Setup, idRotate id.Identity, slot string, ui UI) error {
 
-	fmt.Println()
-	fmt.Println("Cleaning files...")
-	fmt.Println()
+	fmt.Fprintln(ui.Out)
+	fmt.Fprintln(ui.Out, "Cleaning files...")
+	fmt.Fprintln(ui.Out)
 
 	// 1) remove all age encrypted fields of old key
 	numDeleted := 0
@@ -304,15 +300,15 @@ func cleanRotate(s *setup.Setup, idRotate id.Identity, slot string) error {
 
 		err := os.Remove(h.Path)
 		if err != nil {
-			fmt.Printf("%8s Error while deleting h.Path %s: %s\n", "", h.Path, err)
+			fmt.Fprintf(ui.Out, "%8s Error while deleting h.Path %s: %s\n", "", h.Path, err)
 			return err
 		}
 
 		numDeleted++
 	}
 
-	fmt.Printf("Deleted %d files encrypted with key %s\n", numDeleted, s.Id.Path)
-	fmt.Println()
+	fmt.Fprintf(ui.Out, "Deleted %d files encrypted with key %s\n", numDeleted, s.Id.Path)
+	fmt.Fprintln(ui.Out)
 
 	// 2) rename
 	numRenamed := 0
@@ -320,7 +316,7 @@ func cleanRotate(s *setup.Setup, idRotate id.Identity, slot string) error {
 		if h.Err != nil {
 			var e *age.NoIdentityMatchError
 			if errors.As(h.Err, &e) {
-				fmt.Printf("NoIdentityMatchError: Could not decrupt with curreent key %s\n", h.Err)
+				fmt.Fprintf(ui.Out, "NoIdentityMatchError: Could not decrupt with curreent key %s\n", h.Err)
 				continue
 			}
 
@@ -336,8 +332,8 @@ func cleanRotate(s *setup.Setup, idRotate id.Identity, slot string) error {
 		numRenamed++
 	}
 
-	fmt.Printf("Renamed %d rotated files to %s extension\n", numRenamed, AgeExtension)
-	fmt.Println()
+	fmt.Fprintf(ui.Out, "Renamed %d rotated files to %s extension\n", numRenamed, AgeExtension)
+	fmt.Fprintln(ui.Out)
 
 	// 3) rename old key to back
 	backupKeyPath := id.BackupFilePath(s.Repository)
@@ -346,30 +342,30 @@ func cleanRotate(s *setup.Setup, idRotate id.Identity, slot string) error {
 		return err
 	}
 
-	fmt.Printf("Renamed old key %s to %s\n", s.Id.Path, backupKeyPath)
-	fmt.Println()
+	fmt.Fprintf(ui.Out, "Renamed old key %s to %s\n", s.Id.Path, backupKeyPath)
+	fmt.Fprintln(ui.Out)
 
 	// 4) rename new key
 	err = os.Rename(idRotate.Path, s.Id.Path)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Renamed new key %s to %s\n", idRotate.Path, s.Id.Path)
-	fmt.Println()
+	fmt.Fprintf(ui.Out, "Renamed new key %s to %s\n", idRotate.Path, s.Id.Path)
+	fmt.Fprintln(ui.Out)
 
-	fmt.Printf("The new key is a %s\n", id.FmtType(slot))
-	fmt.Printf("⚠ Make sure the config file %s has these lines:\n", s.C.Path)
-	fmt.Println()
+	fmt.Fprintf(ui.Out, "The new key is a %s\n", id.FmtType(slot))
+	fmt.Fprintf(ui.Out, "⚠ Make sure the config file %s has these lines:\n", s.C.Path)
+	fmt.Fprintln(ui.Out)
 	if len(slot) > 0 {
-		fmt.Println("    identity_type = \"PIV\"")
-		fmt.Printf("    identity_piv_slot = \"%s\"\n", slot)
+		fmt.Fprintln(ui.Out, "    identity_type = \"PIV\"")
+		fmt.Fprintf(ui.Out, "    identity_piv_slot = \"%s\"\n", slot)
 	} else {
-		fmt.Println("    identity_type = \"\"")
-		fmt.Println("    identity_piv_slot = \"\"")
+		fmt.Fprintln(ui.Out, "    identity_type = \"\"")
+		fmt.Fprintln(ui.Out, "    identity_piv_slot = \"\"")
 	}
-	fmt.Println()
+	fmt.Fprintln(ui.Out)
 
-	fmt.Println("cleaning is completed ✔️")
+	fmt.Fprintln(ui.Out, "cleaning is completed ✔️")
 
 	return nil
 }

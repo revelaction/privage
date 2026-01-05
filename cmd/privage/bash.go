@@ -4,8 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-
-	"github.com/revelaction/privage/setup"
 )
 
 const complete = `#! /bin/bash
@@ -36,18 +34,18 @@ _privage_autocomplete() {
 complete -F _privage_autocomplete privage
 `
 
-func bashCommand(opts setup.Options, args []string) error {
+func bashCommand(ui UI) error {
 	fs := flag.NewFlagSet("bash", flag.ContinueOnError)
+	fs.SetOutput(ui.Err)
 	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s bash\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "\nDescription:\n")
-		fmt.Fprintf(os.Stderr, "  Dump bash complete script.\n")
+		fmt.Fprintf(ui.Err, "Usage: %s bash\n", os.Args[0])
+		fmt.Fprintf(ui.Err, "\nDescription:\n")
+		fmt.Fprintf(ui.Err, "  Dump bash complete script.\n")
 	}
 
-	if err := fs.Parse(args); err != nil {
-		return err
-	}
+	// Note: args not passed to bashCommand anymore, but it had no args anyway
+	// If it needs them in the future we can adjust main.go
 
-	fmt.Print(complete)
+	fmt.Fprint(ui.Out, complete)
 	return nil
 }

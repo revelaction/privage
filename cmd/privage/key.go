@@ -12,26 +12,22 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-func keyCommand(opts setup.Options, args []string) (err error) {
+func keyCommand(s *setup.Setup, args []string, ui UI) (err error) {
 	flagSet := flag.NewFlagSet("key", flag.ContinueOnError)
+	flagSet.SetOutput(ui.Err)
 	flagSet.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s key\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "\nDescription:\n")
-		fmt.Fprintf(os.Stderr, "  Decrypt the age private key with the PIV key defined in the .privage.conf file.\n")
+		fmt.Fprintf(ui.Err, "Usage: %s key\n", os.Args[0])
+		fmt.Fprintf(ui.Err, "\nDescription:\n")
+		fmt.Fprintf(ui.Err, "  Decrypt the age private key with the PIV key defined in the .privage.conf file.\n")
 	}
 
 	if err = flagSet.Parse(args); err != nil {
 		return err
 	}
 
-	s, err := setupEnv(opts)
-	if err != nil {
-		return fmt.Errorf("unable to setup environment configuration: %s", err)
-	}
-
 	// piv functionality requires conf piv slot
-	if len(s.C.IdentityPivSlot) == 0 {
-		return fmt.Errorf("found no piv slot in conf: %w", s.Id.Err)
+	if s.C == nil || len(s.C.IdentityPivSlot) == 0 {
+		return fmt.Errorf("found no piv slot in conf")
 	}
 
 	ps, err := strconv.ParseUint(s.C.IdentityPivSlot, 16, 32)
@@ -64,7 +60,7 @@ func keyCommand(opts setup.Options, args []string) (err error) {
 		return fmt.Errorf("could not decrypt age key: %w", err)
 	}
 
-	_, err = fmt.Fprintf(os.Stdout, "%s\n", ageKey)
+	_, err = fmt.Fprintf(ui.Out, "%s\n", ageKey)
 	if err != nil {
 		return fmt.Errorf("could not copy to the console: %w", err)
 	}

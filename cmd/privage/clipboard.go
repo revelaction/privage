@@ -10,58 +10,38 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-func clipboardCommand(opts setup.Options, args []string) error {
+// clipboardCommand copies the password field of a credential file to the clipboard
+func clipboardCommand(s *setup.Setup, args []string, ui UI) (err error) {
 	fs := flag.NewFlagSet("clipboard", flag.ContinueOnError)
-	var deleteFlag bool
-	fs.BoolVar(&deleteFlag, "delete", false, "Delete the contents of the clipboard")
-	fs.BoolVar(&deleteFlag, "d", false, "alias for -delete")
+	fs.SetOutput(ui.Err)
 	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s clipboard [options] [label]\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "\nDescription:\n")
-		fmt.Fprintf(os.Stderr, "  Copy the credential password to the clipboard.\n")
-		fmt.Fprintf(os.Stderr, "\nOptions:\n")
+		fmt.Fprintf(ui.Err, "Usage: %s clipboard [options] [label]\n", os.Args[0])
+		fmt.Fprintf(ui.Err, "\nDescription:\n")
+		fmt.Fprintf(ui.Err, "  Copy the credential password to the clipboard.\n")
+		fmt.Fprintf(ui.Err, "\nOptions:\n")
 		fs.PrintDefaults()
-		fmt.Fprintf(os.Stderr, "\nArguments:\n")
-		fmt.Fprintf(os.Stderr, "  label  The label of the credential to copy\n")
+		fmt.Fprintf(ui.Err, "\nArguments:\n")
+		fmt.Fprintf(ui.Err, "  label  The label of the credential to copy\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 
-	if deleteFlag {
-		err := credential.EmptyClipboard()
-		if err != nil {
-			return fmt.Errorf("could not emtpty the clipboard: %w", err)
-		}
+	args = fs.Args()
 
-		return nil
-	}
-
-	if fs.NArg() == 0 {
-		return errors.New("clipboard command needs one argument: label")
-	}
-
-	s, err := setupEnv(opts)
-	if err != nil {
-		return fmt.Errorf("unable to setup environment configuration: %s", err)
+	if len(args) == 0 {
+		return errors.New("clipboard command needs one argument (label)")
 	}
 
 	if s.Id.Id == nil {
 		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}
 
-	label := fs.Arg(0)
-
-	return clipboard(label, s)
-}
-
-func clipboard(label string, s *setup.Setup) (err error) {
+	label := args[0]
 
 	for h := range headerGenerator(s.Repository, s.Id) {
-
 		if h.Label == label {
-
 			f, err := os.Open(h.Path)
 			if err != nil {
 				return err
@@ -77,12 +57,13 @@ func clipboard(label string, s *setup.Setup) (err error) {
 				return err
 			}
 
-			err = credential.CopyClipboard(r)
-			if err != nil {
-				return fmt.Errorf("could not copy to clipboard: %w", err)
+			if err := credential.CopyClipboard(r); err != nil {
+				return err
 			}
 
-			fmt.Printf("The password for `%s` is in the clipboard\n", label)
+			fmt.Fprintf(ui.Out, "The password for `%s` is in the clipboard\n", label)
+
+			return nil
 		}
 	}
 

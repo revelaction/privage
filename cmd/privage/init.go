@@ -27,16 +27,17 @@ const (
 // It generates a .gitignore file in the current directory if not existing.
 // It generates a .privage.conf file in the home directory, with the
 // identity and secret directory paths.
-func initCommand(opts setup.Options, args []string) (err error) {
+func initCommand(opts setup.Options, args []string, ui UI) (err error) {
 	fs := flag.NewFlagSet("init", flag.ContinueOnError)
+	fs.SetOutput(ui.Err)
 	var slot string
 	fs.StringVar(&slot, "piv-slot", "", "Use the yubikey slot key to encrypt the age private key")
 	fs.StringVar(&slot, "p", "", "alias for -piv-slot")
 	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s init [options]\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "\nDescription:\n")
-		fmt.Fprintf(os.Stderr, "  Add a .gitignore, age/yubikey key file to the current directory. Add a config file in the home directory.\n")
-		fmt.Fprintf(os.Stderr, "\nOptions:\n")
+		fmt.Fprintf(ui.Err, "Usage: %s init [options]\n", os.Args[0])
+		fmt.Fprintf(ui.Err, "\nDescription:\n")
+		fmt.Fprintf(ui.Err, "  Add a .gitignore, age/yubikey key file to the current directory. Add a config file in the home directory.\n")
+		fmt.Fprintf(ui.Err, "\nOptions:\n")
 		fs.PrintDefaults()
 	}
 
@@ -50,7 +51,7 @@ func initCommand(opts setup.Options, args []string) (err error) {
 		return fmt.Errorf("error searching for config file: %w", err)
 	}
 	if configPath != "" {
-		fmt.Printf("📑 Config file already exists: %s... Exiting\n", configPath)
+		fmt.Fprintf(ui.Out, "📑 Config file already exists: %s... Exiting\n", configPath)
 		return nil
 	}
 
@@ -60,7 +61,7 @@ func initCommand(opts setup.Options, args []string) (err error) {
 		return fmt.Errorf("error searching for identity file: %w", err)
 	}
 	if idPath != "" {
-		fmt.Printf("🔑 privage key file already exists: %s... Exiting.\n", idPath)
+		fmt.Fprintf(ui.Out, "🔑 privage key file already exists: %s... Exiting.\n", idPath)
 		return nil
 	}
 
@@ -109,7 +110,7 @@ func initCommand(opts setup.Options, args []string) (err error) {
 			return fmt.Errorf("error creating encrypted age key in slot %s: %w", slot, err)
 		}
 
-		fmt.Printf("🔑 Generated encrypted age key file `%s` with PIV slot %s ✔️\n", identityPath, slot)
+		fmt.Fprintf(ui.Out, "🔑 Generated encrypted age key file `%s` with PIV slot %s ✔️\n", identityPath, slot)
 	} else {
 		// normal age key
 		f, err := filesystem.CreateFile(identityPath, 0600)
@@ -126,7 +127,7 @@ func initCommand(opts setup.Options, args []string) (err error) {
 			return err
 		}
 
-		fmt.Printf("🔑 Generated age key file `%s` ✔️\n", identityPath)
+		fmt.Fprintf(ui.Out, "🔑 Generated age key file `%s` ✔️\n", identityPath)
 	}
 
 	//
@@ -140,11 +141,11 @@ func initCommand(opts setup.Options, args []string) (err error) {
 			return err
 		}
 
-		fmt.Printf("📒 .gitignore file already exists: %s... Exiting\n", gitignorePath)
+		fmt.Fprintf(ui.Out, "📒 .gitignore file already exists: %s... Exiting\n", gitignorePath)
 		return nil
 	}
 
-	fmt.Printf("📒 Generated `%s` file ✔️\n", gitignorePath)
+	fmt.Fprintf(ui.Out, "📒 Generated `%s` file ✔️\n", gitignorePath)
 
 	//
 	// config file
@@ -176,7 +177,7 @@ func initCommand(opts setup.Options, args []string) (err error) {
 		return fmt.Errorf("could not encode config file: %w", err)
 	}
 
-	fmt.Printf("📑 Generated config file %s ✔️\n", confPath)
+	fmt.Fprintf(ui.Out, "📑 Generated config file %s ✔️\n", confPath)
 
 	return nil
 }

@@ -12,14 +12,15 @@ import (
 )
 
 // listCommand list encripted files
-func listCommand(opts setup.Options, args []string) error {
+func listCommand(s *setup.Setup, args []string, ui UI) error {
 	fs := flag.NewFlagSet("list", flag.ContinueOnError)
+	fs.SetOutput(ui.Err)
 	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s list [filter]\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "\nDescription:\n")
-		fmt.Fprintf(os.Stderr, "  List metadata of all or some encrypted files.\n")
-		fmt.Fprintf(os.Stderr, "\nArguments:\n")
-		fmt.Fprintf(os.Stderr, "  filter  Optional filter for category or label name\n")
+		fmt.Fprintf(ui.Err, "Usage: %s list [filter]\n", os.Args[0])
+		fmt.Fprintf(ui.Err, "\nDescription:\n")
+		fmt.Fprintf(ui.Err, "  List metadata of all or some encrypted files.\n")
+		fmt.Fprintf(ui.Err, "\nArguments:\n")
+		fmt.Fprintf(ui.Err, "  filter  Optional filter for category or label name\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -27,11 +28,6 @@ func listCommand(opts setup.Options, args []string) error {
 	}
 
 	args = fs.Args()
-
-	s, err := setupEnv(opts)
-	if err != nil {
-		return fmt.Errorf("unable to setup environment configuration: %s", err)
-	}
 
 	filter := "" // no filter
 	if len(args) != 0 {
@@ -51,10 +47,10 @@ func listCommand(opts setup.Options, args []string) error {
 	var toList, toListForCat, toListForLabel []*header.Header
 	if filter == "" {
 		toList = headers
-		fmt.Printf("Found %d total encrypted tracked files.\n", len(toList))
+		fmt.Fprintf(ui.Out, "Found %d total encrypted tracked files.\n", len(toList))
 		sorted := sortList(toList)
 		for _, h := range sorted {
-			fmt.Printf("%8s%s\n", "", h)
+			fmt.Fprintf(ui.Out, "%8s%s\n", "", h)
 		}
 
 		return nil
@@ -64,30 +60,30 @@ func listCommand(opts setup.Options, args []string) error {
 	toListForLabel = headersForFilterLabel(filter, headers)
 
 	if len(toListForCat) == 0 && len(toListForLabel) == 0 {
-		fmt.Printf("Found no encrypted tracked files matching '%s'\n", filter)
+		fmt.Fprintf(ui.Out, "Found no encrypted tracked files matching '%s'\n", filter)
 		return nil
 	}
 
 	if len(toListForCat) > 0 {
-		fmt.Printf("Found %d files with category matching '%s':\n", len(toListForCat), filter)
-		fmt.Println()
+		fmt.Fprintf(ui.Out, "Found %d files with category matching '%s':\n", len(toListForCat), filter)
+		fmt.Fprintln(ui.Out)
 		sorted := sortList(toListForCat)
 		for _, h := range sorted {
-			fmt.Printf("%8s%s\n", "", h)
+			fmt.Fprintf(ui.Out, "%8s%s\n", "", h)
 		}
 
-		fmt.Println()
+		fmt.Fprintln(ui.Out)
 	}
 
 	if len(toListForLabel) > 0 {
-		fmt.Printf("Found %d files with name matching '%s':\n", len(toListForLabel), filter)
-		fmt.Println()
+		fmt.Fprintf(ui.Out, "Found %d files with name matching '%s':\n", len(toListForLabel), filter)
+		fmt.Fprintln(ui.Out)
 		sorted := sortList(toListForLabel)
 		for _, h := range sorted {
-			fmt.Printf("%8s%s\n", "", h)
+			fmt.Fprintf(ui.Out, "%8s%s\n", "", h)
 		}
 
-		fmt.Println()
+		fmt.Fprintln(ui.Out)
 	}
 
 	return nil

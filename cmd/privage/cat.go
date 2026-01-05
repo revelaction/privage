@@ -7,19 +7,19 @@ import (
 	"io"
 	"os"
 
-	"github.com/revelaction/privage/header"
 	"github.com/revelaction/privage/setup"
 )
 
 // catCommand prints in the terminal the contents of an encrypted file.
-func catCommand(opts setup.Options, args []string) error {
+func catCommand(s *setup.Setup, args []string, ui UI) (err error) {
 	fs := flag.NewFlagSet("cat", flag.ContinueOnError)
+	fs.SetOutput(ui.Err)
 	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s cat [label]\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "\nDescription:\n")
-		fmt.Fprintf(os.Stderr, "  Print the full contents of an encrypted file to stdout.\n")
-		fmt.Fprintf(os.Stderr, "\nArguments:\n")
-		fmt.Fprintf(os.Stderr, "  label  The label of the file to show\n")
+		fmt.Fprintf(ui.Err, "Usage: %s cat [label]\n", os.Args[0])
+		fmt.Fprintf(ui.Err, "\nDescription:\n")
+		fmt.Fprintf(ui.Err, "  Print the full contents of an encrypted file to stdout.\n")
+		fmt.Fprintf(ui.Err, "\nArguments:\n")
+		fmt.Fprintf(ui.Err, "  label  The label of the file to show\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -32,34 +32,14 @@ func catCommand(opts setup.Options, args []string) error {
 		return errors.New("cat command needs one argument (label)")
 	}
 
-	s, err := setupEnv(opts)
-	if err != nil {
-		return fmt.Errorf("unable to setup environment configuration: %s", err)
-	}
-
 	if s.Id.Id == nil {
 		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}
 
 	label := args[0]
 
-	streamHeaders := func() <-chan *header.Header {
-		return headerGenerator(s.Repository, s.Id)
-	}
-
-	readContent := func(r io.Reader) (io.Reader, error) {
-		return contentReader(r, s.Id)
-	}
-
-	return cat(label, streamHeaders, readContent, os.Stdout)
-}
-
-func cat(label string, streamHeaders HeaderStreamFunc, readContent ContentReaderFunc, out io.Writer) (err error) {
-
-	for h := range streamHeaders() {
-
+	for h := range headerGenerator(s.Repository, s.Id) {
 		if h.Label == label {
-
 			f, err := os.Open(h.Path)
 			if err != nil {
 				return err
@@ -70,12 +50,12 @@ func cat(label string, streamHeaders HeaderStreamFunc, readContent ContentReader
 				}
 			}()
 
-			r, err := readContent(f)
+			r, err := contentReader(f, s.Id)
 			if err != nil {
 				return err
 			}
 
-			if _, err := io.Copy(out, r); err != nil {
+			if _, err := io.Copy(ui.Out, r); err != nil {
 				if err != io.ErrUnexpectedEOF {
 					return err
 				}
