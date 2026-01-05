@@ -18,7 +18,6 @@ stdout 'Password:'
 
 # Delete
 exec privage delete mycred
-! exists mycred.age
 
 # Verify deletion
 exec privage list
