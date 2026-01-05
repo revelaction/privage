@@ -39,7 +39,7 @@ func statusCommand(opts setup.Options, args []string) error {
 
 	fmt.Printf("📂 The directory of the encrypted files is %s ✔️\n", s.Repository)
 
-	if len(s.C.Path) > 0 {
+	if s.C != nil && len(s.C.Path) > 0 {
 		fmt.Printf("📑 Found config file %s in %s ✔️\n", config.DefaultFileName, s.C.Path)
 
 		showUpdateMessage := false
