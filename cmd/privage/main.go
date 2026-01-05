@@ -37,6 +37,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  reencrypt  Reencrypt all decrypted files that are already encrypted. (default is dry-run)\n")
 		fmt.Fprintf(os.Stderr, "  rotate     Create a new age key and reencrypt every file with the new key\n")
 		fmt.Fprintf(os.Stderr, "  bash       Dump bash complete script.\n")
+		fmt.Fprintf(os.Stderr, "  version    Show version information\n")
 		fmt.Fprintf(os.Stderr, "  help, h    Show help for a command.\n")
 		fmt.Fprintf(os.Stderr, "\nGlobal Options:\n")
 		fmt.Fprintf(os.Stderr, "  -h, --help\n")
@@ -108,6 +109,8 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 		err = rotateCommand(opts, args)
 	case "bash":
 		err = bashCommand(opts, args)
+	case "version":
+		err = versionCommand(opts, args)
 	case "complete":
 		err = completeCommand(opts, args)
 	case "help", "h":
