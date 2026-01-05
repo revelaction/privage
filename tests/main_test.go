@@ -21,7 +21,9 @@ func TestMain(m *testing.M) {
 		fmt.Fprintf(os.Stderr, "failed to create temp dir: %v\n", err)
 		os.Exit(1)
 	}
-	defer os.RemoveAll(binDir)
+	defer func() {
+		_ = os.RemoveAll(binDir)
+	}()
 
 	binPath := filepath.Join(binDir, "privage")
 	if runtime.GOOS == "windows" {
@@ -37,7 +39,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// 2. Run
-	os.Exit(testscript.RunMain(m, map[string]func() int{}))
+	testscript.Main(m, map[string]func(){})
 }
 
 func TestScript(t *testing.T) {
