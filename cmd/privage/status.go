@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/revelaction/privage/config"
-	id "github.com/revelaction/privage/identity"
 	"github.com/revelaction/privage/setup"
 )
 
