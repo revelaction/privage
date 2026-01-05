@@ -1,0 +1,25 @@
+# Setup
+exec privage init
+
+# Add a credential
+exec privage add credential mycred
+stdout 'Login:'
+stdout 'Password:'
+
+# List
+exec privage list
+stdout 'mycred'
+stdout 'credential'
+
+# Show
+exec privage show mycred
+stdout 'Login:'
+stdout 'Password:'
+
+# Delete
+exec privage delete mycred
+! exists mycred.age
+
+# Verify deletion
+exec privage list
+! stdout 'mycred'

@@ -1,0 +1,14 @@
+# No init check
+# We expect status to fail or report errors if not initialized.
+# But default testscript env is empty.
+! exec privage status
+stderr 'unable to setup environment configuration'
+! stdout 'Found age key file'
+
+# Bad command
+! exec privage unknown
+stderr 'unknown command'
+
+# Add without init
+! exec privage add cred mylabel
+stderr 'unable to setup environment configuration'

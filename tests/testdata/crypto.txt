@@ -1,0 +1,29 @@
+# Setup
+exec privage init
+
+# Create source file
+cp input.txt secret.txt
+
+# Add (encrypt)
+# usage: add <category> <file-label>
+# For custom categories, the label must be the file path.
+exec privage add customcat secret.txt
+
+# Verify via list (filenames are hashed)
+exec privage list
+stdout 'secret.txt'
+
+# Remove original
+rm secret.txt
+! exists secret.txt
+
+# Decrypt
+exec privage decrypt secret.txt
+stdout 'decrypted in the directory'
+exists secret.txt
+
+# Verify content matches input
+grep 'secret data' secret.txt
+
+-- input.txt --
+secret data
