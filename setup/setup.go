@@ -2,15 +2,9 @@ package setup
 
 import (
 	"errors"
-	"fmt"
-	"os"
-	"strconv"
 
 	"github.com/revelaction/privage/config"
-	"github.com/revelaction/privage/fs"
-
 	id "github.com/revelaction/privage/identity"
-	"github.com/revelaction/privage/identity/piv/yubikey"
 )
 
 // Setup contains the path of the secrets repository and the path of
@@ -74,11 +68,6 @@ func (o *Options) Validate() error {
 		return errors.New("flag -r cannot be used with -c")
 	}
 
-	// -p can only be used with -k
-	if o.PivSlot != "" && o.KeyFile == "" {
-		return errors.New("flag -p can only be used with -k")
-	}
-
 	return nil
 }
 
@@ -92,9 +81,10 @@ func (o *Options) WithKeyRepo() bool {
 	return o.KeyFile != "" && o.RepoPath != ""
 }
 
-// NoFlags returns true if no options are specified (no flags).
-func (o *Options) NoFlags() bool {
-	return o.ConfigFile == "" && o.KeyFile == "" && o.RepoPath == "" && o.PivSlot == ""
+// NoKeyRepoConfig returns true if no explicit setup options (config, key, repo) are specified.
+// This allows for auto-discovery, optionally with a PIV slot.
+func (o *Options) NoKeyRepoConfig() bool {
+	return o.ConfigFile == "" && o.KeyFile == "" && o.RepoPath == ""
 }
 
 // Copy returns a copy of the Setup s with an empty Identity
@@ -103,87 +93,4 @@ func (s *Setup) Copy() *Setup {
 	conf := s.C
 	repo := s.Repository
 	return &Setup{C: conf, Repository: repo}
-}
-
-// NewFromKeyRepoFlags creates a Setup from explicit key and repository paths.
-// Used when -k and -r flags are provided.
-func NewFromKeyRepoFlags(keyPath, repoPath, pivSlot string) (*Setup, error) {
-	// keyPath is never empty when called from WithKeyRepo() case
-	// (validated by Options.Validate())
-	id := identity(keyPath, pivSlot)
-
-	exists, err := fs.DirExists(repoPath)
-	if err != nil {
-		return &Setup{}, err
-	}
-	if !exists {
-		return &Setup{}, fmt.Errorf("repository directory %s does not exist", repoPath)
-	}
-
-	return &Setup{C: &config.Config{}, Id: id, Repository: repoPath}, nil
-}
-
-func NewFromConfigFile(path string) (s *Setup, err error) {
-
-	f, err := os.Open(path)
-	if err != nil {
-		return &Setup{}, err
-	}
-	defer func() {
-		if cerr := f.Close(); cerr != nil && err == nil {
-			err = cerr
-		}
-	}()
-
-	conf, err := config.Load(f)
-	if err != nil {
-		return &Setup{}, fmt.Errorf("invalid configuration file %s: %w", path, err)
-	}
-
-	conf.Path = path
-
-	return &Setup{C: conf, Id: identity(conf.IdentityPath, conf.IdentityPivSlot), Repository: conf.RepositoryPath}, nil
-}
-
-func identity(keyPath, pivSlot string) (ident id.Identity) {
-
-	if pivSlot == "" {
-		f, err := fs.OpenFile(keyPath)
-		if err != nil {
-			return id.Identity{Err: err}
-		}
-		defer func() {
-			if cerr := f.Close(); cerr != nil && ident.Err == nil {
-				ident.Err = cerr
-			}
-		}()
-		return id.LoadAge(f, keyPath)
-	}
-
-	slot, err := strconv.ParseUint(pivSlot, 16, 32)
-	if err != nil {
-		return id.Identity{Err: fmt.Errorf("could not convert slot %d to hex: %v", slot, err)}
-	}
-
-	device, err := yubikey.New()
-	if err != nil {
-		return id.Identity{Err: fmt.Errorf("could not create yubikey device: %w", err)}
-	}
-	defer func() {
-		if cerr := device.Close(); cerr != nil && ident.Err == nil {
-			ident.Err = cerr
-		}
-	}()
-
-	f, err := fs.OpenFile(keyPath)
-	if err != nil {
-		return id.Identity{Err: err}
-	}
-	defer func() {
-		if cerr := f.Close(); cerr != nil && ident.Err == nil {
-			ident.Err = cerr
-		}
-	}()
-
-	return id.LoadPiv(f, keyPath, device, uint32(slot))
 }
