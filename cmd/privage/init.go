@@ -44,14 +44,23 @@ func initCommand(opts setup.Options, args []string) (err error) {
 		return err
 	}
 
-	s, err := setupEnv(opts)
+	// 1. Check if config file exists
+	configPath, err := filesystem.FindConfigFile()
 	if err != nil {
-		return fmt.Errorf("unable to setup environment configuration: %s", err)
+		return fmt.Errorf("error searching for config file: %w", err)
+	}
+	if configPath != "" {
+		fmt.Printf("📑 Config file already exists: %s... Exiting\n", configPath)
+		return nil
 	}
 
-	// If config file exist, we exit
-	if len(s.C.Path) > 0 {
-		fmt.Printf("📑 Config file already exists: %s... Exiting\n", s.C.Path)
+	// 2. Check if identity file exists
+	idPath, err := filesystem.FindIdentityFile()
+	if err != nil {
+		return fmt.Errorf("error searching for identity file: %w", err)
+	}
+	if idPath != "" {
+		fmt.Printf("🔑 privage key file already exists: %s... Exiting.\n", idPath)
 		return nil
 	}
 
@@ -63,11 +72,6 @@ func initCommand(opts setup.Options, args []string) (err error) {
 	//
 	// identity
 	//
-	if len(s.Id.Path) > 0 {
-		fmt.Printf("🔑 privage key file already exists: %s... Exiting.\n", s.Id.Path)
-		return nil
-	}
-
 	identityPath := currentDir + "/" + id.DefaultFileName
 	identityType := id.TypeAge
 
@@ -80,22 +84,22 @@ func initCommand(opts setup.Options, args []string) (err error) {
 			return fmt.Errorf("could not convert slot %s to hex: %v", slot, err)
 		}
 
-		f, err := filesystem.CreateFile(identityPath, 0600)
-		if err != nil {
-			return err
-		}
-		defer func() {
-			if cerr := f.Close(); cerr != nil && err == nil {
-				err = cerr
-			}
-		}()
-
 		yk, err := yubikey.New()
 		if err != nil {
 			return fmt.Errorf("could not connect to yubikey: %w", err)
 		}
 		defer func() {
 			if cerr := yk.Close(); cerr != nil && err == nil {
+				err = cerr
+			}
+		}()
+
+		f, err := filesystem.CreateFile(identityPath, 0600)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if cerr := f.Close(); cerr != nil && err == nil {
 				err = cerr
 			}
 		}()
