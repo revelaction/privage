@@ -43,7 +43,7 @@ jobs:
             
             DIR="dist/standard"
             mkdir -p "$DIR/privage"
-            CGO_ENABLED=1 go build -o "$DIR/privage" -ldflags "$LDFLAGS" -trimpath ./cmd/...
+            CGO_ENABLED=1 go build -o "$DIR/privage" -ldflags "$LDFLAGS -X main.YubikeySupport=enabled" -trimpath ./cmd/...
             tar -cvzf "privage-$VERSION-$GOOS-$GOARCH.tar.gz" -C "$DIR" privage
           fi
 
@@ -53,7 +53,7 @@ jobs:
           EXTENSION=""
           [ "$GOOS" = "windows" ] && EXTENSION=".exe"
           
-          CGO_ENABLED=0 go build -tags noyubikey -o "$DIR_NOYK/privage$EXTENSION" -ldflags "$LDFLAGS" -trimpath ./cmd/...
+          CGO_ENABLED=0 go build -tags noyubikey -o "$DIR_NOYK/privage$EXTENSION" -ldflags "$LDFLAGS -X main.YubikeySupport=disabled" -trimpath ./cmd/...
           
           if [ "$GOOS" = "windows" ]; then
             zip -j "privage-$VERSION-noyubikey-$GOOS-$GOARCH.zip" "$DIR_NOYK/privage$EXTENSION"

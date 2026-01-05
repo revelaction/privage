@@ -14,8 +14,9 @@ import (
 var global setup.Options
 
 var (
-	BuildCommit string
-	BuildTag    string
+	BuildCommit    string
+	BuildTag       string
+	YubikeySupport string
 )
 
 func main() {
@@ -48,7 +49,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "    	The PIV slot for decryption of the age key\n")
 		fmt.Fprintf(os.Stderr, "  -r, -repository string\n")
 		fmt.Fprintf(os.Stderr, "    	Use file path as path for the repository\n")
-		fmt.Fprintf(os.Stderr, "\nVersion: %s, commit %s\n", BuildTag, BuildCommit)
+		fmt.Fprintf(os.Stderr, "\nVersion: %s, commit %s, yubikey %s\n", BuildTag, BuildCommit, YubikeySupport)
 	}
 
 	flag.StringVar(&global.ConfigFile, "conf", "", "Use file as privage configuration file")
