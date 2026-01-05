@@ -42,8 +42,8 @@ func TestCompleteAction_Subcommands(t *testing.T) {
 		},
 		{
 			name:     "Command completion (partial)",
-			args:     []string{"--", "privage", "sh"},
-			contains: []string{"show"},
+			args:     []string{"--", "privage", "ve"},
+			contains: []string{"version"},
 		},
 		{
 			name:     "Global flag skipping",

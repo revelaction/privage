@@ -25,6 +25,7 @@ var commands = []string{
 	"reencrypt",
 	"rotate",
 	"bash",
+	"version",
 	"help",
 }
 
