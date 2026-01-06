@@ -27,63 +27,21 @@ type UI struct {
 }
 
 func main() {
-	var global setup.Options
-
-	flag.Usage = func() {
-		output := flag.CommandLine.Output()
-		fmt.Fprintf(output, "Usage: %s [global options] command [command options] [arguments...]\n", os.Args[0])
-		fmt.Fprintf(output, "\nCommands:\n")
-		fmt.Fprintf(output, "  init       Add a .gitignore, age/yubikey key file to the current directory. Add a config file in the home directory.\n")
-		fmt.Fprintf(output, "  key        Decrypt the age private key with the PIV key defined in the .privage.conf file.\n")
-		fmt.Fprintf(output, "  status     Provide information about the current configuration.\n")
-		fmt.Fprintf(output, "  add        Add a new encrypted file.\n")
-		fmt.Fprintf(output, "  delete     Delete an encrypted file.\n")
-		fmt.Fprintf(output, "  list       list metadata of all/some encrypted files.\n")
-		fmt.Fprintf(output, "  show       Show the contents the an encripted file.\n")
-		fmt.Fprintf(output, "  cat        Print the full contents of an encrypted file to stdout.\n")
-		fmt.Fprintf(output, "  clipboard  Copy the credential password to the clipboard\n")
-		fmt.Fprintf(output, "  decrypt    Decrypt a file and write its content in a file named after the label\n")
-		fmt.Fprintf(output, "  reencrypt  Reencrypt all decrypted files that are already encrypted. (default is dry-run)\n")
-		fmt.Fprintf(output, "  rotate     Create a new age key and reencrypt every file with the new key\n")
-		fmt.Fprintf(output, "  bash       Dump bash complete script.\n")
-		fmt.Fprintf(output, "  version    Show version information\n")
-		fmt.Fprintf(output, "  help, h    Show help for a command.\n")
-		fmt.Fprintf(output, "\nGlobal Options:\n")
-		fmt.Fprintf(output, "  -h, --help\n")
-		fmt.Fprintf(output, "    \tShow help for privage\n")
-		fmt.Fprintf(output, "  -c, -conf string\n")
-		fmt.Fprintf(output, "    \tUse file as privage configuration file\n")
-		fmt.Fprintf(output, "  -k, -key string\n")
-		fmt.Fprintf(output, "    \tUse file path for private key\n")
-		fmt.Fprintf(output, "  -p, -piv-slot string\n")
-		fmt.Fprintf(output, "    \tThe PIV slot for decryption of the age key\n")
-		fmt.Fprintf(output, "  -r, -repository string\n")
-		fmt.Fprintf(output, "    \tUse file path as path for the repository\n")
-		fmt.Fprintf(output, "\nVersion: %s, commit %s, yubikey %s\n", BuildTag, BuildCommit, YubikeySupport)
-	}
+	setupUsage()
 
 	// Global -h/--help should go to Stdout
 	flag.CommandLine.SetOutput(os.Stdout)
 
-	flag.StringVar(&global.ConfigFile, "conf", "", "Use file as privage configuration file")
-	flag.StringVar(&global.ConfigFile, "c", "", "alias for -conf")
-	flag.StringVar(&global.KeyFile, "key", "", "Use file path for private key")
-	flag.StringVar(&global.KeyFile, "k", "", "alias for -key")
-	flag.StringVar(&global.PivSlot, "piv-slot", "", "The PIV slot for decryption of the age key")
-	flag.StringVar(&global.PivSlot, "p", "", "alias for -piv-slot")
-	flag.StringVar(&global.RepoPath, "repository", "", "Use file path as path for the repository")
-	flag.StringVar(&global.RepoPath, "r", "", "alias for -repository")
-
-	flag.Parse()
-
-	if flag.NArg() == 0 {
+	cmd, args, global, err := parseMainArgs()
+	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			os.Exit(0)
+		}
+		// If no command was provided, show usage and exit with 1
 		flag.CommandLine.SetOutput(os.Stderr)
 		flag.Usage()
 		os.Exit(1)
 	}
-
-	cmd := flag.Arg(0)
-	args := flag.Args()[1:]
 
 	if err := runCommand(cmd, args, global); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
@@ -91,6 +49,29 @@ func main() {
 		}
 		fatal(err)
 	}
+}
+
+func parseMainArgs() (string, []string, setup.Options, error) {
+	var opts setup.Options
+
+	flag.StringVar(&opts.ConfigFile, "conf", "", "Use file as privage configuration file")
+	flag.StringVar(&opts.ConfigFile, "c", "", "alias for -conf")
+	flag.StringVar(&opts.KeyFile, "key", "", "Use file path for private key")
+	flag.StringVar(&opts.KeyFile, "k", "", "alias for -key")
+	flag.StringVar(&opts.PivSlot, "piv-slot", "", "The PIV slot for decryption of the age key")
+	flag.StringVar(&opts.PivSlot, "p", "", "alias for -piv-slot")
+	flag.StringVar(&opts.RepoPath, "repository", "", "Use file path as path for the repository")
+	flag.StringVar(&opts.RepoPath, "r", "", "alias for -repository")
+
+	flag.Parse()
+
+	if flag.NArg() == 0 {
+		return "", nil, opts, errors.New("no command provided")
+	}
+
+	cmd := flag.Arg(0)
+	args := flag.Args()[1:]
+	return cmd, args, opts, nil
 }
 
 func runCommand(cmd string, args []string, opts setup.Options) error {
@@ -149,189 +130,170 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 		return initCommand(slot, currentDir, ui)
 
 	// 3. Operational commands (Require full Setup)
-	case "key", "status", "add", "delete", "list", "show", "cat", "clipboard", "decrypt", "reencrypt", "rotate":
-
-		// POC: The "cat" command now follows the centralized driver design.
-		// All CLI concerns (parsing, help, usage, positional validation) happen here.
-		if cmd == "cat" {
-			label, err := parseCatArgs(args, ui)
-			if err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return err
+	case "cat":
+		label, err := parseCatArgs(args, ui)
+		if err != nil {
+			if errors.Is(err, flag.ErrHelp) {
+				return nil
 			}
-
-			// 3. Resource Acquisition (The "Fat Driver" phase).
-			// Only after CLI concerns are satisfied do we attempt to build the domain environment.
-			s, setupErr := setupEnv(opts)
-			if setupErr != nil {
-				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
-			}
-
-			// 4. Execution.
-			// The subcommand is now a "clean" worker receiving pre-validated data.
-			return catCommand(s, label, ui)
+			return err
 		}
 
-		if cmd == "add" {
-			cat, label, err := parseAddArgs(args, ui)
-			if err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return err
-			}
-
-			s, setupErr := setupEnv(opts)
-			if setupErr != nil {
-				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
-			}
-
-			// Check label exists
-			if labelExists(label, s.Id) {
-				return errors.New("second argument (label) already exist")
-			}
-
-			return addCommand(s, cat, label, ui)
+		s, setupErr := setupEnv(opts)
+		if setupErr != nil {
+			return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
 		}
 
-		if cmd == "show" {
-			label, fieldName, err := parseShowArgs(args, ui)
-			if err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return err
-			}
+		return catCommand(s, label, ui)
 
-			s, setupErr := setupEnv(opts)
-			if setupErr != nil {
-				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+	case "add":
+		cat, label, err := parseAddArgs(args, ui)
+		if err != nil {
+			if errors.Is(err, flag.ErrHelp) {
+				return nil
 			}
-
-			return showCommand(s, label, fieldName, ui)
+			return err
 		}
 
-		if cmd == "delete" {
-			label, err := parseDeleteArgs(args, ui)
-			if err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return err
-			}
-
-			s, setupErr := setupEnv(opts)
-			if setupErr != nil {
-				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
-			}
-
-			return deleteCommand(s, label, ui)
+		s, setupErr := setupEnv(opts)
+		if setupErr != nil {
+			return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
 		}
 
-		if cmd == "key" {
-			if err := parseKeyArgs(args, ui); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return err
-			}
-			s, setupErr := setupEnv(opts)
-			if setupErr != nil {
-				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
-			}
-			return keyCommand(s, ui)
+		// Check label exists
+		if labelExists(label, s.Id) {
+			return errors.New("second argument (label) already exist")
 		}
 
-		if cmd == "status" {
-			if err := parseStatusArgs(args, ui); err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return err
+		return addCommand(s, cat, label, ui)
+
+	case "show":
+		label, fieldName, err := parseShowArgs(args, ui)
+		if err != nil {
+			if errors.Is(err, flag.ErrHelp) {
+				return nil
 			}
-			s, setupErr := setupEnv(opts)
-			if setupErr != nil {
-				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
-			}
-			return statusCommand(s, ui)
+			return err
 		}
 
-		if cmd == "list" {
-			filter, err := parseListArgs(args, ui)
-			if err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return err
-			}
-			s, setupErr := setupEnv(opts)
-			if setupErr != nil {
-				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
-			}
-			return listCommand(s, filter, ui)
+		s, setupErr := setupEnv(opts)
+		if setupErr != nil {
+			return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
 		}
 
-		if cmd == "clipboard" {
-			label, err := parseClipboardArgs(args, ui)
-			if err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return err
+		return showCommand(s, label, fieldName, ui)
+
+	case "delete":
+		label, err := parseDeleteArgs(args, ui)
+		if err != nil {
+			if errors.Is(err, flag.ErrHelp) {
+				return nil
 			}
-			s, setupErr := setupEnv(opts)
-			if setupErr != nil {
-				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
-			}
-			return clipboardCommand(s, label, ui)
+			return err
 		}
 
-		if cmd == "decrypt" {
-			label, err := parseDecryptArgs(args, ui)
-			if err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return err
-			}
-			s, setupErr := setupEnv(opts)
-			if setupErr != nil {
-				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
-			}
-			return decryptCommand(s, label, ui)
+		s, setupErr := setupEnv(opts)
+		if setupErr != nil {
+			return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
 		}
 
-		if cmd == "reencrypt" {
-			force, clean, err := parseReencryptArgs(args, ui)
-			if err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return err
-			}
-			s, setupErr := setupEnv(opts)
-			if setupErr != nil {
-				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
-			}
-			return reencryptCommand(s, force, clean, ui)
-		}
+		return deleteCommand(s, label, ui)
 
-		if cmd == "rotate" {
-			clean, slot, err := parseRotateArgs(args, ui)
-			if err != nil {
-				if errors.Is(err, flag.ErrHelp) {
-					return nil
-				}
-				return err
+	case "key":
+		if err := parseKeyArgs(args, ui); err != nil {
+			if errors.Is(err, flag.ErrHelp) {
+				return nil
 			}
-			s, setupErr := setupEnv(opts)
-			if setupErr != nil {
-				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
-			}
-			return rotateCommand(s, clean, slot, ui)
+			return err
 		}
+		s, setupErr := setupEnv(opts)
+		if setupErr != nil {
+			return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+		}
+		return keyCommand(s, ui)
+
+	case "status":
+		if err := parseStatusArgs(args, ui); err != nil {
+			if errors.Is(err, flag.ErrHelp) {
+				return nil
+			}
+			return err
+		}
+		s, setupErr := setupEnv(opts)
+		if setupErr != nil {
+			return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+		}
+		return statusCommand(s, ui)
+
+	case "list":
+		filter, err := parseListArgs(args, ui)
+		if err != nil {
+			if errors.Is(err, flag.ErrHelp) {
+				return nil
+			}
+			return err
+		}
+		s, setupErr := setupEnv(opts)
+		if setupErr != nil {
+			return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+		}
+		return listCommand(s, filter, ui)
+
+	case "clipboard":
+		label, err := parseClipboardArgs(args, ui)
+		if err != nil {
+			if errors.Is(err, flag.ErrHelp) {
+				return nil
+			}
+			return err
+		}
+		s, setupErr := setupEnv(opts)
+		if setupErr != nil {
+			return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+		}
+		return clipboardCommand(s, label, ui)
+
+	case "decrypt":
+		label, err := parseDecryptArgs(args, ui)
+		if err != nil {
+			if errors.Is(err, flag.ErrHelp) {
+				return nil
+			}
+			return err
+		}
+		s, setupErr := setupEnv(opts)
+		if setupErr != nil {
+			return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+		}
+		return decryptCommand(s, label, ui)
+
+	case "reencrypt":
+		force, clean, err := parseReencryptArgs(args, ui)
+		if err != nil {
+			if errors.Is(err, flag.ErrHelp) {
+				return nil
+			}
+			return err
+		}
+		s, setupErr := setupEnv(opts)
+		if setupErr != nil {
+			return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+		}
+		return reencryptCommand(s, force, clean, ui)
+
+	case "rotate":
+		clean, slot, err := parseRotateArgs(args, ui)
+		if err != nil {
+			if errors.Is(err, flag.ErrHelp) {
+				return nil
+			}
+			return err
+		}
+		s, setupErr := setupEnv(opts)
+		if setupErr != nil {
+			return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+		}
+		return rotateCommand(s, clean, slot, ui)
 	}
 
 	return fmt.Errorf("unknown command: %s", cmd)
@@ -724,4 +686,39 @@ func parseRotateArgs(args []string, ui UI) (bool, string, error) {
 		return false, "", err
 	}
 	return clean, slot, nil
+}
+
+func setupUsage() {
+	flag.Usage = func() {
+		output := flag.CommandLine.Output()
+		fmt.Fprintf(output, "Usage: %s [global options] command [command options] [arguments...]\n", os.Args[0])
+		fmt.Fprintf(output, "\nCommands:\n")
+		fmt.Fprintf(output, "  init       Add a .gitignore, age/yubikey key file to the current directory. Add a config file in the home directory.\n")
+		fmt.Fprintf(output, "  key        Decrypt the age private key with the PIV key defined in the .privage.conf file.\n")
+		fmt.Fprintf(output, "  status     Provide information about the current configuration.\n")
+		fmt.Fprintf(output, "  add        Add a new encrypted file.\n")
+		fmt.Fprintf(output, "  delete     Delete an encrypted file.\n")
+		fmt.Fprintf(output, "  list       list metadata of all/some encrypted files.\n")
+		fmt.Fprintf(output, "  show       Show the contents the an encripted file.\n")
+		fmt.Fprintf(output, "  cat        Print the full contents of an encrypted file to stdout.\n")
+		fmt.Fprintf(output, "  clipboard  Copy the credential password to the clipboard\n")
+		fmt.Fprintf(output, "  decrypt    Decrypt a file and write its content in a file named after the label\n")
+		fmt.Fprintf(output, "  reencrypt  Reencrypt all decrypted files that are already encrypted. (default is dry-run)\n")
+		fmt.Fprintf(output, "  rotate     Create a new age key and reencrypt every file with the new key\n")
+		fmt.Fprintf(output, "  bash       Dump bash complete script.\n")
+		fmt.Fprintf(output, "  version    Show version information\n")
+		fmt.Fprintf(output, "  help, h    Show help for a command.\n")
+		fmt.Fprintf(output, "\nGlobal Options:\n")
+		fmt.Fprintf(output, "  -h, --help\n")
+		fmt.Fprintf(output, "    \tShow help for privage\n")
+		fmt.Fprintf(output, "  -c, -conf string\n")
+		fmt.Fprintf(output, "    \tUse file as privage configuration file\n")
+		fmt.Fprintf(output, "  -k, -key string\n")
+		fmt.Fprintf(output, "    \tUse file path for private key\n")
+		fmt.Fprintf(output, "  -p, -piv-slot string\n")
+		fmt.Fprintf(output, "    \tThe PIV slot for decryption of the age key\n")
+		fmt.Fprintf(output, "  -r, -repository string\n")
+		fmt.Fprintf(output, "    \tUse file path as path for the repository\n")
+		fmt.Fprintf(output, "\nVersion: %s, commit %s, yubikey %s\n", BuildTag, BuildCommit, YubikeySupport)
+	}
 }
