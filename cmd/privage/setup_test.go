@@ -24,7 +24,7 @@ func TestSetupEnv_ExplicitFlags(t *testing.T) {
 	if err := identity.GenerateAge(f); err != nil {
 		t.Fatal(err)
 	}
-	f.Close()
+	_ = f.Close()
 
 	// 2. Create repository directory
 	repoPath := filepath.Join(tmpDir, "my-repo")
@@ -64,7 +64,7 @@ func TestSetupEnv_ConfigFlag(t *testing.T) {
 		t.Fatal(err)
 	}
 	_ = identity.GenerateAge(f)
-	f.Close()
+	_ = f.Close()
 
 	// 2. Create repository
 	repoPath := filepath.Join(tmpDir, "repo")
@@ -78,7 +78,7 @@ func TestSetupEnv_ConfigFlag(t *testing.T) {
 	confPath := filepath.Join(tmpDir, "test.conf")
 	cf, _ := os.Create(confPath)
 	_ = conf.Encode(cf)
-	cf.Close()
+	_ = cf.Close()
 
 	opts := setup.Options{
 		ConfigFile: confPath,
@@ -105,7 +105,7 @@ func TestSetupEnv_DiscoveryConfig(t *testing.T) {
 	idPath := filepath.Join(tmpDir, "key.txt")
 	f, _ := os.Create(idPath)
 	_ = identity.GenerateAge(f)
-	f.Close()
+	_ = f.Close()
 
 	repoPath := filepath.Join(tmpDir, "repo")
 	_ = os.Mkdir(repoPath, 0755)
@@ -118,7 +118,7 @@ func TestSetupEnv_DiscoveryConfig(t *testing.T) {
 	confPath := filepath.Join(tmpDir, config.DefaultFileName)
 	cf, _ := os.Create(confPath)
 	_ = conf.Encode(cf)
-	cf.Close()
+	_ = cf.Close()
 
 	opts := setup.Options{} // No flags
 
@@ -138,14 +138,18 @@ func TestSetupEnv_DiscoveryIdentity(t *testing.T) {
 
 	// Mock current directory for repository discovery
 	oldWd, _ := os.Getwd()
-	os.Chdir(tmpDir)
-	defer os.Chdir(oldWd)
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		_ = os.Chdir(oldWd)
+	}()
 
 	// Create identity in HOME/privage-key.txt (FindIdentityFile searches here)
 	idPath := filepath.Join(tmpDir, identity.DefaultFileName)
 	f, _ := os.Create(idPath)
 	_ = identity.GenerateAge(f)
-	f.Close()
+	_ = f.Close()
 
 	opts := setup.Options{}
 
@@ -177,7 +181,7 @@ func TestSetupEnv_PriorityFlagsOverConfig(t *testing.T) {
 	confPath := filepath.Join(tmpDir, config.DefaultFileName)
 	cf, _ := os.Create(confPath)
 	_ = conf.Encode(cf)
-	cf.Close()
+	_ = cf.Close()
 
 	// 2. Create CORRECT paths for flags
 	goodRepo := filepath.Join(tmpDir, "good-repo")
@@ -185,7 +189,7 @@ func TestSetupEnv_PriorityFlagsOverConfig(t *testing.T) {
 	goodKey := filepath.Join(tmpDir, "good-key.txt")
 	f, _ := os.Create(goodKey)
 	_ = identity.GenerateAge(f)
-	f.Close()
+	_ = f.Close()
 
 	// 3. Provide explicit flags. They should overrule the discovery of the config file.
 	// Note: currently setupEnv prioritize WithKeyRepo over NoKeyRepoConfig.
@@ -226,7 +230,7 @@ func TestSetupEnv_PIV_ParsingOnly(t *testing.T) {
 	idPath := filepath.Join(tmpDir, "key.txt")
 	f, _ := os.Create(idPath)
 	_ = identity.GenerateAge(f)
-	f.Close()
+	_ = f.Close()
 
 	opts := setup.Options{
 		KeyFile:  idPath,
