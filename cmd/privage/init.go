@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"os"
 	"strconv"
@@ -11,7 +10,6 @@ import (
 	filesystem "github.com/revelaction/privage/fs"
 	id "github.com/revelaction/privage/identity"
 	"github.com/revelaction/privage/identity/piv/yubikey"
-	"github.com/revelaction/privage/setup"
 )
 
 const (
@@ -23,52 +21,9 @@ const (
 !*.age`
 )
 
-// initCommand generates an age identity in the current dir if no identity was found.
-// It generates a .gitignore file in the current directory if not existing.
-// It generates a .privage.conf file in the home directory, with the
-// identity and secret directory paths.
-func initCommand(opts setup.Options, args []string, ui UI) (err error) {
-	fs := flag.NewFlagSet("init", flag.ContinueOnError)
-	fs.SetOutput(ui.Err)
-	var slot string
-	fs.StringVar(&slot, "piv-slot", "", "Use the yubikey slot key to encrypt the age private key")
-	fs.StringVar(&slot, "p", "", "alias for -piv-slot")
-	fs.Usage = func() {
-		fmt.Fprintf(ui.Err, "Usage: %s init [options]\n", os.Args[0])
-		fmt.Fprintf(ui.Err, "\nDescription:\n")
-		fmt.Fprintf(ui.Err, "  Add a .gitignore, age/yubikey key file to the current directory. Add a config file in the home directory.\n")
-		fmt.Fprintf(ui.Err, "\nOptions:\n")
-		fs.PrintDefaults()
-	}
-
-	if err := fs.Parse(args); err != nil {
-		return err
-	}
-
-	// 1. Check if config file exists
-	configPath, err := filesystem.FindConfigFile()
-	if err != nil {
-		return fmt.Errorf("error searching for config file: %w", err)
-	}
-	if configPath != "" {
-		fmt.Fprintf(ui.Err, "📑 Config file already exists: %s... Exiting\n", configPath)
-		return nil
-	}
-
-	// 2. Check if identity file exists
-	idPath, err := filesystem.FindIdentityFile()
-	if err != nil {
-		return fmt.Errorf("error searching for identity file: %w", err)
-	}
-	if idPath != "" {
-		fmt.Fprintf(ui.Err, "🔑 privage key file already exists: %s... Exiting.\n", idPath)
-		return nil
-	}
-
-	currentDir, err := os.Getwd()
-	if err != nil {
-		return err
-	}
+// initCommand is a pure logic worker for environment initialization.
+// It generates an age identity, a .gitignore, and a .privage.conf file.
+func initCommand(slot string, currentDir string, ui UI) (err error) {
 
 	//
 	// identity
@@ -110,7 +65,7 @@ func initCommand(opts setup.Options, args []string, ui UI) (err error) {
 			return fmt.Errorf("error creating encrypted age key in slot %s: %w", slot, err)
 		}
 
-		fmt.Fprintf(ui.Err, "🔑 Generated encrypted age key file `%s` with PIV slot %s ✔️\n", identityPath, slot)
+		fmt.Fprintf(ui.Err, "🔑 Generated encrypted age key file `%%s` with PIV slot %%s ✔️\n", identityPath, slot)
 	} else {
 		// normal age key
 		f, err := filesystem.CreateFile(identityPath, 0600)
@@ -127,7 +82,7 @@ func initCommand(opts setup.Options, args []string, ui UI) (err error) {
 			return err
 		}
 
-		fmt.Fprintf(ui.Err, "🔑 Generated age key file `%s` ✔️\n", identityPath)
+		fmt.Fprintf(ui.Err, "🔑 Generated age key file `%%s` ✔️\n", identityPath)
 	}
 
 	//
@@ -141,11 +96,11 @@ func initCommand(opts setup.Options, args []string, ui UI) (err error) {
 			return err
 		}
 
-		fmt.Fprintf(ui.Err, "📒 .gitignore file already exists: %s... Exiting\n", gitignorePath)
+		fmt.Fprintf(ui.Err, "📒 .gitignore file already exists: %%s... Exiting\n", gitignorePath)
 		return nil
 	}
 
-	fmt.Fprintf(ui.Err, "📒 Generated `%s` file ✔️\n", gitignorePath)
+	fmt.Fprintf(ui.Err, "📒 Generated `%%s` file ✔️\n", gitignorePath)
 
 	//
 	// config file
@@ -177,7 +132,7 @@ func initCommand(opts setup.Options, args []string, ui UI) (err error) {
 		return fmt.Errorf("could not encode config file: %w", err)
 	}
 
-	fmt.Fprintf(ui.Err, "📑 Generated config file %s ✔️\n", confPath)
+	fmt.Fprintf(ui.Err, "📑 Generated config file %%s ✔️\n", confPath)
 
 	return nil
 }

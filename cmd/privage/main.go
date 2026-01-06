@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 
+	filesystem "github.com/revelaction/privage/fs"
 	"github.com/revelaction/privage/setup"
 )
 
@@ -114,7 +115,56 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 
 	// 2. Bootstrap commands (Needs raw Options, not Setup)
 	case "init":
-		return initCommand(opts, args, ui)
+		fs := flag.NewFlagSet("init", flag.ContinueOnError)
+		fs.SetOutput(io.Discard)
+		var slot string
+		fs.StringVar(&slot, "piv-slot", "", "Use the yubikey slot key to encrypt the age private key")
+		fs.StringVar(&slot, "p", "", "alias for -piv-slot")
+		fs.Usage = func() {
+			fmt.Fprintf(fs.Output(), "Usage: %s init [options]\n", os.Args[0])
+			fmt.Fprintf(fs.Output(), "\nDescription:\n")
+			fmt.Fprintf(fs.Output(), "  Add a .gitignore, age/yubikey key file to the current directory. Add a config file in the home directory.\n")
+			fmt.Fprintf(fs.Output(), "\nOptions:\n")
+			fs.PrintDefaults()
+		}
+
+		if parseErr := fs.Parse(args); parseErr != nil {
+			if errors.Is(parseErr, flag.ErrHelp) {
+				fs.SetOutput(ui.Out)
+				fs.Usage()
+				return nil
+			}
+			fs.SetOutput(ui.Err)
+			fmt.Fprintf(ui.Err, "Error: %v\n", parseErr)
+			fs.Usage()
+			return parseErr
+		}
+
+		// Pre-flight checks (Driver responsibility)
+		configPath, err := filesystem.FindConfigFile()
+		if err != nil {
+			return fmt.Errorf("error searching for config file: %w", err)
+		}
+		if configPath != "" {
+			fmt.Fprintf(ui.Err, "📑 Config file already exists: %s... Exiting\n", configPath)
+			return nil
+		}
+
+		idPath, err := filesystem.FindIdentityFile()
+		if err != nil {
+			return fmt.Errorf("error searching for identity file: %w", err)
+		}
+		if idPath != "" {
+			fmt.Fprintf(ui.Err, "🔑 privage key file already exists: %s... Exiting.\n", idPath)
+			return nil
+		}
+
+		currentDir, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+
+		return initCommand(slot, currentDir, ui)
 
 	// 3. Operational commands (Require full Setup)
 	case "key", "status", "add", "delete", "list", "show", "cat", "clipboard", "decrypt", "reencrypt", "rotate":
