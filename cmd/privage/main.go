@@ -115,29 +115,12 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 
 	// 2. Bootstrap commands (Needs raw Options, not Setup)
 	case "init":
-		fs := flag.NewFlagSet("init", flag.ContinueOnError)
-		fs.SetOutput(io.Discard)
-		var slot string
-		fs.StringVar(&slot, "piv-slot", "", "Use the yubikey slot key to encrypt the age private key")
-		fs.StringVar(&slot, "p", "", "alias for -piv-slot")
-		fs.Usage = func() {
-			fmt.Fprintf(fs.Output(), "Usage: %s init [options]\n", os.Args[0])
-			fmt.Fprintf(fs.Output(), "\nDescription:\n")
-			fmt.Fprintf(fs.Output(), "  Add a .gitignore, age/yubikey key file to the current directory. Add a config file in the home directory.\n")
-			fmt.Fprintf(fs.Output(), "\nOptions:\n")
-			fs.PrintDefaults()
-		}
-
-		if parseErr := fs.Parse(args); parseErr != nil {
-			if errors.Is(parseErr, flag.ErrHelp) {
-				fs.SetOutput(ui.Out)
-				fs.Usage()
+		slot, err := parseInitArgs(args, ui)
+		if err != nil {
+			if errors.Is(err, flag.ErrHelp) {
 				return nil
 			}
-			fs.SetOutput(ui.Err)
-			fmt.Fprintf(ui.Err, "Error: %v\n", parseErr)
-			fs.Usage()
-			return parseErr
+			return err
 		}
 
 		// Pre-flight checks (Driver responsibility)
@@ -172,40 +155,13 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 		// POC: The "cat" command now follows the centralized driver design.
 		// All CLI concerns (parsing, help, usage, positional validation) happen here.
 		if cmd == "cat" {
-			fs := flag.NewFlagSet("cat", flag.ContinueOnError)
-			// Silence automatic output to coordinate Stdout vs Stderr manually.
-			fs.SetOutput(io.Discard)
-			fs.Usage = func() {
-				fmt.Fprintf(fs.Output(), "Usage: %s cat [label]\n", os.Args[0])
-				fmt.Fprintf(fs.Output(), "\nDescription:\n")
-				fmt.Fprintf(fs.Output(), "  Print the full contents of an encrypted file to stdout.\n")
-				fmt.Fprintf(fs.Output(), "\nArguments:\n")
-				fmt.Fprintf(fs.Output(), "  label  The label of the file to show\n")
-			}
-
-			// 1. Parse subcommand flags.
-			// We handle help (-h) before ever attempting to load the environment (setupEnv).
-			if parseErr := fs.Parse(args); parseErr != nil {
-				if errors.Is(parseErr, flag.ErrHelp) {
-					fs.SetOutput(ui.Out) // Help requested -> Stdout
-					fs.Usage()
+			label, err := parseCatArgs(args, ui)
+			if err != nil {
+				if errors.Is(err, flag.ErrHelp) {
 					return nil
 				}
-				fs.SetOutput(ui.Err) // Syntax error -> Stderr
-				fmt.Fprintf(ui.Err, "Error: %v\n", parseErr)
-				fs.Usage()
-				return parseErr
+				return err
 			}
-
-			// 2. Validate positional arguments.
-			// CLI usage errors are reported to Stderr before environment loading.
-			catArgs := fs.Args()
-			if len(catArgs) == 0 {
-				fs.SetOutput(ui.Err)
-				fs.Usage()
-				return errors.New("cat command needs one argument (label)")
-			}
-			label := catArgs[0]
 
 			// 3. Resource Acquisition (The "Fat Driver" phase).
 			// Only after CLI concerns are satisfied do we attempt to build the domain environment.
@@ -220,44 +176,12 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 		}
 
 		if cmd == "add" {
-			fs := flag.NewFlagSet("add", flag.ContinueOnError)
-			fs.SetOutput(io.Discard)
-			fs.Usage = func() {
-				fmt.Fprintf(fs.Output(), "Usage: %s add [category] [label]\n", os.Args[0])
-				fmt.Fprintf(fs.Output(), "\nDescription:\n")
-				fmt.Fprintf(fs.Output(), "  Add a new encrypted file.\n")
-				fmt.Fprintf(fs.Output(), "\nArguments:\n")
-				fmt.Fprintf(fs.Output(), "  category  A category (e.g., 'credential' or any custom string)\n")
-				fmt.Fprintf(fs.Output(), "  label     A label for credentials, or an existing file path\n")
-			}
-
-			if parseErr := fs.Parse(args); parseErr != nil {
-				if errors.Is(parseErr, flag.ErrHelp) {
-					fs.SetOutput(ui.Out)
-					fs.Usage()
+			cat, label, err := parseAddArgs(args, ui)
+			if err != nil {
+				if errors.Is(err, flag.ErrHelp) {
 					return nil
 				}
-				fs.SetOutput(ui.Err)
-				fmt.Fprintf(ui.Err, "Error: %v\n", parseErr)
-				fs.Usage()
-				return parseErr
-			}
-
-			addArgs := fs.Args()
-			if len(addArgs) != 2 {
-				fs.SetOutput(ui.Err)
-				fs.Usage()
-				return errors.New("add command needs two arguments: <category> <label>")
-			}
-
-			cat := addArgs[0]
-			if len(cat) > 32 { // using literal for now to avoid dependency on internal constants
-				return errors.New("first argument (category) length is greater than max allowed")
-			}
-
-			label := addArgs[1]
-			if len(label) > 128 { // using literal for now
-				return errors.New("second argument (label) length is greater than max allowed")
+				return err
 			}
 
 			s, setupErr := setupEnv(opts)
@@ -318,4 +242,110 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 func fatal(err error) {
 	fmt.Fprintf(os.Stderr, "privage: %v\n", err)
 	os.Exit(1)
+}
+
+func parseCatArgs(args []string, ui UI) (string, error) {
+	fs := flag.NewFlagSet("cat", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	fs.Usage = func() {
+		fmt.Fprintf(fs.Output(), "Usage: %s cat [label]\n", os.Args[0])
+		fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		fmt.Fprintf(fs.Output(), "  Print the full contents of an encrypted file to stdout.\n")
+		fmt.Fprintf(fs.Output(), "\nArguments:\n")
+		fmt.Fprintf(fs.Output(), "  label  The label of the file to show\n")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			fs.SetOutput(ui.Out)
+			fs.Usage()
+			return "", err
+		}
+		fs.SetOutput(ui.Err)
+		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		fs.Usage()
+		return "", err
+	}
+
+	catArgs := fs.Args()
+	if len(catArgs) == 0 {
+		fs.SetOutput(ui.Err)
+		fs.Usage()
+		return "", errors.New("cat command needs one argument (label)")
+	}
+
+	return catArgs[0], nil
+}
+
+func parseInitArgs(args []string, ui UI) (string, error) {
+	fs := flag.NewFlagSet("init", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	var slot string
+	fs.StringVar(&slot, "piv-slot", "", "Use the yubikey slot key to encrypt the age private key")
+	fs.StringVar(&slot, "p", "", "alias for -piv-slot")
+	fs.Usage = func() {
+		fmt.Fprintf(fs.Output(), "Usage: %s init [options]\n", os.Args[0])
+		fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		fmt.Fprintf(fs.Output(), "  Add a .gitignore, age/yubikey key file to the current directory. Add a config file in the home directory.\n")
+		fmt.Fprintf(fs.Output(), "\nOptions:\n")
+		fs.PrintDefaults()
+	}
+
+	if parseErr := fs.Parse(args); parseErr != nil {
+		if errors.Is(parseErr, flag.ErrHelp) {
+			fs.SetOutput(ui.Out)
+			fs.Usage()
+			return "", parseErr
+		}
+		fs.SetOutput(ui.Err)
+		fmt.Fprintf(ui.Err, "Error: %v\n", parseErr)
+		fs.Usage()
+		return "", parseErr
+	}
+
+	return slot, nil
+}
+
+func parseAddArgs(args []string, ui UI) (string, string, error) {
+	fs := flag.NewFlagSet("add", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	fs.Usage = func() {
+		fmt.Fprintf(fs.Output(), "Usage: %s add [category] [label]\n", os.Args[0])
+		fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		fmt.Fprintf(fs.Output(), "  Add a new encrypted file.\n")
+		fmt.Fprintf(fs.Output(), "\nArguments:\n")
+		fmt.Fprintf(fs.Output(), "  category  A category (e.g., 'credential' or any custom string)\n")
+		fmt.Fprintf(fs.Output(), "  label     A label for credentials, or an existing file path\n")
+	}
+
+	if parseErr := fs.Parse(args); parseErr != nil {
+		if errors.Is(parseErr, flag.ErrHelp) {
+			fs.SetOutput(ui.Out)
+			fs.Usage()
+			return "", "", parseErr
+		}
+		fs.SetOutput(ui.Err)
+		fmt.Fprintf(ui.Err, "Error: %v\n", parseErr)
+		fs.Usage()
+		return "", "", parseErr
+	}
+
+	addArgs := fs.Args()
+	if len(addArgs) != 2 {
+		fs.SetOutput(ui.Err)
+		fs.Usage()
+		return "", "", errors.New("add command needs two arguments: <category> <label>")
+	}
+
+	cat := addArgs[0]
+	if len(cat) > 32 {
+		return "", "", errors.New("first argument (category) length is greater than max allowed")
+	}
+
+	label := addArgs[1]
+	if len(label) > 128 {
+		return "", "", errors.New("second argument (label) length is greater than max allowed")
+	}
+
+	return cat, label, nil
 }

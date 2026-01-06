@@ -50,7 +50,7 @@ func TestCatCommand(t *testing.T) {
 	var outBuf, errBuf bytes.Buffer
 	ui := UI{Out: &outBuf, Err: &errBuf}
 	
-	err = catCommand(s, []string{label}, ui)
+	err = catCommand(s, label, ui)
 
 	// 4. Assert
 	if err != nil {
@@ -74,7 +74,7 @@ func TestCatCommand_NotFound(t *testing.T) {
 	var outBuf, errBuf bytes.Buffer
 	ui := UI{Out: &outBuf, Err: &errBuf}
 
-	err := catCommand(s, []string{"missing"}, ui)
+	err := catCommand(s, "missing", ui)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

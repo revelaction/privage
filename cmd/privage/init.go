@@ -65,7 +65,7 @@ func initCommand(slot string, currentDir string, ui UI) (err error) {
 			return fmt.Errorf("error creating encrypted age key in slot %s: %w", slot, err)
 		}
 
-		fmt.Fprintf(ui.Err, "🔑 Generated encrypted age key file `%%s` with PIV slot %%s ✔️\n", identityPath, slot)
+		fmt.Fprintf(ui.Err, "🔑 Generated encrypted age key file `%s` with PIV slot %s ✔️\n", identityPath, slot)
 	} else {
 		// normal age key
 		f, err := filesystem.CreateFile(identityPath, 0600)
@@ -82,7 +82,7 @@ func initCommand(slot string, currentDir string, ui UI) (err error) {
 			return err
 		}
 
-		fmt.Fprintf(ui.Err, "🔑 Generated age key file `%%s` ✔️\n", identityPath)
+		fmt.Fprintf(ui.Err, "🔑 Generated age key file `%s` ✔️\n", identityPath)
 	}
 
 	//
@@ -96,11 +96,11 @@ func initCommand(slot string, currentDir string, ui UI) (err error) {
 			return err
 		}
 
-		fmt.Fprintf(ui.Err, "📒 .gitignore file already exists: %%s... Exiting\n", gitignorePath)
+		fmt.Fprintf(ui.Err, "📒 .gitignore file already exists: %s... Exiting\n", gitignorePath)
 		return nil
 	}
 
-	fmt.Fprintf(ui.Err, "📒 Generated `%%s` file ✔️\n", gitignorePath)
+	fmt.Fprintf(ui.Err, "📒 Generated `%s` file ✔️\n", gitignorePath)
 
 	//
 	// config file
@@ -132,7 +132,7 @@ func initCommand(slot string, currentDir string, ui UI) (err error) {
 		return fmt.Errorf("could not encode config file: %w", err)
 	}
 
-	fmt.Fprintf(ui.Err, "📑 Generated config file %%s ✔️\n", confPath)
+	fmt.Fprintf(ui.Err, "📑 Generated config file %s ✔️\n", confPath)
 
 	return nil
 }
