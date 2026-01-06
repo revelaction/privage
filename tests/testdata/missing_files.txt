@@ -1,0 +1,22 @@
+# Initialize a valid environment
+exec privage init
+exists $HOME/.privage.conf
+exists privage-key.txt
+
+# 1. Test 'cat' with missing file
+! exec privage cat missing_file
+stderr 'file "missing_file" not found in repository'
+
+# 2. Test 'show' with missing file
+! exec privage show missing_file
+stderr 'file "missing_file" not found in repository'
+
+# 3. Test 'show' with missing field (on existing file)
+stdin input.txt
+exec privage add credential existing_cred
+! exec privage show existing_cred missing_field
+stderr 'field ''missing_field'' not found in credential ''existing_cred'''
+
+-- input.txt --
+login="user"
+password="pw"
