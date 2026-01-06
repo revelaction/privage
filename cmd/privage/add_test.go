@@ -13,9 +13,6 @@ func setupAddTest(t *testing.T) (*TestHelper, func()) {
 	t.Helper()
 	th := NewTestHelper(t)
 
-	// Isolation: Ensure home directory is redirected to temp dir
-	t.Setenv("HOME", th.Root)
-
 	// When key and repository are resolved (as in NewTestHelper), 
 	// C can be an empty struct. This prevents nil pointer dereference 
 	// in credential.New while avoiding redundant path definitions.
