@@ -84,7 +84,7 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 		return bashCommand(ui)
 	case "complete":
 		return completeCommand(opts, args, ui) // needs raw opts for sub-dispatch
-	case "help", "h":
+	case "help":
 		if len(args) > 0 {
 			return runCommand(args[0], []string{"--help"}, opts)
 		}
@@ -677,7 +677,7 @@ func setupUsage() {
 		fmt.Fprintf(output, "  rotate     Create a new age key and reencrypt every file with the new key\n")
 		fmt.Fprintf(output, "  bash       Dump bash complete script.\n")
 		fmt.Fprintf(output, "  version    Show version information\n")
-		fmt.Fprintf(output, "  help, h    Show help for a command.\n")
+		fmt.Fprintf(output, "  help       Show help for a command.\n")
 		fmt.Fprintf(output, "\nGlobal Options:\n")
 		fmt.Fprintf(output, "  -h, --help\n")
 		fmt.Fprintf(output, "    \tShow help for privage\n")

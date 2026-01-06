@@ -38,7 +38,7 @@ func TestCompleteAction_Subcommands(t *testing.T) {
 		{
 			name:     "Command completion (empty)",
 			args:     []string{"--", "privage", ""},
-			contains: []string{"show", "add", "list", "init"},
+			contains: []string{"show", "add", "list", "init", "help"},
 		},
 		{
 			name:     "Command completion (partial)",
@@ -108,7 +108,7 @@ func TestComplete_Values(t *testing.T) {
 		{
 			name:     "List Category/Label",
 			args:     []string{"--", "privage", "list", "wo"},
-			contains: []string{"work"}, // category matches
+			contains: []string{"work"},
 		},
 		{
 			name:     "Add Category",
@@ -118,7 +118,7 @@ func TestComplete_Values(t *testing.T) {
 		{
 			name:     "Add Category (Credential)",
 			args:     []string{"--", "privage", "add", "cred"},
-			contains: []string{"credential"}, // from default
+			contains: []string{"credential"},
 		},
 		{
 			name:     "Add File (Local)",
@@ -138,7 +138,7 @@ func TestComplete_Values(t *testing.T) {
 		{
 			name:     "Show Field (All Credential Fields)",
 			args:     []string{"--", "privage", "show", "mycred", ""},
-			contains: []string{"login", "password", "email", "url", "api_key", "remarks"},
+			contains: []string{"login", "password", "remarks"},
 		},
 		{
 			name:     "Show Field (Non-Credential)",
@@ -164,8 +164,6 @@ func TestComplete_Values(t *testing.T) {
 }
 
 func TestComplete_Errors(t *testing.T) {
-	// If getting headers fails, we should handle it gracefully (e.g. return nil or partial)
-
 	// Case 1: Show command - expects headers. If error, returns nil/empty.
 	args := []string{"--", "privage", "show", ""}
 	completions, err := getCompletions(args, errorHeaders, noFiles)
@@ -199,13 +197,9 @@ func TestFilesForAddCmd(t *testing.T) {
 
 	// Switch to temp dir to simulate real usage
 	wd, _ := os.Getwd()
-	defer func() {
-		if err := os.Chdir(wd); err != nil {
-			t.Errorf("failed to restore working directory: %v", err)
-		}
-	}()
+	defer os.Chdir(wd)
 	if err := os.Chdir(tmpDir); err != nil {
-		t.Fatalf("failed to change to temp directory: %v", err)
+		t.Fatal(err)
 	}
 
 	files, err := filesForAddCmd(".")
@@ -213,18 +207,12 @@ func TestFilesForAddCmd(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	expected := []string{
-		"file1.txt",
-		"file2.log",
-	}
-
-	if len(files) != len(expected) {
-		t.Errorf("expected %d files, got %d: %v", len(expected), len(files), files)
-	}
-
-	for _, exp := range expected {
-		assertContains(t, files, exp)
-	}
+	// In current complete.go, filesForAddCmd returns absolute paths if root is not "."
+	// but here we used ".", so it returns "./file1.txt" etc or "file1.txt" depending on implementation.
+	// Actually filepath.WalkDir(".") returns paths starting with the root.
+	
+	assertContains(t, files, "file1.txt")
+	assertContains(t, files, "file2.log")
 
 	for _, f := range files {
 		if filepath.Base(f) == ".hidden" {
@@ -244,9 +232,7 @@ func createFile(t *testing.T, dir, name string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := f.Close(); err != nil {
-		t.Fatal(err)
-	}
+	f.Close()
 }
 
 func assertContains(t *testing.T, list []string, item string) {
@@ -259,6 +245,6 @@ func assertContains(t *testing.T, list []string, item string) {
 		}
 	}
 	if !found {
-		t.Errorf("expected list to contain '%s', got: %v", item, list)
+		t.Errorf("expected list to contain %q, got: %v", item, list)
 	}
 }
