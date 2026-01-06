@@ -83,10 +83,7 @@ func completeCommand(opts setup.Options, args []string, ui UI) error {
 	return nil
 }
 
-type HeaderListFunc func() ([]*header.Header, error)
-type FileListFunc func() ([]string, error)
-
-func getCompletions(args []string, listHeaders HeaderListFunc, listFiles FileListFunc) ([]string, error) {
+func getCompletions(args []string, listHeaders func() ([]*header.Header, error), listFiles func() ([]string, error)) ([]string, error) {
 	if len(args) < 2 {
 		return nil, nil
 	}

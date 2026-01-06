@@ -3,37 +3,13 @@ package main
 import (
 	"bytes"
 	"errors"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/revelaction/privage/header"
-	"github.com/revelaction/privage/identity"
 	"github.com/revelaction/privage/setup"
 )
 
 func TestCatCommand(t *testing.T) {
-	// setupTestEnv creates a standard environment with a valid age key
-	setupTestEnv := func(t *testing.T) (*setup.Setup, string) {
-		tmpDir := t.TempDir()
-		idPath := filepath.Join(tmpDir, "key.age")
-		f, err := os.Create(idPath)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := identity.GenerateAge(f); err != nil {
-			t.Fatal(err)
-		}
-		f.Close()
-
-		f, _ = os.Open(idPath)
-		ident := identity.LoadAge(f, idPath)
-		f.Close()
-
-		return &setup.Setup{Id: ident, Repository: tmpDir}, tmpDir
-	}
-
 	tests := []struct {
 		name           string
 		setupData      func(t *testing.T, s *setup.Setup)
@@ -44,12 +20,7 @@ func TestCatCommand(t *testing.T) {
 		{
 			name: "Success",
 			setupData: func(t *testing.T, s *setup.Setup) {
-				label := "secret.txt"
-				content := "real secret content"
-				h := &header.Header{Label: label}
-				if err := encryptSave(h, "", strings.NewReader(content), s); err != nil {
-					t.Fatalf("failed to encrypt: %v", err)
-				}
+				createEncryptedFile(t, s, "secret.txt", "", "real secret content")
 			},
 			label:          "secret.txt",
 			expectedOutput: "real secret content",

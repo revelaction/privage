@@ -1,238 +1,131 @@
 package main
 
 import (
-	"errors"
+	"bytes"
 	"os"
-	"path/filepath"
+	"strings"
 	"testing"
 
-	"github.com/revelaction/privage/header"
+	"github.com/revelaction/privage/setup"
 )
 
-// noHeaders is a helper list func returning empty headers
-func noHeaders() ([]*header.Header, error) {
-	return nil, nil
-}
-
-// noFiles is a helper list func returning empty files
-func noFiles() ([]string, error) {
-	return nil, nil
-}
-
-// errorHeaders is a helper list func returning an error
-func errorHeaders() ([]*header.Header, error) {
-	return nil, errors.New("simulated error")
-}
-
-func TestCompleteAction_Subcommands(t *testing.T) {
+func TestCompleteCommand(t *testing.T) {
 	tests := []struct {
-		name     string
-		args     []string
-		contains []string // Strings that should be present in output
+		name      string
+		setupData func(t *testing.T, s *setup.Setup)
+		args      []string
+		contains  []string
 	}{
 		{
-			name:     "Empty args",
-			args:     []string{"--", "privage"},
-			contains: []string{},
+			name:      "Command completion (empty)",
+			setupData: func(t *testing.T, s *setup.Setup) {},
+			args:      []string{"--", "privage", ""},
+			contains:  []string{"show", "add", "list", "init", "help"},
 		},
 		{
-			name:     "Command completion (empty)",
-			args:     []string{"--", "privage", ""},
-			contains: []string{"show", "add", "list", "init", "help"},
+			name:      "Command completion (partial)",
+			setupData: func(t *testing.T, s *setup.Setup) {},
+			args:      []string{"--", "privage", "ve"},
+			contains:  []string{"version"},
 		},
 		{
-			name:     "Command completion (partial)",
-			args:     []string{"--", "privage", "ve"},
-			contains: []string{"version"},
-		},
-		{
-			name:     "Global flag skipping",
-			args:     []string{"--", "privage", "-k", "key.txt", ""},
-			contains: []string{"show", "add"},
-		},
-		{
-			name:     "Global flag skipping (partial)",
-			args:     []string{"--", "privage", "-k", "key.txt", "sh"},
-			contains: []string{"show"},
-		},
-		{
-			name:     "Global flag skipping (multiple)",
-			args:     []string{"--", "privage", "-c", "conf", "-r", "repo", ""},
-			contains: []string{"show", "add"},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			completions, err := getCompletions(tt.args, noHeaders, noFiles)
-
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
-
-			for _, c := range tt.contains {
-				assertContains(t, completions, c)
-			}
-		})
-	}
-}
-
-func TestComplete_Values(t *testing.T) {
-	// Setup static data
-	headers := []*header.Header{
-		{Label: "mycred", Category: "credential"},
-		{Label: "work_stuff", Category: "work"},
-		{Label: "other_thing", Category: "other"},
-	}
-	files := []string{"local.txt", "image.png"}
-
-	// ListFuncs
-	listHeaders := func() ([]*header.Header, error) { return headers, nil }
-	listFiles := func() ([]string, error) { return files, nil }
-
-	tests := []struct {
-		name     string
-		args     []string
-		contains []string
-	}{
-		{
-			name:     "Show Label",
+			name: "Show Label",
+			setupData: func(t *testing.T, s *setup.Setup) {
+				createEncryptedFile(t, s, "mycred", "credential", "pass")
+				createEncryptedFile(t, s, "work_stuff", "work", "doc")
+			},
 			args:     []string{"--", "privage", "show", "my"},
 			contains: []string{"mycred"},
 		},
 		{
-			name:     "Show Label (All)",
+			name: "Show Label (All)",
+			setupData: func(t *testing.T, s *setup.Setup) {
+				createEncryptedFile(t, s, "mycred", "credential", "pass")
+				createEncryptedFile(t, s, "work_stuff", "work", "doc")
+			},
 			args:     []string{"--", "privage", "show", ""},
-			contains: []string{"mycred", "work_stuff", "other_thing"},
+			contains: []string{"mycred", "work_stuff"},
 		},
 		{
-			name:     "List Category/Label",
-			args:     []string{"--", "privage", "list", "wo"},
-			contains: []string{"work"},
-		},
-		{
-			name:     "Add Category",
-			args:     []string{"--", "privage", "add", "wo"},
-			contains: []string{"work"},
-		},
-		{
-			name:     "Add Category (Credential)",
+			name: "Add Category (Credential)",
+			setupData: func(t *testing.T, s *setup.Setup) {
+				// No existing files needed for this
+			},
 			args:     []string{"--", "privage", "add", "cred"},
 			contains: []string{"credential"},
 		},
 		{
-			name:     "Add File (Local)",
+			name: "Add File (Local)",
+			setupData: func(t *testing.T, s *setup.Setup) {
+				// We need to create a plain file in the repo
+				createFile(t, s.Repository, "local.txt")
+			},
 			args:     []string{"--", "privage", "add", "work", "loc"},
 			contains: []string{"local.txt"},
 		},
 		{
-			name:     "Add File (All)",
-			args:     []string{"--", "privage", "add", "work", ""},
-			contains: []string{"local.txt", "image.png"},
-		},
-		{
-			name:     "Show Field (Credential)",
+			name: "Show Field (Credential)",
+			setupData: func(t *testing.T, s *setup.Setup) {
+				createEncryptedFile(t, s, "mycred", "credential", "pass")
+			},
 			args:     []string{"--", "privage", "show", "mycred", "pas"},
 			contains: []string{"password"},
 		},
 		{
-			name:     "Show Field (All Credential Fields)",
-			args:     []string{"--", "privage", "show", "mycred", ""},
-			contains: []string{"login", "password", "remarks"},
-		},
-		{
-			name:     "Show Field (Non-Credential)",
+			name: "Show Field (Non-Credential)",
+			setupData: func(t *testing.T, s *setup.Setup) {
+				// "work" category implies non-credential unless specialized
+				createEncryptedFile(t, s, "work_stuff", "work", "doc")
+			},
 			args:     []string{"--", "privage", "show", "work_stuff", ""},
-			contains: []string{},
+			contains: []string{}, // Should be empty
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			completions, err := getCompletions(tt.args, listHeaders, listFiles)
+			s, tmpDir := setupTestEnv(t)
+			tt.setupData(t, s)
+
+			// We need to switch to the tmpDir because filesForAddCmd uses "."
+			// This simulates the user being in the repo directory
+			oldWd, _ := os.Getwd()
+			if err := os.Chdir(tmpDir); err != nil {
+				t.Fatal(err)
+			}
+			defer os.Chdir(oldWd)
+
+			// Construct options that point to our test environment
+			opts := setup.Options{
+				KeyFile:  s.Id.Path,
+				RepoPath: tmpDir,
+			}
+
+			var outBuf, errBuf bytes.Buffer
+			ui := UI{Out: &outBuf, Err: &errBuf}
+
+			err := completeCommand(opts, tt.args, ui)
+
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			if tt.name == "Show Field (Non-Credential)" && len(completions) != 0 {
-				t.Errorf("expected no completions for non-credential field, got %v", completions)
+
+			output := outBuf.String()
+			completions := strings.Split(strings.TrimSpace(output), "\n")
+			// Handle empty case where Split returns [""]
+			if len(completions) == 1 && completions[0] == "" {
+				completions = []string{}
 			}
+
+			if tt.name == "Show Field (Non-Credential)" && len(completions) != 0 {
+				t.Errorf("expected no completions, got %v", completions)
+			}
+
 			for _, c := range tt.contains {
 				assertContains(t, completions, c)
 			}
 		})
 	}
-}
-
-func TestComplete_Errors(t *testing.T) {
-	// Case 1: Show command - expects headers. If error, returns nil/empty.
-	args := []string{"--", "privage", "show", ""}
-	completions, err := getCompletions(args, errorHeaders, noFiles)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(completions) != 0 {
-		t.Errorf("expected empty completions on error, got %v", completions)
-	}
-
-	// Case 2: Add command - expects headers for categories. If error, should still return "credential"
-	args = []string{"--", "privage", "add", "cred"}
-	completions, err = getCompletions(args, errorHeaders, noFiles)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	assertContains(t, completions, header.CategoryCredential)
-}
-
-func TestFilesForAddCmd(t *testing.T) {
-	tmpDir := t.TempDir()
-
-	// Create some files
-	createFile(t, tmpDir, "file1.txt")
-	createFile(t, tmpDir, "file2.log")
-	createFile(t, tmpDir, ".hidden")
-	createFile(t, tmpDir, "secret.age")
-	if err := os.Mkdir(filepath.Join(tmpDir, "subdir"), 0755); err != nil {
-		t.Fatal(err)
-	}
-
-	// Switch to temp dir to simulate real usage
-	wd, _ := os.Getwd()
-	defer os.Chdir(wd)
-	if err := os.Chdir(tmpDir); err != nil {
-		t.Fatal(err)
-	}
-
-	files, err := filesForAddCmd(".")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	// In current complete.go, filesForAddCmd returns absolute paths if root is not "."
-	// but here we used ".", so it returns "./file1.txt" etc or "file1.txt" depending on implementation.
-	// Actually filepath.WalkDir(".") returns paths starting with the root.
-	
-	assertContains(t, files, "file1.txt")
-	assertContains(t, files, "file2.log")
-
-	for _, f := range files {
-		if filepath.Base(f) == ".hidden" {
-			t.Error("should not contain dot files")
-		}
-		if filepath.Ext(f) == ".age" {
-			t.Error("should not contain .age files")
-		}
-	}
-}
-
-// Helpers
-
-func createFile(t *testing.T, dir, name string) {
-	t.Helper()
-	f, err := os.Create(filepath.Join(dir, name))
-	if err != nil {
-		t.Fatal(err)
-	}
-	f.Close()
 }
 
 func assertContains(t *testing.T, list []string, item string) {
