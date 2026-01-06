@@ -197,6 +197,23 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 			return addCommand(s, cat, label, ui)
 		}
 
+		if cmd == "show" {
+			label, fieldName, err := parseShowArgs(args, ui)
+			if err != nil {
+				if errors.Is(err, flag.ErrHelp) {
+					return nil
+				}
+				return err
+			}
+
+			s, setupErr := setupEnv(opts)
+			if setupErr != nil {
+				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+			}
+
+			return showCommand(s, label, fieldName, ui)
+		}
+
 		// Legacy coordination for other commands (to be refactored next)
 		s, setupErr := setupEnv(opts)
 
@@ -210,8 +227,6 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 			cmdErr = deleteCommand(s, args, ui)
 		case "list":
 			cmdErr = listCommand(s, args, ui)
-		case "show":
-			cmdErr = showCommand(s, args, ui)
 		case "clipboard":
 			cmdErr = clipboardCommand(s, args, ui)
 		case "decrypt":
@@ -348,4 +363,45 @@ func parseAddArgs(args []string, ui UI) (string, string, error) {
 	}
 
 	return cat, label, nil
+}
+
+func parseShowArgs(args []string, ui UI) (string, string, error) {
+	fs := flag.NewFlagSet("show", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	fs.Usage = func() {
+		fmt.Fprintf(fs.Output(), "Usage: %s show [label] [field]\n", os.Args[0])
+		fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		fmt.Fprintf(fs.Output(), "  Show the contents of an encrypted file (formatted if it's a credential).\n")
+		fmt.Fprintf(fs.Output(), "  If a field name is provided, only that field's value is printed.\n")
+		fmt.Fprintf(fs.Output(), "\nArguments:\n")
+		fmt.Fprintf(fs.Output(), "  label  The label of the file to show\n")
+		fmt.Fprintf(fs.Output(), "  field  Optional: specific TOML field to show (e.g., api_key)\n")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			fs.SetOutput(ui.Out)
+			fs.Usage()
+			return "", "", err
+		}
+		fs.SetOutput(ui.Err)
+		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		fs.Usage()
+		return "", "", err
+	}
+
+	showArgs := fs.Args()
+	if len(showArgs) == 0 {
+		fs.SetOutput(ui.Err)
+		fs.Usage()
+		return "", "", errors.New("show command needs at least one argument (label)")
+	}
+
+	label := showArgs[0]
+	var fieldName string
+	if len(showArgs) > 1 {
+		fieldName = showArgs[1]
+	}
+
+	return label, fieldName, nil
 }

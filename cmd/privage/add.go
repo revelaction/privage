@@ -52,8 +52,7 @@ func addCredential(h *header.Header, s *setup.Setup, ui UI) error {
 	}
 
 	// Data output goes to ui.Out (handled by showCommand)
-	// We pass a slice because showCommand has not been refactored yet.
-	if err := showCommand(s, []string{h.Label}, ui); err != nil {
+	if err := showCommand(s, h.Label, "", ui); err != nil {
 		return err
 	}
 

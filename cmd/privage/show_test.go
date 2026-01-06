@@ -43,7 +43,7 @@ password = "supersecret"
 	var outBuf, errBuf bytes.Buffer
 	ui := UI{Out: &outBuf, Err: &errBuf}
 	
-	err := showCommand(s, []string{label}, ui)
+	err := showCommand(s, label, "", ui)
 	if err != nil {
 		t.Fatalf("showCommand failed: %v", err)
 	}
@@ -55,7 +55,7 @@ password = "supersecret"
 
 	// 4. Run Command - Specific field
 	outBuf.Reset()
-	err = showCommand(s, []string{label, "password"}, ui)
+	err = showCommand(s, label, "password", ui)
 	if err != nil {
 		t.Fatalf("showCommand failed: %v", err)
 	}
@@ -89,7 +89,7 @@ func TestShowCommand_WrongCategory(t *testing.T) {
 	var outBuf, errBuf bytes.Buffer
 	ui := UI{Out: &outBuf, Err: &errBuf}
 
-	err := showCommand(s, []string{label}, ui)
+	err := showCommand(s, label, "", ui)
 	if err == nil {
 		t.Fatal("expected error for non-credential category, got nil")
 	}
