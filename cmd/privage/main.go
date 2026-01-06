@@ -160,11 +160,6 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 			return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
 		}
 
-		// Check label exists
-		if labelExists(label, s.Id) {
-			return errors.New("second argument (label) already exist")
-		}
-
 		return addCommand(s, cat, label, ui)
 
 	case "show":

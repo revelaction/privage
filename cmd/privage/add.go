@@ -15,6 +15,11 @@ import (
 // It assumes that category and label have been validated by the driver in main.go.
 func addCommand(s *setup.Setup, cat string, label string, ui UI) error {
 
+	// Check label exists
+	if labelExists(label, s.Id) {
+		return fmt.Errorf("second argument (label) %q already exist", label)
+	}
+
 	h := &header.Header{Label: label}
 
 	switch cat {
