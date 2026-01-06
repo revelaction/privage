@@ -49,7 +49,7 @@ var commands = []string{
 // - COMP_WORDS: ["privage", "-k", "key.txt", "show", ""]
 // - args received here: ["--", "privage", "-k", "key.txt", "show", ""]
 // - commandIndex starts at 2, skips "-k" and "key.txt", and identifies "show" at index 4.
-func completeCommand(opts setup.Options, args []string) error {
+func completeCommand(opts setup.Options, args []string, ui UI) error {
 
 	// Decouple the completion logic from file system and encryption
 	// dependencies by injecting dependencies via functions
@@ -78,7 +78,7 @@ func completeCommand(opts setup.Options, args []string) error {
 		return err
 	}
 	for _, c := range completions {
-		fmt.Println(c)
+		fmt.Fprintln(ui.Out, c)
 	}
 	return nil
 }
@@ -100,6 +100,7 @@ func getCompletions(args []string, listHeaders HeaderListFunc, listFiles FileLis
 			commandIndex++ // Skip the flag
 			// Check if this global flag takes an argument
 			trimmed := strings.TrimLeft(arg, "-")
+			// TODO: Sync these cases with global flags defined in main.go
 			switch trimmed {
 			case "k", "key", "c", "conf", "p", "piv-slot", "r", "repository":
 				commandIndex++ // Skip the flag value

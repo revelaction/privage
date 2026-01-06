@@ -103,7 +103,7 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 	case "bash":
 		return bashCommand(ui)
 	case "complete":
-		return completeCommand(opts, args) // needs raw opts for sub-dispatch
+		return completeCommand(opts, args, ui) // needs raw opts for sub-dispatch
 	case "help", "h":
 		if len(args) > 0 {
 			return runCommand(args[0], []string{"--help"}, opts)
