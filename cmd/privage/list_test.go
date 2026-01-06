@@ -138,8 +138,8 @@ func TestList_Filter(t *testing.T) {
 func TestList_Error(t *testing.T) {
 	th := NewTestHelper(t)
 	// Corrupt identity
-	th.Setup.Id.Id = nil
-	th.Setup.Id.Err = errors.New("simulated error")
+	th.Id.Id = nil
+	th.Id.Err = errors.New("simulated error")
 
 	ui := UI{Out: &bytes.Buffer{}, Err: &bytes.Buffer{}}
 

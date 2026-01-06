@@ -10,38 +10,38 @@ import (
 // statusCommand prints on the terminal a status of the privage command
 // configuration
 func statusCommand(s *setup.Setup, ui UI) error {
-	fmt.Fprintln(ui.Out)
+	_, _ = fmt.Fprintln(ui.Out)
 
 	if s.Id.Id != nil {
-		fmt.Fprintf(ui.Out, "🔑 Found age key file in %s ✔️\n", s.Id.Path)
+		_, _ = fmt.Fprintf(ui.Out, "🔑 Found age key file in %s ✔️\n", s.Id.Path)
 	} else {
-		fmt.Fprintln(ui.Out, "🔑 🚫 Could not find an age key")
+		_, _ = fmt.Fprintln(ui.Out, "🔑 🚫 Could not find an age key")
 	}
 
-	fmt.Fprintf(ui.Out, "📂 The directory of the encrypted files is %s ✔️\n", s.Repository)
+	_, _ = fmt.Fprintf(ui.Out, "📂 The directory of the encrypted files is %s ✔️\n", s.Repository)
 
 	if s.C != nil && len(s.C.Path) > 0 {
-		fmt.Fprintf(ui.Out, "📑 Found config file in %s ✔️\n", s.C.Path)
+		_, _ = fmt.Fprintf(ui.Out, "📑 Found config file in %s ✔️\n", s.C.Path)
 
 		showUpdateMessage := false
 		if s.Id.Path != s.C.IdentityPath {
 
-			fmt.Fprintf(ui.Out, "%4s ⚠ The identity path does not match the identity path in the config file: %s.\n", "", s.C.IdentityPath)
+			_, _ = fmt.Fprintf(ui.Out, "%4s ⚠ The identity path does not match the identity path in the config file: %s.\n", "", s.C.IdentityPath)
 			showUpdateMessage = true
 		}
 
-		fmt.Fprintln(ui.Out)
+		_, _ = fmt.Fprintln(ui.Out)
 		if showUpdateMessage {
 
-			fmt.Fprintf(ui.Out, "%4s You may want to edit the config file %s\n", "", s.C.Path)
+			_, _ = fmt.Fprintf(ui.Out, "%4s You may want to edit the config file %s\n", "", s.C.Path)
 		} else {
-			fmt.Fprintf(ui.Out, "%4s The configuration file %s is up to date\n", "", s.C.Path)
+			_, _ = fmt.Fprintf(ui.Out, "%4s The configuration file %s is up to date\n", "", s.C.Path)
 		}
 
-		fmt.Fprintln(ui.Out)
+		_, _ = fmt.Fprintln(ui.Out)
 	} else {
-		fmt.Fprintf(ui.Out, "📑 A config file %s does not exists\n", config.DefaultFileName)
-		fmt.Fprintln(ui.Out)
+		_, _ = fmt.Fprintf(ui.Out, "📑 A config file %s does not exists\n", config.DefaultFileName)
+		_, _ = fmt.Fprintln(ui.Out)
 
 	}
 
@@ -51,7 +51,7 @@ func statusCommand(s *setup.Setup, ui UI) error {
 			cnt++
 		}
 
-		fmt.Fprintf(ui.Out, "🔐  Found %d encrypted files for the age key %s\n", cnt, s.Id.Path)
+		_, _ = fmt.Fprintf(ui.Out, "🔐  Found %d encrypted files for the age key %s\n", cnt, s.Id.Path)
 	}
 
 	return nil

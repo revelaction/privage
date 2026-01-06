@@ -17,13 +17,25 @@ func TestDecryptCommand(t *testing.T) {
 	// 1. Setup real environment
 	tmpDir := t.TempDir()
 	idPath := filepath.Join(tmpDir, "key.age")
-	f, _ := os.Create(idPath)
-	identity.GenerateAge(f)
-	f.Close()
+	f, err := os.Create(idPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := identity.GenerateAge(f); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.Close(); err != nil {
+		t.Fatal(err)
+	}
 
-	f, _ = os.Open(idPath)
+	f, err = os.Open(idPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 	ident := identity.LoadAge(f, idPath)
-	f.Close()
+	if err := f.Close(); err != nil {
+		t.Fatal(err)
+	}
 
 	s := &setup.Setup{
 		Id:         ident,
@@ -42,7 +54,7 @@ func TestDecryptCommand(t *testing.T) {
 	var outBuf, errBuf bytes.Buffer
 	ui := UI{Out: &outBuf, Err: &errBuf}
 	
-	err := decryptCommand(s, label, ui)
+	err = decryptCommand(s, label, ui)
 
 	// 4. Assert
 	if err != nil {

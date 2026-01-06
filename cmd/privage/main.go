@@ -270,7 +270,7 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 }
 
 func fatal(err error) {
-	fmt.Fprintf(os.Stderr, "privage: %v\n", err)
+	_, _ = fmt.Fprintf(os.Stderr, "privage: %v\n", err)
 	os.Exit(1)
 }
 
@@ -278,11 +278,11 @@ func parseCatArgs(args []string, ui UI) (string, error) {
 	fs := flag.NewFlagSet("cat", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "Usage: %s cat [label]\n", os.Args[0])
-		fmt.Fprintf(fs.Output(), "\nDescription:\n")
-		fmt.Fprintf(fs.Output(), "  Print the full contents of an encrypted file to stdout.\n")
-		fmt.Fprintf(fs.Output(), "\nArguments:\n")
-		fmt.Fprintf(fs.Output(), "  label  The label of the file to show\n")
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s cat [label]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  Print the full contents of an encrypted file to stdout.\n")
+		_, _ = fmt.Fprintf(fs.Output(), "\nArguments:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  label  The label of the file to show\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -292,7 +292,7 @@ func parseCatArgs(args []string, ui UI) (string, error) {
 			return "", err
 		}
 		fs.SetOutput(ui.Err)
-		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
 		fs.Usage()
 		return "", err
 	}
@@ -314,10 +314,10 @@ func parseInitArgs(args []string, ui UI) (string, error) {
 	fs.StringVar(&slot, "piv-slot", "", "Use the yubikey slot key to encrypt the age private key")
 	fs.StringVar(&slot, "p", "", "alias for -piv-slot")
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "Usage: %s init [options]\n", os.Args[0])
-		fmt.Fprintf(fs.Output(), "\nDescription:\n")
-		fmt.Fprintf(fs.Output(), "  Add a .gitignore, age/yubikey key file to the current directory. Add a config file in the home directory.\n")
-		fmt.Fprintf(fs.Output(), "\nOptions:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s init [options]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  Add a .gitignore, age/yubikey key file to the current directory. Add a config file in the home directory.\n")
+		_, _ = fmt.Fprintf(fs.Output(), "\nOptions:\n")
 		fs.PrintDefaults()
 	}
 
@@ -328,7 +328,7 @@ func parseInitArgs(args []string, ui UI) (string, error) {
 			return "", parseErr
 		}
 		fs.SetOutput(ui.Err)
-		fmt.Fprintf(ui.Err, "Error: %v\n", parseErr)
+		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", parseErr)
 		fs.Usage()
 		return "", parseErr
 	}
@@ -340,12 +340,12 @@ func parseAddArgs(args []string, ui UI) (string, string, error) {
 	fs := flag.NewFlagSet("add", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "Usage: %s add [category] [label]\n", os.Args[0])
-		fmt.Fprintf(fs.Output(), "\nDescription:\n")
-		fmt.Fprintf(fs.Output(), "  Add a new encrypted file.\n")
-		fmt.Fprintf(fs.Output(), "\nArguments:\n")
-		fmt.Fprintf(fs.Output(), "  category  A category (e.g., 'credential' or any custom string)\n")
-		fmt.Fprintf(fs.Output(), "  label     A label for credentials, or an existing file path\n")
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s add [category] [label]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  Add a new encrypted file.\n")
+		_, _ = fmt.Fprintf(fs.Output(), "\nArguments:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  category  A category (e.g., 'credential' or any custom string)\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  label     A label for credentials, or an existing file path\n")
 	}
 
 	if parseErr := fs.Parse(args); parseErr != nil {
@@ -355,7 +355,7 @@ func parseAddArgs(args []string, ui UI) (string, string, error) {
 			return "", "", parseErr
 		}
 		fs.SetOutput(ui.Err)
-		fmt.Fprintf(ui.Err, "Error: %v\n", parseErr)
+		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", parseErr)
 		fs.Usage()
 		return "", "", parseErr
 	}
@@ -384,13 +384,13 @@ func parseShowArgs(args []string, ui UI) (string, string, error) {
 	fs := flag.NewFlagSet("show", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "Usage: %s show [label] [field]\n", os.Args[0])
-		fmt.Fprintf(fs.Output(), "\nDescription:\n")
-		fmt.Fprintf(fs.Output(), "  Show the contents of an encrypted file (formatted if it's a credential).\n")
-		fmt.Fprintf(fs.Output(), "  If a field name is provided, only that field's value is printed.\n")
-		fmt.Fprintf(fs.Output(), "\nArguments:\n")
-		fmt.Fprintf(fs.Output(), "  label  The label of the file to show\n")
-		fmt.Fprintf(fs.Output(), "  field  Optional: specific TOML field to show (e.g., api_key)\n")
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s show [label] [field]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  Show the contents of an encrypted file (formatted if it's a credential).\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  If a field name is provided, only that field's value is printed.\n")
+		_, _ = fmt.Fprintf(fs.Output(), "\nArguments:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  label  The label of the file to show\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  field  Optional: specific TOML field to show (e.g., api_key)\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -400,7 +400,7 @@ func parseShowArgs(args []string, ui UI) (string, string, error) {
 			return "", "", err
 		}
 		fs.SetOutput(ui.Err)
-		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
 		fs.Usage()
 		return "", "", err
 	}
@@ -425,11 +425,11 @@ func parseDeleteArgs(args []string, ui UI) (string, error) {
 	fs := flag.NewFlagSet("delete", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "Usage: %s delete [label]\n", os.Args[0])
-		fmt.Fprintf(fs.Output(), "\nDescription:\n")
-		fmt.Fprintf(fs.Output(), "  Delete an encrypted file.\n")
-		fmt.Fprintf(fs.Output(), "\nArguments:\n")
-		fmt.Fprintf(fs.Output(), "  label  The label of the file to delete\n")
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s delete [label]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  Delete an encrypted file.\n")
+		_, _ = fmt.Fprintf(fs.Output(), "\nArguments:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  label  The label of the file to delete\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -439,7 +439,7 @@ func parseDeleteArgs(args []string, ui UI) (string, error) {
 			return "", err
 		}
 		fs.SetOutput(ui.Err)
-		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
 		fs.Usage()
 		return "", err
 	}
@@ -458,9 +458,9 @@ func parseKeyArgs(args []string, ui UI) error {
 	fs := flag.NewFlagSet("key", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "Usage: %s key\n", os.Args[0])
-		fmt.Fprintf(fs.Output(), "\nDescription:\n")
-		fmt.Fprintf(fs.Output(), "  Decrypt the age private key with the PIV key defined in the .privage.conf file.\n")
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s key\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  Decrypt the age private key with the PIV key defined in the .privage.conf file.\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -470,7 +470,7 @@ func parseKeyArgs(args []string, ui UI) error {
 			return err
 		}
 		fs.SetOutput(ui.Err)
-		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
 		fs.Usage()
 		return err
 	}
@@ -481,9 +481,9 @@ func parseStatusArgs(args []string, ui UI) error {
 	fs := flag.NewFlagSet("status", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "Usage: %s status\n", os.Args[0])
-		fmt.Fprintf(fs.Output(), "\nDescription:\n")
-		fmt.Fprintf(fs.Output(), "  Provide information about the current configuration.\n")
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s status\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  Provide information about the current configuration.\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -493,7 +493,7 @@ func parseStatusArgs(args []string, ui UI) error {
 			return err
 		}
 		fs.SetOutput(ui.Err)
-		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
 		fs.Usage()
 		return err
 	}
@@ -504,11 +504,11 @@ func parseListArgs(args []string, ui UI) (string, error) {
 	fs := flag.NewFlagSet("list", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "Usage: %s list [filter]\n", os.Args[0])
-		fmt.Fprintf(fs.Output(), "\nDescription:\n")
-		fmt.Fprintf(fs.Output(), "  List metadata of all or some encrypted files.\n")
-		fmt.Fprintf(fs.Output(), "\nArguments:\n")
-		fmt.Fprintf(fs.Output(), "  filter  Optional filter for category or label name\n")
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s list [filter]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  List metadata of all or some encrypted files.\n")
+		_, _ = fmt.Fprintf(fs.Output(), "\nArguments:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  filter  Optional filter for category or label name\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -518,7 +518,7 @@ func parseListArgs(args []string, ui UI) (string, error) {
 			return "", err
 		}
 		fs.SetOutput(ui.Err)
-		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
 		fs.Usage()
 		return "", err
 	}
@@ -535,13 +535,13 @@ func parseClipboardArgs(args []string, ui UI) (string, error) {
 	fs := flag.NewFlagSet("clipboard", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "Usage: %s clipboard [options] [label]\n", os.Args[0])
-		fmt.Fprintf(fs.Output(), "\nDescription:\n")
-		fmt.Fprintf(fs.Output(), "  Copy the credential password to the clipboard.\n")
-		fmt.Fprintf(fs.Output(), "\nOptions:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s clipboard [options] [label]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  Copy the credential password to the clipboard.\n")
+		_, _ = fmt.Fprintf(fs.Output(), "\nOptions:\n")
 		fs.PrintDefaults()
-		fmt.Fprintf(fs.Output(), "\nArguments:\n")
-		fmt.Fprintf(fs.Output(), "  label  The label of the credential to copy\n")
+		_, _ = fmt.Fprintf(fs.Output(), "\nArguments:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  label  The label of the credential to copy\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -551,7 +551,7 @@ func parseClipboardArgs(args []string, ui UI) (string, error) {
 			return "", err
 		}
 		fs.SetOutput(ui.Err)
-		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
 		fs.Usage()
 		return "", err
 	}
@@ -569,11 +569,11 @@ func parseDecryptArgs(args []string, ui UI) (string, error) {
 	fs := flag.NewFlagSet("decrypt", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "Usage: %s decrypt [label]\n", os.Args[0])
-		fmt.Fprintf(fs.Output(), "\nDescription:\n")
-		fmt.Fprintf(fs.Output(), "  Decrypt a file and write its content in a file named after the label\n")
-		fmt.Fprintf(fs.Output(), "\nArguments:\n")
-		fmt.Fprintf(fs.Output(), "  label  The label of the file to decrypt\n")
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s decrypt [label]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  Decrypt a file and write its content in a file named after the label\n")
+		_, _ = fmt.Fprintf(fs.Output(), "\nArguments:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  label  The label of the file to decrypt\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -583,7 +583,7 @@ func parseDecryptArgs(args []string, ui UI) (string, error) {
 			return "", err
 		}
 		fs.SetOutput(ui.Err)
-		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
 		fs.Usage()
 		return "", err
 	}
@@ -606,10 +606,10 @@ func parseReencryptArgs(args []string, ui UI) (bool, bool, error) {
 	fs.BoolVar(&clean, "clean", false, "Force encryption the files and also delete/clean the decrypted files.")
 	fs.BoolVar(&clean, "c", false, "alias for -clean")
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "Usage: %s reencrypt [options]\n", os.Args[0])
-		fmt.Fprintf(fs.Output(), "\nDescription:\n")
-		fmt.Fprintf(fs.Output(), "  Reencrypt all decrypted files that are already encrypted. (default is dry-run)\n")
-		fmt.Fprintf(fs.Output(), "\nOptions:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s reencrypt [options]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  Reencrypt all decrypted files that are already encrypted. (default is dry-run)\n")
+		_, _ = fmt.Fprintf(fs.Output(), "\nOptions:\n")
 		fs.PrintDefaults()
 	}
 
@@ -620,7 +620,7 @@ func parseReencryptArgs(args []string, ui UI) (bool, bool, error) {
 			return false, false, err
 		}
 		fs.SetOutput(ui.Err)
-		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
 		fs.Usage()
 		return false, false, err
 	}
@@ -637,10 +637,10 @@ func parseRotateArgs(args []string, ui UI) (bool, string, error) {
 	fs.StringVar(&slot, "piv-slot", "", "Use the yubikey slot to encrypt the age private key with the RSA Key")
 	fs.StringVar(&slot, "p", "", "alias for -piv-slot")
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "Usage: %s rotate [options]\n", os.Args[0])
-		fmt.Fprintf(fs.Output(), "\nDescription:\n")
-		fmt.Fprintf(fs.Output(), "  Create a new age key and reencrypt every file with the new key.\n")
-		fmt.Fprintf(fs.Output(), "\nOptions:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s rotate [options]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  Create a new age key and reencrypt every file with the new key.\n")
+		_, _ = fmt.Fprintf(fs.Output(), "\nOptions:\n")
 		fs.PrintDefaults()
 	}
 
@@ -651,7 +651,7 @@ func parseRotateArgs(args []string, ui UI) (bool, string, error) {
 			return false, "", err
 		}
 		fs.SetOutput(ui.Err)
-		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
 		fs.Usage()
 		return false, "", err
 	}
@@ -661,34 +661,34 @@ func parseRotateArgs(args []string, ui UI) (bool, string, error) {
 func setupUsage() {
 	flag.Usage = func() {
 		output := flag.CommandLine.Output()
-		fmt.Fprintf(output, "Usage: %s [global options] command [command options] [arguments...]\n", os.Args[0])
-		fmt.Fprintf(output, "\nCommands:\n")
-		fmt.Fprintf(output, "  init       Add a .gitignore, age/yubikey key file to the current directory. Add a config file in the home directory.\n")
-		fmt.Fprintf(output, "  key        Decrypt the age private key with the PIV key defined in the .privage.conf file.\n")
-		fmt.Fprintf(output, "  status     Provide information about the current configuration.\n")
-		fmt.Fprintf(output, "  add        Add a new encrypted file.\n")
-		fmt.Fprintf(output, "  delete     Delete an encrypted file.\n")
-		fmt.Fprintf(output, "  list       list metadata of all/some encrypted files.\n")
-		fmt.Fprintf(output, "  show       Show the contents the an encripted file.\n")
-		fmt.Fprintf(output, "  cat        Print the full contents of an encrypted file to stdout.\n")
-		fmt.Fprintf(output, "  clipboard  Copy the credential password to the clipboard\n")
-		fmt.Fprintf(output, "  decrypt    Decrypt a file and write its content in a file named after the label\n")
-		fmt.Fprintf(output, "  reencrypt  Reencrypt all decrypted files that are already encrypted. (default is dry-run)\n")
-		fmt.Fprintf(output, "  rotate     Create a new age key and reencrypt every file with the new key\n")
-		fmt.Fprintf(output, "  bash       Dump bash complete script.\n")
-		fmt.Fprintf(output, "  version    Show version information\n")
-		fmt.Fprintf(output, "  help       Show help for a command.\n")
-		fmt.Fprintf(output, "\nGlobal Options:\n")
-		fmt.Fprintf(output, "  -h, --help\n")
-		fmt.Fprintf(output, "    \tShow help for privage\n")
-		fmt.Fprintf(output, "  -c, -conf string\n")
-		fmt.Fprintf(output, "    \tUse file as privage configuration file\n")
-		fmt.Fprintf(output, "  -k, -key string\n")
-		fmt.Fprintf(output, "    \tUse file path for private key\n")
-		fmt.Fprintf(output, "  -p, -piv-slot string\n")
-		fmt.Fprintf(output, "    \tThe PIV slot for decryption of the age key\n")
-		fmt.Fprintf(output, "  -r, -repository string\n")
-		fmt.Fprintf(output, "    \tUse file path as path for the repository\n")
-		fmt.Fprintf(output, "\nVersion: %s, commit %s, yubikey %s\n", BuildTag, BuildCommit, YubikeySupport)
+		_, _ = fmt.Fprintf(output, "Usage: %s [global options] command [command options] [arguments...]\n", os.Args[0])
+		_, _ = fmt.Fprintf(output, "\nCommands:\n")
+		_, _ = fmt.Fprintf(output, "  init       Add a .gitignore, age/yubikey key file to the current directory. Add a config file in the home directory.\n")
+		_, _ = fmt.Fprintf(output, "  key        Decrypt the age private key with the PIV key defined in the .privage.conf file.\n")
+		_, _ = fmt.Fprintf(output, "  status     Provide information about the current configuration.\n")
+		_, _ = fmt.Fprintf(output, "  add        Add a new encrypted file.\n")
+		_, _ = fmt.Fprintf(output, "  delete     Delete an encrypted file.\n")
+		_, _ = fmt.Fprintf(output, "  list       list metadata of all/some encrypted files.\n")
+		_, _ = fmt.Fprintf(output, "  show       Show the contents the an encripted file.\n")
+		_, _ = fmt.Fprintf(output, "  cat        Print the full contents of an encrypted file to stdout.\n")
+		_, _ = fmt.Fprintf(output, "  clipboard  Copy the credential password to the clipboard\n")
+		_, _ = fmt.Fprintf(output, "  decrypt    Decrypt a file and write its content in a file named after the label\n")
+		_, _ = fmt.Fprintf(output, "  reencrypt  Reencrypt all decrypted files that are already encrypted. (default is dry-run)\n")
+		_, _ = fmt.Fprintf(output, "  rotate     Create a new age key and reencrypt every file with the new key\n")
+		_, _ = fmt.Fprintf(output, "  bash       Dump bash complete script.\n")
+		_, _ = fmt.Fprintf(output, "  version    Show version information\n")
+		_, _ = fmt.Fprintf(output, "  help       Show help for a command.\n")
+		_, _ = fmt.Fprintf(output, "\nGlobal Options:\n")
+		_, _ = fmt.Fprintf(output, "  -h, --help\n")
+		_, _ = fmt.Fprintf(output, "    \tShow help for privage\n")
+		_, _ = fmt.Fprintf(output, "  -c, -conf string\n")
+		_, _ = fmt.Fprintf(output, "    \tUse file as privage configuration file\n")
+		_, _ = fmt.Fprintf(output, "  -k, -key string\n")
+		_, _ = fmt.Fprintf(output, "    \tUse file path for private key\n")
+		_, _ = fmt.Fprintf(output, "  -p, -piv-slot string\n")
+		_, _ = fmt.Fprintf(output, "    \tThe PIV slot for decryption of the age key\n")
+		_, _ = fmt.Fprintf(output, "  -r, -repository string\n")
+		_, _ = fmt.Fprintf(output, "    \tUse file path as path for the repository\n")
+		_, _ = fmt.Fprintf(output, "\nVersion: %s, commit %s, yubikey %s\n", BuildTag, BuildCommit, YubikeySupport)
 	}
 }

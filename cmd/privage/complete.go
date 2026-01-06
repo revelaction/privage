@@ -78,7 +78,7 @@ func completeCommand(opts setup.Options, args []string, ui UI) error {
 		return err
 	}
 	for _, c := range completions {
-		fmt.Fprintln(ui.Out, c)
+		_, _ = fmt.Fprintln(ui.Out, c)
 	}
 	return nil
 }

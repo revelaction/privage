@@ -26,9 +26,9 @@ func deleteCommand(s *setup.Setup, label string, ui UI) error {
 	}
 
 	if !found {
-		fmt.Fprintf(ui.Err, "could not find the encrypted file for %s\n", label)
+		_, _ = fmt.Fprintf(ui.Err, "could not find the encrypted file for %s\n", label)
 	} else {
-		fmt.Fprintf(ui.Err, "deleted encrypted file for %s\n", label)
+		_, _ = fmt.Fprintf(ui.Err, "deleted encrypted file for %s\n", label)
 	}
 
 	return nil

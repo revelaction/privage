@@ -31,7 +31,7 @@ func initCommand(slot string, ui UI) (err error) {
 		return fmt.Errorf("error searching for config file: %w", err)
 	}
 	if configPath != "" {
-		fmt.Fprintf(ui.Err, "📑 Config file already exists: %s... Exiting\n", configPath)
+		_, _ = fmt.Fprintf(ui.Err, "📑 Config file already exists: %s... Exiting\n", configPath)
 		return nil
 	}
 
@@ -40,7 +40,7 @@ func initCommand(slot string, ui UI) (err error) {
 		return fmt.Errorf("error searching for identity file: %w", err)
 	}
 	if idPath != "" {
-		fmt.Fprintf(ui.Err, "🔑 privage key file already exists: %s... Exiting.\n", idPath)
+		_, _ = fmt.Fprintf(ui.Err, "🔑 privage key file already exists: %s... Exiting.\n", idPath)
 		return nil
 	}
 
@@ -89,7 +89,7 @@ func initCommand(slot string, ui UI) (err error) {
 			return fmt.Errorf("error creating encrypted age key in slot %s: %w", slot, err)
 		}
 
-		fmt.Fprintf(ui.Err, "🔑 Generated encrypted age key file `%s` with PIV slot %s ✔️\n", identityPath, slot)
+		_, _ = fmt.Fprintf(ui.Err, "🔑 Generated encrypted age key file `%s` with PIV slot %s ✔️\n", identityPath, slot)
 	} else {
 		// normal age key
 		f, err := filesystem.CreateFile(identityPath, 0600)
@@ -106,7 +106,7 @@ func initCommand(slot string, ui UI) (err error) {
 			return err
 		}
 
-		fmt.Fprintf(ui.Err, "🔑 Generated age key file `%s` ✔️\n", identityPath)
+		_, _ = fmt.Fprintf(ui.Err, "🔑 Generated age key file `%s` ✔️\n", identityPath)
 	}
 
 	//
@@ -120,11 +120,11 @@ func initCommand(slot string, ui UI) (err error) {
 			return err
 		}
 
-		fmt.Fprintf(ui.Err, "📒 .gitignore file already exists: %s... Exiting\n", gitignorePath)
+		_, _ = fmt.Fprintf(ui.Err, "📒 .gitignore file already exists: %s... Exiting\n", gitignorePath)
 		return nil
 	}
 
-	fmt.Fprintf(ui.Err, "📒 Generated `%s` file ✔️\n", gitignorePath)
+	_, _ = fmt.Fprintf(ui.Err, "📒 Generated `%s` file ✔️\n", gitignorePath)
 
 	//
 	// config file
@@ -156,7 +156,7 @@ func initCommand(slot string, ui UI) (err error) {
 		return fmt.Errorf("could not encode config file: %w", err)
 	}
 
-	fmt.Fprintf(ui.Err, "📑 Generated config file %s ✔️\n", confPath)
+	_, _ = fmt.Fprintf(ui.Err, "📑 Generated config file %s ✔️\n", confPath)
 
 	return nil
 }

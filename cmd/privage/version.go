@@ -5,6 +5,6 @@ import (
 )
 
 func versionCommand(ui UI) error {
-	fmt.Fprintf(ui.Out, "privage version %s (commit: %s, yubikey: %s)\n", BuildTag, BuildCommit, YubikeySupport)
-	return nil
+	_, err := fmt.Fprintf(ui.Out, "privage version %s (commit: %s, yubikey: %s)\n", BuildTag, BuildCommit, YubikeySupport)
+	return err
 }

@@ -93,7 +93,9 @@ func TestCompleteCommand(t *testing.T) {
 			if err := os.Chdir(th.Root); err != nil {
 				t.Fatal(err)
 			}
-			defer os.Chdir(oldWd)
+			defer func() {
+				_ = os.Chdir(oldWd)
+			}()
 
 			// Construct options that point to our test environment
 			opts := setup.Options{

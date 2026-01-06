@@ -30,11 +30,18 @@ func NewTestHelper(t *testing.T) *TestHelper {
 	if err := identity.GenerateAge(f); err != nil {
 		t.Fatal(err)
 	}
-	f.Close()
+	if err := f.Close(); err != nil {
+		t.Fatal(err)
+	}
 
-	f, _ = os.Open(idPath)
+	f, err = os.Open(idPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 	ident := identity.LoadAge(f, idPath)
-	f.Close()
+	if err := f.Close(); err != nil {
+		t.Fatal(err)
+	}
 
 	s := &setup.Setup{Id: ident, Repository: tmpDir}
 	return &TestHelper{Setup: s, t: t, Root: tmpDir}
@@ -60,5 +67,7 @@ func (th *TestHelper) AddFile(name string) {
 	if err != nil {
 		th.t.Fatal(err)
 	}
-	f.Close()
+	if err := f.Close(); err != nil {
+		th.t.Fatal(err)
+	}
 }

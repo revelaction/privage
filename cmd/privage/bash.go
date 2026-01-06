@@ -38,14 +38,14 @@ func bashCommand(ui UI) error {
 	fs := flag.NewFlagSet("bash", flag.ContinueOnError)
 	fs.SetOutput(ui.Err)
 	fs.Usage = func() {
-		fmt.Fprintf(ui.Err, "Usage: %s bash\n", os.Args[0])
-		fmt.Fprintf(ui.Err, "\nDescription:\n")
-		fmt.Fprintf(ui.Err, "  Dump bash complete script.\n")
+		_, _ = fmt.Fprintf(ui.Err, "Usage: %s bash\n", os.Args[0])
+		_, _ = fmt.Fprintf(ui.Err, "\nDescription:\n")
+		_, _ = fmt.Fprintf(ui.Err, "  Dump bash complete script.\n")
 	}
 
 	// Note: args not passed to bashCommand anymore, but it had no args anyway
 	// If it needs them in the future we can adjust main.go
 
-	fmt.Fprint(ui.Out, complete)
-	return nil
+	_, err := fmt.Fprint(ui.Out, complete)
+	return err
 }

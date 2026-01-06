@@ -24,10 +24,10 @@ func listCommand(s *setup.Setup, filter string, ui UI) error {
 	var toList, toListForCat, toListForLabel []*header.Header
 	if filter == "" {
 		toList = headers
-		fmt.Fprintf(ui.Out, "Found %d total encrypted tracked files.\n", len(toList))
+		_, _ = fmt.Fprintf(ui.Out, "Found %d total encrypted tracked files.\n", len(toList))
 		sorted := sortList(toList)
 		for _, h := range sorted {
-			fmt.Fprintf(ui.Out, "%8s%s\n", "", h)
+			_, _ = fmt.Fprintf(ui.Out, "%8s%s\n", "", h)
 		}
 
 		return nil
@@ -37,30 +37,30 @@ func listCommand(s *setup.Setup, filter string, ui UI) error {
 	toListForLabel = headersForFilterLabel(filter, headers)
 
 	if len(toListForCat) == 0 && len(toListForLabel) == 0 {
-		fmt.Fprintf(ui.Out, "Found no encrypted tracked files matching '%s'\n", filter)
+		_, _ = fmt.Fprintf(ui.Out, "Found no encrypted tracked files matching '%s'\n", filter)
 		return nil
 	}
 
 	if len(toListForCat) > 0 {
-		fmt.Fprintf(ui.Out, "Found %d files with category matching '%s':\n", len(toListForCat), filter)
-		fmt.Fprintln(ui.Out)
+		_, _ = fmt.Fprintf(ui.Out, "Found %d files with category matching '%s':\n", len(toListForCat), filter)
+		_, _ = fmt.Fprintln(ui.Out)
 		sorted := sortList(toListForCat)
 		for _, h := range sorted {
-			fmt.Fprintf(ui.Out, "%8s%s\n", "", h)
+			_, _ = fmt.Fprintf(ui.Out, "%8s%s\n", "", h)
 		}
 
-		fmt.Fprintln(ui.Out)
+		_, _ = fmt.Fprintln(ui.Out)
 	}
 
 	if len(toListForLabel) > 0 {
-		fmt.Fprintf(ui.Out, "Found %d files with name matching '%s':\n", len(toListForLabel), filter)
-		fmt.Fprintln(ui.Out)
+		_, _ = fmt.Fprintf(ui.Out, "Found %d files with name matching '%s':\n", len(toListForLabel), filter)
+		_, _ = fmt.Fprintln(ui.Out)
 		sorted := sortList(toListForLabel)
 		for _, h := range sorted {
-			fmt.Fprintf(ui.Out, "%8s%s\n", "", h)
+			_, _ = fmt.Fprintf(ui.Out, "%8s%s\n", "", h)
 		}
 
-		fmt.Fprintln(ui.Out)
+		_, _ = fmt.Fprintln(ui.Out)
 	}
 
 	return nil

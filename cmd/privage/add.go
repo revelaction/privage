@@ -62,12 +62,12 @@ func addCredential(h *header.Header, s *setup.Setup, ui UI) error {
 	}
 
 	// Diagnostic/Instruction output goes to ui.Err
-	fmt.Fprintln(ui.Err, "You can edit the credentials file by running these commands:")
-	fmt.Fprintln(ui.Err)
-	fmt.Fprintf(ui.Err, "   privage decrypt %s\n", h.Label)
-	fmt.Fprintf(ui.Err, "   vim %s # or your favorite editor\n", h.Label)
-	fmt.Fprintf(ui.Err, "   privage reencrypt\n")
-	fmt.Fprintln(ui.Err)
+	_, _ = fmt.Fprintln(ui.Err, "You can edit the credentials file by running these commands:")
+	_, _ = fmt.Fprintln(ui.Err)
+	_, _ = fmt.Fprintf(ui.Err, "   privage decrypt %s\n", h.Label)
+	_, _ = fmt.Fprintf(ui.Err, "   vim %s # or your favorite editor\n", h.Label)
+	_, _ = fmt.Fprintf(ui.Err, "   privage reencrypt\n")
+	_, _ = fmt.Fprintln(ui.Err)
 
 	return nil
 }
@@ -91,7 +91,7 @@ func addCustomCategory(h *header.Header, s *setup.Setup, ui UI) (err error) {
 		return err
 	}
 
-	fmt.Fprintf(ui.Err, "Added file '%s' to category '%s' ✔️\n", h.Label, h.Category)
+	_, _ = fmt.Fprintf(ui.Err, "Added file '%s' to category '%s' ✔️\n", h.Label, h.Category)
 
 	return nil
 }
