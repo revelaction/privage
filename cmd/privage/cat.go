@@ -1,8 +1,6 @@
 package main
 
 import (
-	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -10,33 +8,13 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-// catCommand prints in the terminal the contents of an encrypted file.
-func catCommand(s *setup.Setup, args []string, ui UI) (err error) {
-	fs := flag.NewFlagSet("cat", flag.ContinueOnError)
-	fs.SetOutput(ui.Err)
-	fs.Usage = func() {
-		fmt.Fprintf(ui.Err, "Usage: %s cat [label]\n", os.Args[0])
-		fmt.Fprintf(ui.Err, "\nDescription:\n")
-		fmt.Fprintf(ui.Err, "  Print the full contents of an encrypted file to stdout.\n")
-		fmt.Fprintf(ui.Err, "\nArguments:\n")
-		fmt.Fprintf(ui.Err, "  label  The label of the file to show\n")
-	}
-
-	if err := fs.Parse(args); err != nil {
-		return err
-	}
-
-	args = fs.Args()
-
-	if len(args) == 0 {
-		return errors.New("cat command needs one argument (label)")
-	}
+// catCommand is a pure logic worker. It does not know about flags or usage.
+// It assumes the label has been validated and the setup is successful.
+func catCommand(s *setup.Setup, label string, ui UI) (err error) {
 
 	if s.Id.Id == nil {
 		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}
-
-	label := args[0]
 
 	for h := range headerGenerator(s.Repository, s.Id) {
 		if h.Label == label {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/revelaction/privage/credential"
@@ -22,23 +23,33 @@ import (
 // - a existing file in the current directory
 func addCommand(s *setup.Setup, args []string, ui UI) error {
 	fs := flag.NewFlagSet("add", flag.ContinueOnError)
-	fs.SetOutput(ui.Err)
+	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
-		fmt.Fprintf(ui.Err, "Usage: %s add [category] [label]\n", os.Args[0])
-		fmt.Fprintf(ui.Err, "\nDescription:\n")
-		fmt.Fprintf(ui.Err, "  Add a new encrypted file.\n")
-		fmt.Fprintf(ui.Err, "\nArguments:\n")
-		fmt.Fprintf(ui.Err, "  category  A category (e.g., 'credential' or any custom string)\n")
-		fmt.Fprintf(ui.Err, "  label     A label for credentials, or an existing file path\n")
+		fmt.Fprintf(fs.Output(), "Usage: %s add [category] [label]\n", os.Args[0])
+		fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		fmt.Fprintf(fs.Output(), "  Add a new encrypted file.\n")
+		fmt.Fprintf(fs.Output(), "\nArguments:\n")
+		fmt.Fprintf(fs.Output(), "  category  A category (e.g., 'credential' or any custom string)\n")
+		fmt.Fprintf(fs.Output(), "  label     A label for credentials, or an existing file path\n")
 	}
 
-	if err := fs.Parse(args); err != nil {
-		return err
+	if parseErr := fs.Parse(args); parseErr != nil {
+		if errors.Is(parseErr, flag.ErrHelp) {
+			fs.SetOutput(ui.Out)
+			fs.Usage()
+			return nil
+		}
+		fs.SetOutput(ui.Err)
+		fmt.Fprintf(ui.Err, "Error: %v\n", parseErr)
+		fs.Usage()
+		return parseErr
 	}
 
 	args = fs.Args()
 
 	if len(args) != 2 {
+		fs.SetOutput(ui.Err)
+		fs.Usage()
 		return errors.New("add command needs two arguments: <category> <label>")
 	}
 
