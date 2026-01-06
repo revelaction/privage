@@ -5,29 +5,27 @@ import (
 	"errors"
 	"strings"
 	"testing"
-
-	"github.com/revelaction/privage/setup"
 )
 
 func TestCatCommand(t *testing.T) {
 	tests := []struct {
 		name           string
-		setupData      func(t *testing.T, s *setup.Setup)
+		setupData      func(th *TestHelper)
 		label          string
 		expectedOutput string
 		expectedErr    string
 	}{
 		{
 			name: "Success",
-			setupData: func(t *testing.T, s *setup.Setup) {
-				createEncryptedFile(t, s, "secret.txt", "", "real secret content")
+			setupData: func(th *TestHelper) {
+				th.AddEncryptedFile("secret.txt", "", "real secret content")
 			},
 			label:          "secret.txt",
 			expectedOutput: "real secret content",
 		},
 		{
 			name: "Label Not Found",
-			setupData: func(t *testing.T, s *setup.Setup) {
+			setupData: func(th *TestHelper) {
 				// No files encrypted
 			},
 			label:       "missing.txt",
@@ -35,9 +33,9 @@ func TestCatCommand(t *testing.T) {
 		},
 		{
 			name: "Identity Error",
-			setupData: func(t *testing.T, s *setup.Setup) {
-				s.Id.Id = nil
-				s.Id.Err = errors.New("key failed")
+			setupData: func(th *TestHelper) {
+				th.Id.Id = nil
+				th.Id.Err = errors.New("key failed")
 			},
 			label:       "any.txt",
 			expectedErr: "found no privage key file",
@@ -46,13 +44,14 @@ func TestCatCommand(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, _ := setupTestEnv(t)
-			tt.setupData(t, s)
+			th := NewTestHelper(t)
+			tt.setupData(th)
 
 			var outBuf, errBuf bytes.Buffer
 			ui := UI{Out: &outBuf, Err: &errBuf}
 
-			err := catCommand(s, tt.label, ui)
+			// th.Setup is embedded
+			err := catCommand(th.Setup, tt.label, ui)
 
 			if tt.expectedErr != "" {
 				if err == nil {

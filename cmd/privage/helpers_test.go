@@ -11,8 +11,15 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-// setupTestEnv creates a standard environment with a valid age key
-func setupTestEnv(t *testing.T) (*setup.Setup, string) {
+// TestHelper encapsulates the test environment and helper methods.
+type TestHelper struct {
+	*setup.Setup
+	t    *testing.T
+	Root string
+}
+
+// NewTestHelper creates a standard environment with a valid age key.
+func NewTestHelper(t *testing.T) *TestHelper {
 	t.Helper()
 	tmpDir := t.TempDir()
 	idPath := filepath.Join(tmpDir, "key.age")
@@ -29,28 +36,29 @@ func setupTestEnv(t *testing.T) (*setup.Setup, string) {
 	ident := identity.LoadAge(f, idPath)
 	f.Close()
 
-	return &setup.Setup{Id: ident, Repository: tmpDir}, tmpDir
+	s := &setup.Setup{Id: ident, Repository: tmpDir}
+	return &TestHelper{Setup: s, t: t, Root: tmpDir}
 }
 
-// createEncryptedFile creates a valid encrypted file in the setup repository
-func createEncryptedFile(t *testing.T, s *setup.Setup, label, category string, content string) {
-	t.Helper()
+// AddEncryptedFile creates a valid encrypted file in the setup repository.
+func (th *TestHelper) AddEncryptedFile(label, category, content string) {
+	th.t.Helper()
 	h := &header.Header{Label: label, Category: category}
-	if err := encryptSave(h, "", strings.NewReader(content), s); err != nil {
-		t.Fatalf("failed to encrypt %s: %v", label, err)
+	if err := encryptSave(h, "", strings.NewReader(content), th.Setup); err != nil {
+		th.t.Fatalf("failed to encrypt %s: %v", label, err)
 	}
 }
 
-// createFile creates a plain file (for testing non-encrypted file listing)
-func createFile(t *testing.T, dir, name string) {
-	t.Helper()
-	path := filepath.Join(dir, name)
+// AddFile creates a plain file (for testing non-encrypted file listing).
+func (th *TestHelper) AddFile(name string) {
+	th.t.Helper()
+	path := filepath.Join(th.Root, name)
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		t.Fatal(err)
+		th.t.Fatal(err)
 	}
 	f, err := os.Create(path)
 	if err != nil {
-		t.Fatal(err)
+		th.t.Fatal(err)
 	}
 	f.Close()
 }

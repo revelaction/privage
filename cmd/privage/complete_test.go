@@ -12,43 +12,43 @@ import (
 func TestCompleteCommand(t *testing.T) {
 	tests := []struct {
 		name      string
-		setupData func(t *testing.T, s *setup.Setup)
+		setupData func(th *TestHelper)
 		args      []string
 		contains  []string
 	}{
 		{
 			name:      "Command completion (empty)",
-			setupData: func(t *testing.T, s *setup.Setup) {},
+			setupData: func(th *TestHelper) {},
 			args:      []string{"--", "privage", ""},
 			contains:  []string{"show", "add", "list", "init", "help"},
 		},
 		{
 			name:      "Command completion (partial)",
-			setupData: func(t *testing.T, s *setup.Setup) {},
+			setupData: func(th *TestHelper) {},
 			args:      []string{"--", "privage", "ve"},
 			contains:  []string{"version"},
 		},
 		{
 			name: "Show Label",
-			setupData: func(t *testing.T, s *setup.Setup) {
-				createEncryptedFile(t, s, "mycred", "credential", "pass")
-				createEncryptedFile(t, s, "work_stuff", "work", "doc")
+			setupData: func(th *TestHelper) {
+				th.AddEncryptedFile("mycred", "credential", "pass")
+				th.AddEncryptedFile("work_stuff", "work", "doc")
 			},
 			args:     []string{"--", "privage", "show", "my"},
 			contains: []string{"mycred"},
 		},
 		{
 			name: "Show Label (All)",
-			setupData: func(t *testing.T, s *setup.Setup) {
-				createEncryptedFile(t, s, "mycred", "credential", "pass")
-				createEncryptedFile(t, s, "work_stuff", "work", "doc")
+			setupData: func(th *TestHelper) {
+				th.AddEncryptedFile("mycred", "credential", "pass")
+				th.AddEncryptedFile("work_stuff", "work", "doc")
 			},
 			args:     []string{"--", "privage", "show", ""},
 			contains: []string{"mycred", "work_stuff"},
 		},
 		{
 			name: "Add Category (Credential)",
-			setupData: func(t *testing.T, s *setup.Setup) {
+			setupData: func(th *TestHelper) {
 				// No existing files needed for this
 			},
 			args:     []string{"--", "privage", "add", "cred"},
@@ -56,26 +56,26 @@ func TestCompleteCommand(t *testing.T) {
 		},
 		{
 			name: "Add File (Local)",
-			setupData: func(t *testing.T, s *setup.Setup) {
+			setupData: func(th *TestHelper) {
 				// We need to create a plain file in the repo
-				createFile(t, s.Repository, "local.txt")
+				th.AddFile("local.txt")
 			},
 			args:     []string{"--", "privage", "add", "work", "loc"},
 			contains: []string{"local.txt"},
 		},
 		{
 			name: "Show Field (Credential)",
-			setupData: func(t *testing.T, s *setup.Setup) {
-				createEncryptedFile(t, s, "mycred", "credential", "pass")
+			setupData: func(th *TestHelper) {
+				th.AddEncryptedFile("mycred", "credential", "pass")
 			},
 			args:     []string{"--", "privage", "show", "mycred", "pas"},
 			contains: []string{"password"},
 		},
 		{
 			name: "Show Field (Non-Credential)",
-			setupData: func(t *testing.T, s *setup.Setup) {
+			setupData: func(th *TestHelper) {
 				// "work" category implies non-credential unless specialized
-				createEncryptedFile(t, s, "work_stuff", "work", "doc")
+				th.AddEncryptedFile("work_stuff", "work", "doc")
 			},
 			args:     []string{"--", "privage", "show", "work_stuff", ""},
 			contains: []string{}, // Should be empty
@@ -84,21 +84,21 @@ func TestCompleteCommand(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s, tmpDir := setupTestEnv(t)
-			tt.setupData(t, s)
+			th := NewTestHelper(t)
+			tt.setupData(th)
 
 			// We need to switch to the tmpDir because filesForAddCmd uses "."
 			// This simulates the user being in the repo directory
 			oldWd, _ := os.Getwd()
-			if err := os.Chdir(tmpDir); err != nil {
+			if err := os.Chdir(th.Root); err != nil {
 				t.Fatal(err)
 			}
 			defer os.Chdir(oldWd)
 
 			// Construct options that point to our test environment
 			opts := setup.Options{
-				KeyFile:  s.Id.Path,
-				RepoPath: tmpDir,
+				KeyFile:  th.Id.Path,
+				RepoPath: th.Root,
 			}
 
 			var outBuf, errBuf bytes.Buffer
