@@ -1,0 +1,47 @@
+# Global Help requested via -h (Stdout)
+exec privage -h
+stdout 'Usage: .*privage'
+! stderr 'Usage: .*privage'
+
+# Global Help requested via --help (Stdout)
+exec privage --help
+stdout 'Usage: .*privage'
+! stderr 'Usage: .*privage'
+
+# Global Usage triggered by error (no args) (Stderr)
+! exec privage
+stderr 'Usage: .*privage'
+! stdout 'Usage: .*privage'
+
+# Subcommand Help requested via -h (Stdout)
+# We test 'cat' as it was refactored
+exec privage cat -h
+stdout 'Usage: .*privage cat'
+! stderr 'Usage: .*privage cat'
+
+# Subcommand Help requested via help command (Stdout)
+exec privage help cat
+stdout 'Usage: .*privage cat'
+! stderr 'Usage: .*privage cat'
+
+# Subcommand Usage triggered by missing arguments (Stderr)
+! exec privage cat
+stderr 'Usage: .*privage cat'
+stderr 'cat command needs one argument'
+! stdout 'Usage: .*privage cat'
+
+# Subcommand Usage triggered by invalid flag (Stderr)
+! exec privage cat -invalid
+stderr 'Usage: .*privage cat'
+stderr 'Error: flag provided but not defined: -invalid'
+! stdout 'Usage: .*privage cat'
+
+# Subcommand 'add' refactored as well
+exec privage add -h
+stdout 'Usage: .*privage add'
+! stderr 'Usage: .*privage add'
+
+! exec privage add
+stderr 'Usage: .*privage add'
+stderr 'add command needs two arguments'
+! stdout 'Usage: .*privage add'
