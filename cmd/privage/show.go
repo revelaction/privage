@@ -57,5 +57,5 @@ func showCommand(s *setup.Setup, label string, fieldName string, ui UI) (err err
 		}
 	}
 
-	return nil
+	return fmt.Errorf("file %q not found in repository", label)
 }

@@ -2,98 +2,108 @@ package main
 
 import (
 	"bytes"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/revelaction/privage/header"
-	"github.com/revelaction/privage/identity"
-	"github.com/revelaction/privage/setup"
 )
 
-func TestShowCommand(t *testing.T) {
-	// 1. Setup real environment
-	tmpDir := t.TempDir()
-	idPath := filepath.Join(tmpDir, "key.age")
-	f, _ := os.Create(idPath)
-	identity.GenerateAge(f)
-	f.Close()
+func TestShow_FullContent(t *testing.T) {
+	th := NewTestHelper(t)
+	content := "login = \"user123\"\npassword = \"supersecret\"\n"
+	th.AddEncryptedFile("mycred", "credential", content)
 
-	f, _ = os.Open(idPath)
-	ident := identity.LoadAge(f, idPath)
-	f.Close()
+	var outBuf bytes.Buffer
+	ui := UI{Out: &outBuf, Err: &bytes.Buffer{}}
 
-	s := &setup.Setup{
-		Id:         ident,
-		Repository: tmpDir,
-	}
+	// Act
+	err := showCommand(th.Setup, "mycred", "", ui)
 
-	// 2. Encrypt a credential
-	label := "mycred"
-	secretContent := `login = "user123"
-password = "supersecret"
-`
-	h := &header.Header{Label: label, Category: header.CategoryCredential}
-	if err := encryptSave(h, "", strings.NewReader(secretContent), s); err != nil {
-		t.Fatal(err)
-	}
-
-	// 3. Run Command - Full Show
-	var outBuf, errBuf bytes.Buffer
-	ui := UI{Out: &outBuf, Err: &errBuf}
-	
-	err := showCommand(s, label, "", ui)
+	// Assert
 	if err != nil {
-		t.Fatalf("showCommand failed: %v", err)
+		t.Fatalf("unexpected error: %v", err)
 	}
-
 	output := outBuf.String()
 	if !strings.Contains(output, "user123") {
-		t.Errorf("expected output to contain login 'user123', got %q", output)
-	}
-
-	// 4. Run Command - Specific field
-	outBuf.Reset()
-	err = showCommand(s, label, "password", ui)
-	if err != nil {
-		t.Fatalf("showCommand failed: %v", err)
-	}
-	if outBuf.String() != "supersecret" {
-		t.Errorf("expected %q, got %q", "supersecret", outBuf.String())
+		t.Errorf("expected output to contain 'user123', got:\n%s", output)
 	}
 }
 
-func TestShowCommand_WrongCategory(t *testing.T) {
-	tmpDir := t.TempDir()
-	idPath := filepath.Join(tmpDir, "key.age")
-	f, _ := os.Create(idPath)
-	identity.GenerateAge(f)
-	f.Close()
+func TestShow_SpecificField(t *testing.T) {
+	th := NewTestHelper(t)
+	content := "login = \"user123\"\npassword = \"supersecret\"\n"
+	th.AddEncryptedFile("mycred", "credential", content)
 
-	f, _ = os.Open(idPath)
-	ident := identity.LoadAge(f, idPath)
-	f.Close()
-
-	s := &setup.Setup{
-		Id:         ident,
-		Repository: tmpDir,
+	tests := []struct {
+		field    string
+		expected string
+	}{
+		{"login", "user123"},
+		{"password", "supersecret"},
 	}
 
-	label := "not-a-cred"
-	h := &header.Header{Label: label, Category: "other"}
-	if err := encryptSave(h, "", strings.NewReader("some content"), s); err != nil {
-		t.Fatal(err)
+	for _, tt := range tests {
+		t.Run(tt.field, func(t *testing.T) {
+			var outBuf bytes.Buffer
+			ui := UI{Out: &outBuf, Err: &bytes.Buffer{}}
+
+			err := showCommand(th.Setup, "mycred", tt.field, ui)
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if outBuf.String() != tt.expected {
+				t.Errorf("field %s: expected %q, got %q", tt.field, tt.expected, outBuf.String())
+			}
+		})
+	}
+}
+
+func TestShow_Errors(t *testing.T) {
+	tests := []struct {
+		name      string
+		setupData func(th *TestHelper)
+		label     string
+		field     string
+		wantError string
+	}{
+		{
+			name:      "File Not Found",
+			setupData: func(th *TestHelper) {},
+			label:     "missing",
+			wantError: "file \"missing\" not found",
+		},
+		{
+			name: "Field Not Found",
+			setupData: func(th *TestHelper) {
+				th.AddEncryptedFile("mycred", "credential", "login=\"u\"")
+			},
+			label:     "mycred",
+			field:     "bad_field",
+			wantError: "field 'bad_field' not found",
+		},
+		{
+			name: "Wrong Category",
+			setupData: func(th *TestHelper) {
+				th.AddEncryptedFile("notes", "work", "stuff")
+			},
+			label:     "notes",
+			wantError: "is not a credential",
+		},
 	}
 
-	var outBuf, errBuf bytes.Buffer
-	ui := UI{Out: &outBuf, Err: &errBuf}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			th := NewTestHelper(t)
+			tt.setupData(th)
+			ui := UI{Out: &bytes.Buffer{}, Err: &bytes.Buffer{}}
 
-	err := showCommand(s, label, "", ui)
-	if err == nil {
-		t.Fatal("expected error for non-credential category, got nil")
-	}
-	if !strings.Contains(err.Error(), "is not a credential") {
-		t.Errorf("expected 'is not a credential' error, got: %v", err)
+			err := showCommand(th.Setup, tt.label, tt.field, ui)
+
+			if err == nil {
+				t.Fatal("expected error, got nil")
+			}
+			if !strings.Contains(err.Error(), tt.wantError) {
+				t.Errorf("expected error containing %q, got %q", tt.wantError, err.Error())
+			}
+		})
 	}
 }
