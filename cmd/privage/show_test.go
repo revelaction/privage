@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"strings"
 	"testing"
 )
@@ -63,13 +64,13 @@ func TestShow_Errors(t *testing.T) {
 		setupData func(th *TestHelper)
 		label     string
 		field     string
-		wantError string
+		wantErr   error
 	}{
 		{
 			name:      "File Not Found",
 			setupData: func(th *TestHelper) {},
 			label:     "missing",
-			wantError: "file \"missing\" not found",
+			wantErr:   ErrFileNotFound,
 		},
 		{
 			name: "Field Not Found",
@@ -78,7 +79,7 @@ func TestShow_Errors(t *testing.T) {
 			},
 			label:     "mycred",
 			field:     "bad_field",
-			wantError: "field 'bad_field' not found",
+			wantErr:   ErrFieldNotFound,
 		},
 		{
 			name: "Wrong Category",
@@ -86,7 +87,7 @@ func TestShow_Errors(t *testing.T) {
 				th.AddEncryptedFile("notes", "work", "stuff")
 			},
 			label:     "notes",
-			wantError: "is not a credential",
+			wantErr:   ErrNotCredential,
 		},
 	}
 
@@ -101,8 +102,8 @@ func TestShow_Errors(t *testing.T) {
 			if err == nil {
 				t.Fatal("expected error, got nil")
 			}
-			if !strings.Contains(err.Error(), tt.wantError) {
-				t.Errorf("expected error containing %q, got %q", tt.wantError, err.Error())
+			if !errors.Is(err, tt.wantErr) {
+				t.Errorf("expected error %v, got %v", tt.wantErr, err)
 			}
 		})
 	}

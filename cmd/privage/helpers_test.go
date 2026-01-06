@@ -22,7 +22,7 @@ type TestHelper struct {
 func NewTestHelper(t *testing.T) *TestHelper {
 	t.Helper()
 	tmpDir := t.TempDir()
-	idPath := filepath.Join(tmpDir, "key.age")
+	idPath := filepath.Join(tmpDir, "privage-key.txt")
 	f, err := os.Create(idPath)
 	if err != nil {
 		t.Fatal(err)

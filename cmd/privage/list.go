@@ -14,7 +14,7 @@ func listCommand(s *setup.Setup, filter string, ui UI) error {
 	headers := []*header.Header{}
 
 	if s.Id.Id == nil {
-		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
+		return fmt.Errorf("%w: %v", ErrNoIdentity, s.Id.Err)
 	}
 
 	for h := range headerGenerator(s.Repository, s.Id) {

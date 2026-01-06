@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"errors"
-	"strings"
 	"testing"
 )
 
@@ -13,7 +12,7 @@ func TestCatCommand(t *testing.T) {
 		setupData      func(th *TestHelper)
 		label          string
 		expectedOutput string
-		expectedErr    string
+		expectedErr    error
 	}{
 		{
 			name: "Success",
@@ -29,7 +28,7 @@ func TestCatCommand(t *testing.T) {
 				// No files encrypted
 			},
 			label:       "missing.txt",
-			expectedErr: "file \"missing.txt\" not found in repository",
+			expectedErr: ErrFileNotFound,
 		},
 		{
 			name: "Identity Error",
@@ -38,7 +37,7 @@ func TestCatCommand(t *testing.T) {
 				th.Id.Err = errors.New("key failed")
 			},
 			label:       "any.txt",
-			expectedErr: "found no privage key file",
+			expectedErr: ErrNoIdentity,
 		},
 	}
 
@@ -53,12 +52,12 @@ func TestCatCommand(t *testing.T) {
 			// th.Setup is embedded
 			err := catCommand(th.Setup, tt.label, ui)
 
-			if tt.expectedErr != "" {
+			if tt.expectedErr != nil {
 				if err == nil {
 					t.Fatal("expected error, got nil")
 				}
-				if !strings.Contains(err.Error(), tt.expectedErr) {
-					t.Errorf("expected error containing %q, got %q", tt.expectedErr, err.Error())
+				if !errors.Is(err, tt.expectedErr) {
+					t.Errorf("expected error %v, got %v", tt.expectedErr, err)
 				}
 			} else {
 				if err != nil {

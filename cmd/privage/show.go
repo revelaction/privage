@@ -13,7 +13,7 @@ import (
 // file.
 func showCommand(s *setup.Setup, label string, fieldName string, ui UI) (err error) {
 	if s.Id.Id == nil {
-		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
+		return fmt.Errorf("%w: %v", ErrNoIdentity, s.Id.Err)
 	}
 
 	for h := range headerGenerator(s.Repository, s.Id) {
@@ -34,7 +34,7 @@ func showCommand(s *setup.Setup, label string, fieldName string, ui UI) (err err
 			}
 
 			if h.Category != header.CategoryCredential {
-				return fmt.Errorf("file '%s' is not a credential. Use 'privage cat %s' to view its contents", label, label)
+				return fmt.Errorf("%w: file '%s' is not a credential. Use 'privage cat %s' to view its contents", ErrNotCredential, label, label)
 			}
 
 			cred, err := credential.Decode(r)
@@ -45,7 +45,7 @@ func showCommand(s *setup.Setup, label string, fieldName string, ui UI) (err err
 			if fieldName != "" {
 				val, ok := cred.GetField(fieldName)
 				if !ok {
-					return fmt.Errorf("field '%s' not found in credential '%s'", fieldName, label)
+					return fmt.Errorf("%w: field '%s' not found in credential '%s'", ErrFieldNotFound, fieldName, label)
 				}
 				if _, err := fmt.Fprint(ui.Out, val); err != nil {
 					return err
@@ -57,5 +57,5 @@ func showCommand(s *setup.Setup, label string, fieldName string, ui UI) (err err
 		}
 	}
 
-	return fmt.Errorf("file %q not found in repository", label)
+	return fmt.Errorf("%w: %q", ErrFileNotFound, label)
 }
