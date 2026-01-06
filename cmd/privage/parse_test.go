@@ -9,323 +9,541 @@ import (
 )
 
 func TestParseCatArgs(t *testing.T) {
-	tests := []struct {
-		name      string
-		args      []string
-		wantLabel string
-		wantErr   bool
-		isHelp    bool
-	}{
-		{"Valid label", []string{"mylabel"}, "mylabel", false, false},
-		{"Missing label", []string{}, "", true, false},
-		{"Help flag", []string{"-h"}, "", true, true},
-		{"Unknown flag", []string{"--foo"}, "", true, false},
-	}
+	t.Run("Success", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		label, err := parseCatArgs([]string{"mylabel"}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if label != "mylabel" {
+			t.Errorf("got label %q, want %q", label, "mylabel")
+		}
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var outBuf, errBuf bytes.Buffer
-			ui := UI{Out: &outBuf, Err: &errBuf}
-			label, err := parseCatArgs(tt.args, ui)
+	t.Run("Help", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, err := parseCatArgs([]string{"-h"}, ui)
+		if !errors.Is(err, flag.ErrHelp) {
+			t.Fatalf("expected flag.ErrHelp, got %v", err)
+		}
+		if outBuf.Len() == 0 {
+			t.Error("expected usage output in Out buffer")
+		}
+	})
 
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseCatArgs() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if tt.isHelp && !errors.Is(err, flag.ErrHelp) {
-				t.Errorf("expected flag.ErrHelp, got %v", err)
-			}
-			if label != tt.wantLabel {
-				t.Errorf("got label %q, want %q", label, tt.wantLabel)
-			}
-		})
-	}
+	t.Run("UnknownFlag", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, err := parseCatArgs([]string{"--foo"}, ui)
+		if err == nil {
+			t.Fatal("expected error for unknown flag")
+		}
+		if errBuf.Len() == 0 {
+			t.Error("expected error message in Err buffer")
+		}
+	})
+
+	t.Run("MissingLabel", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, err := parseCatArgs([]string{}, ui)
+		if err == nil {
+			t.Fatal("expected error for missing label")
+		}
+		if errBuf.Len() == 0 {
+			t.Error("expected error message in Err buffer")
+		}
+	})
 }
 
 func TestParseInitArgs(t *testing.T) {
-	tests := []struct {
-		name     string
-		args     []string
-		wantSlot string
-		wantErr  bool
-	}{
-		{"No args", []string{}, "", false},
-		{"Valid slot", []string{"-p", "9c"}, "9c", false},
-		{"Help", []string{"--help"}, "", true},
-	}
+	t.Run("SuccessEmpty", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		slot, err := parseInitArgs([]string{}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if slot != "" {
+			t.Errorf("got slot %q, want empty", slot)
+		}
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var outBuf, errBuf bytes.Buffer
-			ui := UI{Out: &outBuf, Err: &errBuf}
-			slot, err := parseInitArgs(tt.args, ui)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("wantErr %v, got %v", tt.wantErr, err)
-			}
-			if slot != tt.wantSlot {
-				t.Errorf("got %q, want %q", slot, tt.wantSlot)
-			}
-		})
-	}
+	t.Run("SuccessSlot", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		slot, err := parseInitArgs([]string{"-p", "9c"}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if slot != "9c" {
+			t.Errorf("got slot %q, want %q", slot, "9c")
+		}
+	})
+
+	t.Run("Help", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, err := parseInitArgs([]string{"--help"}, ui)
+		if !errors.Is(err, flag.ErrHelp) {
+			t.Fatalf("expected flag.ErrHelp, got %v", err)
+		}
+		if outBuf.Len() == 0 {
+			t.Error("expected usage output in Out buffer")
+		}
+	})
+
+	t.Run("UnknownFlag", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, err := parseInitArgs([]string{"--foo"}, ui)
+		if err == nil {
+			t.Fatal("expected error for unknown flag")
+		}
+		if errBuf.Len() == 0 {
+			t.Error("expected error message in Err buffer")
+		}
+	})
 }
 
 func TestParseAddArgs(t *testing.T) {
-	tests := []struct {
-		name     string
-		args     []string
-		wantCat  string
-		wantLab  string
-		wantErr  bool
-	}{
-		{"Valid", []string{"cred", "mylabel"}, "cred", "mylabel", false},
-		{"Missing one", []string{"cred"}, "", "", true},
-		{"Category too long", []string{strings.Repeat("a", 33), "lab"}, "", "", true},
-		{"Label too long", []string{"cat", strings.Repeat("a", 129)}, "", "", true},
-	}
+	t.Run("Success", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		cat, lab, err := parseAddArgs([]string{"cred", "mylabel"}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if cat != "cred" || lab != "mylabel" {
+			t.Errorf("got %q/%q, want %q/%q", cat, lab, "cred", "mylabel")
+		}
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var outBuf, errBuf bytes.Buffer
-			ui := UI{Out: &outBuf, Err: &errBuf}
-			cat, lab, err := parseAddArgs(tt.args, ui)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("wantErr %v, got %v", tt.wantErr, err)
-			}
-			if cat != tt.wantCat || lab != tt.wantLab {
-				t.Errorf("got %q/%q, want %q/%q", cat, lab, tt.wantCat, tt.wantLab)
-			}
-		})
-	}
+	t.Run("Help", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, _, err := parseAddArgs([]string{"--help"}, ui)
+		if !errors.Is(err, flag.ErrHelp) {
+			t.Fatalf("expected flag.ErrHelp, got %v", err)
+		}
+		if outBuf.Len() == 0 {
+			t.Error("expected usage output in Out buffer")
+		}
+	})
+
+	t.Run("MissingArgs", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, _, err := parseAddArgs([]string{"cred"}, ui)
+		if err == nil {
+			t.Fatal("expected error for missing argument")
+		}
+		if errBuf.Len() == 0 {
+			t.Error("expected error message in Err buffer")
+		}
+	})
+
+	t.Run("CategoryTooLong", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, _, err := parseAddArgs([]string{strings.Repeat("a", 33), "lab"}, ui)
+		if err == nil {
+			t.Fatal("expected error for long category")
+		}
+	})
+
+	t.Run("LabelTooLong", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, _, err := parseAddArgs([]string{"cat", strings.Repeat("a", 129)}, ui)
+		if err == nil {
+			t.Fatal("expected error for long label")
+		}
+	})
 }
 
 func TestParseShowArgs(t *testing.T) {
-	tests := []struct {
-		name      string
-		args      []string
-		wantLabel string
-		wantField string
-		wantErr   bool
-	}{
-		{"Label only", []string{"my"}, "my", "", false},
-		{"Label and field", []string{"my", "pass"}, "my", "pass", false},
-		{"Missing label", []string{}, "", "", true},
-	}
+	t.Run("LabelOnly", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		label, field, err := parseShowArgs([]string{"my"}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if label != "my" || field != "" {
+			t.Errorf("got %q/%q, want %q/empty", label, field, "my")
+		}
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var outBuf, errBuf bytes.Buffer
-			ui := UI{Out: &outBuf, Err: &errBuf}
-			label, field, err := parseShowArgs(tt.args, ui)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("wantErr %v, got %v", tt.wantErr, err)
-			}
-			if label != tt.wantLabel || field != tt.wantField {
-				t.Errorf("got %q/%q, want %q/%q", label, field, tt.wantLabel, tt.wantField)
-			}
-		})
-	}
+	t.Run("LabelAndField", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		label, field, err := parseShowArgs([]string{"my", "pass"}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if label != "my" || field != "pass" {
+			t.Errorf("got %q/%q, want %q/%q", label, field, "my", "pass")
+		}
+	})
+
+	t.Run("Help", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, _, err := parseShowArgs([]string{"--help"}, ui)
+		if !errors.Is(err, flag.ErrHelp) {
+			t.Fatalf("expected flag.ErrHelp, got %v", err)
+		}
+		if outBuf.Len() == 0 {
+			t.Error("expected usage output in Out buffer")
+		}
+	})
+
+	t.Run("MissingLabel", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, _, err := parseShowArgs([]string{}, ui)
+		if err == nil {
+			t.Fatal("expected error for missing label")
+		}
+		if errBuf.Len() == 0 {
+			t.Error("expected error message in Err buffer")
+		}
+	})
 }
 
 func TestParseReencryptArgs(t *testing.T) {
-	tests := []struct {
-		name      string
-		args      []string
-		wantForce bool
-		wantClean bool
-		wantErr   bool
-	}{
-		{"Dry run", []string{}, false, false, false},
-		{"Force", []string{"--force"}, true, false, false},
-		{"Clean", []string{"-c"}, false, true, false},
-		{"Both", []string{"-f", "-c"}, true, true, false},
-	}
+	t.Run("SuccessDryRun", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		force, clean, err := parseReencryptArgs([]string{}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if force || clean {
+			t.Errorf("got force=%v, clean=%v, want both false", force, clean)
+		}
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var outBuf, errBuf bytes.Buffer
-			ui := UI{Out: &outBuf, Err: &errBuf}
-			force, clean, err := parseReencryptArgs(tt.args, ui)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("wantErr %v, got %v", tt.wantErr, err)
-			}
-			if force != tt.wantForce || clean != tt.wantClean {
-				t.Errorf("got %v/%v, want %v/%v", force, clean, tt.wantForce, tt.wantClean)
-			}
-		})
-	}
+	t.Run("SuccessForceAndClean", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		force, clean, err := parseReencryptArgs([]string{"-f", "-c"}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if !force || !clean {
+			t.Errorf("got force=%v, clean=%v, want both true", force, clean)
+		}
+	})
+
+	t.Run("Help", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, _, err := parseReencryptArgs([]string{"--help"}, ui)
+		if !errors.Is(err, flag.ErrHelp) {
+			t.Fatalf("expected flag.ErrHelp, got %v", err)
+		}
+		if outBuf.Len() == 0 {
+			t.Error("expected usage output in Out buffer")
+		}
+	})
+
+	t.Run("UnknownFlag", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, _, err := parseReencryptArgs([]string{"--foo"}, ui)
+		if err == nil {
+			t.Fatal("expected error for unknown flag")
+		}
+		if errBuf.Len() == 0 {
+			t.Error("expected error message in Err buffer")
+		}
+	})
 }
 
 func TestParseRotateArgs(t *testing.T) {
-	tests := []struct {
-		name      string
-		args      []string
-		wantClean bool
-		wantSlot  string
-		wantErr   bool
-	}{
-		{"Default", []string{}, false, "", false},
-		{"Clean and Slot", []string{"--clean", "--piv-slot", "9e"}, true, "9e", false},
-	}
+	t.Run("SuccessDefault", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		clean, slot, err := parseRotateArgs([]string{}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if clean || slot != "" {
+			t.Errorf("got clean=%v, slot=%q, want false/empty", clean, slot)
+		}
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var outBuf, errBuf bytes.Buffer
-			ui := UI{Out: &outBuf, Err: &errBuf}
-			clean, slot, err := parseRotateArgs(tt.args, ui)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("wantErr %v, got %v", tt.wantErr, err)
-			}
-			if clean != tt.wantClean || slot != tt.wantSlot {
-				t.Errorf("got %v/%q, want %v/%q", clean, slot, tt.wantClean, tt.wantSlot)
-			}
-		})
-	}
+	t.Run("SuccessCleanAndSlot", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		clean, slot, err := parseRotateArgs([]string{"--clean", "--piv-slot", "9e"}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if !clean || slot != "9e" {
+			t.Errorf("got clean=%v, slot=%q, want true/9e", clean, slot)
+		}
+	})
+
+	t.Run("Help", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, _, err := parseRotateArgs([]string{"--help"}, ui)
+		if !errors.Is(err, flag.ErrHelp) {
+			t.Fatalf("expected flag.ErrHelp, got %v", err)
+		}
+		if outBuf.Len() == 0 {
+			t.Error("expected usage output in Out buffer")
+		}
+	})
+
+	t.Run("UnknownFlag", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, _, err := parseRotateArgs([]string{"--foo"}, ui)
+		if err == nil {
+			t.Fatal("expected error for unknown flag")
+		}
+		if errBuf.Len() == 0 {
+			t.Error("expected error message in Err buffer")
+		}
+	})
 }
 
 func TestParseListArgs(t *testing.T) {
-	tests := []struct {
-		name       string
-		args       []string
-		wantFilter string
-		wantErr    bool
-	}{
-		{"Default", []string{}, "", false},
-		{"Filter", []string{"myfilter"}, "myfilter", false},
-		{"Help", []string{"--help"}, "", true},
-	}
+	t.Run("SuccessNoFilter", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		filter, err := parseListArgs([]string{}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if filter != "" {
+			t.Errorf("got filter %q, want empty", filter)
+		}
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var outBuf, errBuf bytes.Buffer
-			ui := UI{Out: &outBuf, Err: &errBuf}
-			filter, err := parseListArgs(tt.args, ui)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseListArgs() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if filter != tt.wantFilter {
-				t.Errorf("got filter %q, want %q", filter, tt.wantFilter)
-			}
-		})
-	}
+	t.Run("SuccessFilter", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		filter, err := parseListArgs([]string{"myfilter"}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if filter != "myfilter" {
+			t.Errorf("got filter %q, want %q", filter, "myfilter")
+		}
+	})
+
+	t.Run("Help", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, err := parseListArgs([]string{"--help"}, ui)
+		if !errors.Is(err, flag.ErrHelp) {
+			t.Fatalf("expected flag.ErrHelp, got %v", err)
+		}
+		if outBuf.Len() == 0 {
+			t.Error("expected usage output in Out buffer")
+		}
+	})
+
+	t.Run("UnknownFlag", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, err := parseListArgs([]string{"--foo"}, ui)
+		if err == nil {
+			t.Fatal("expected error for unknown flag")
+		}
+		if errBuf.Len() == 0 {
+			t.Error("expected error message in Err buffer")
+		}
+	})
 }
 
 func TestParseDeleteArgs(t *testing.T) {
-	tests := []struct {
-		name      string
-		args      []string
-		wantLabel string
-		wantErr   bool
-	}{
-		{"Valid label", []string{"mylabel"}, "mylabel", false},
-		{"Missing label", []string{}, "", true},
-	}
+	t.Run("Success", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		label, err := parseDeleteArgs([]string{"mylabel"}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if label != "mylabel" {
+			t.Errorf("got label %q, want %q", label, "mylabel")
+		}
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var outBuf, errBuf bytes.Buffer
-			ui := UI{Out: &outBuf, Err: &errBuf}
-			label, err := parseDeleteArgs(tt.args, ui)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseDeleteArgs() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if label != tt.wantLabel {
-				t.Errorf("got label %q, want %q", label, tt.wantLabel)
-			}
-		})
-	}
+	t.Run("Help", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, err := parseDeleteArgs([]string{"--help"}, ui)
+		if !errors.Is(err, flag.ErrHelp) {
+			t.Fatalf("expected flag.ErrHelp, got %v", err)
+		}
+		if outBuf.Len() == 0 {
+			t.Error("expected usage output in Out buffer")
+		}
+	})
+
+	t.Run("MissingLabel", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, err := parseDeleteArgs([]string{}, ui)
+		if err == nil {
+			t.Fatal("expected error for missing label")
+		}
+		if errBuf.Len() == 0 {
+			t.Error("expected error message in Err buffer")
+		}
+	})
 }
 
 func TestParseKeyArgs(t *testing.T) {
-	tests := []struct {
-		name    string
-		args    []string
-		wantErr bool
-	}{
-		{"No args", []string{}, false},
-		{"Help", []string{"--help"}, true},
-	}
+	t.Run("Success", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		err := parseKeyArgs([]string{}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var outBuf, errBuf bytes.Buffer
-			ui := UI{Out: &outBuf, Err: &errBuf}
-			err := parseKeyArgs(tt.args, ui)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseKeyArgs() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
+	t.Run("Help", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		err := parseKeyArgs([]string{"--help"}, ui)
+		if !errors.Is(err, flag.ErrHelp) {
+			t.Fatalf("expected flag.ErrHelp, got %v", err)
+		}
+		if outBuf.Len() == 0 {
+			t.Error("expected usage output in Out buffer")
+		}
+	})
+
+	t.Run("UnknownFlag", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		err := parseKeyArgs([]string{"--foo"}, ui)
+		if err == nil {
+			t.Fatal("expected error for unknown flag")
+		}
+		if errBuf.Len() == 0 {
+			t.Error("expected error message in Err buffer")
+		}
+	})
 }
 
 func TestParseStatusArgs(t *testing.T) {
-	tests := []struct {
-		name    string
-		args    []string
-		wantErr bool
-	}{
-		{"No args", []string{}, false},
-		{"Help", []string{"--help"}, true},
-	}
+	t.Run("Success", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		err := parseStatusArgs([]string{}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var outBuf, errBuf bytes.Buffer
-			ui := UI{Out: &outBuf, Err: &errBuf}
-			err := parseStatusArgs(tt.args, ui)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseStatusArgs() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
+	t.Run("Help", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		err := parseStatusArgs([]string{"--help"}, ui)
+		if !errors.Is(err, flag.ErrHelp) {
+			t.Fatalf("expected flag.ErrHelp, got %v", err)
+		}
+		if outBuf.Len() == 0 {
+			t.Error("expected usage output in Out buffer")
+		}
+	})
+
+	t.Run("UnknownFlag", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		err := parseStatusArgs([]string{"--foo"}, ui)
+		if err == nil {
+			t.Fatal("expected error for unknown flag")
+		}
+		if errBuf.Len() == 0 {
+			t.Error("expected error message in Err buffer")
+		}
+	})
 }
 
 func TestParseClipboardArgs(t *testing.T) {
-	tests := []struct {
-		name      string
-		args      []string
-		wantLabel string
-		wantErr   bool
-	}{
-		{"Valid label", []string{"mylabel"}, "mylabel", false},
-		{"Missing label", []string{}, "", true},
-	}
+	t.Run("Success", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		label, err := parseClipboardArgs([]string{"mylabel"}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if label != "mylabel" {
+			t.Errorf("got label %q, want %q", label, "mylabel")
+		}
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var outBuf, errBuf bytes.Buffer
-			ui := UI{Out: &outBuf, Err: &errBuf}
-			label, err := parseClipboardArgs(tt.args, ui)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseClipboardArgs() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if label != tt.wantLabel {
-				t.Errorf("got label %q, want %q", label, tt.wantLabel)
-			}
-		})
-	}
+	t.Run("Help", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, err := parseClipboardArgs([]string{"--help"}, ui)
+		if !errors.Is(err, flag.ErrHelp) {
+			t.Fatalf("expected flag.ErrHelp, got %v", err)
+		}
+		if outBuf.Len() == 0 {
+			t.Error("expected usage output in Out buffer")
+		}
+	})
+
+	t.Run("MissingLabel", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, err := parseClipboardArgs([]string{}, ui)
+		if err == nil {
+			t.Fatal("expected error for missing label")
+		}
+		if errBuf.Len() == 0 {
+			t.Error("expected error message in Err buffer")
+		}
+	})
 }
 
 func TestParseDecryptArgs(t *testing.T) {
-	tests := []struct {
-		name      string
-		args      []string
-		wantLabel string
-		wantErr   bool
-	}{
-		{"Valid label", []string{"mylabel"}, "mylabel", false},
-		{"Missing label", []string{}, "", true},
-	}
+	t.Run("Success", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		label, err := parseDecryptArgs([]string{"mylabel"}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if label != "mylabel" {
+			t.Errorf("got label %q, want %q", label, "mylabel")
+		}
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var outBuf, errBuf bytes.Buffer
-			ui := UI{Out: &outBuf, Err: &errBuf}
-			label, err := parseDecryptArgs(tt.args, ui)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseDecryptArgs() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if label != tt.wantLabel {
-				t.Errorf("got label %q, want %q", label, tt.wantLabel)
-			}
-		})
-	}
+	t.Run("Help", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, err := parseDecryptArgs([]string{"--help"}, ui)
+		if !errors.Is(err, flag.ErrHelp) {
+			t.Fatalf("expected flag.ErrHelp, got %v", err)
+		}
+		if outBuf.Len() == 0 {
+			t.Error("expected usage output in Out buffer")
+		}
+	})
+
+	t.Run("MissingLabel", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, err := parseDecryptArgs([]string{}, ui)
+		if err == nil {
+			t.Fatal("expected error for missing label")
+		}
+		if errBuf.Len() == 0 {
+			t.Error("expected error message in Err buffer")
+		}
+	})
 }
