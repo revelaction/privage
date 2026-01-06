@@ -9,7 +9,6 @@ import (
 	"io"
 	"os"
 
-	filesystem "github.com/revelaction/privage/fs"
 	"github.com/revelaction/privage/setup"
 )
 
@@ -103,31 +102,7 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 			return err
 		}
 
-		// Pre-flight checks (Driver responsibility)
-		configPath, err := filesystem.FindConfigFile()
-		if err != nil {
-			return fmt.Errorf("error searching for config file: %w", err)
-		}
-		if configPath != "" {
-			fmt.Fprintf(ui.Err, "📑 Config file already exists: %s... Exiting\n", configPath)
-			return nil
-		}
-
-		idPath, err := filesystem.FindIdentityFile()
-		if err != nil {
-			return fmt.Errorf("error searching for identity file: %w", err)
-		}
-		if idPath != "" {
-			fmt.Fprintf(ui.Err, "🔑 privage key file already exists: %s... Exiting.\n", idPath)
-			return nil
-		}
-
-		currentDir, err := os.Getwd()
-		if err != nil {
-			return err
-		}
-
-		return initCommand(slot, currentDir, ui)
+		return initCommand(slot, ui)
 
 	// 3. Operational commands (Require full Setup)
 	case "cat":

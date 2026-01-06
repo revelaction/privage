@@ -23,7 +23,31 @@ const (
 
 // initCommand is a pure logic worker for environment initialization.
 // It generates an age identity, a .gitignore, and a .privage.conf file.
-func initCommand(slot string, currentDir string, ui UI) (err error) {
+func initCommand(slot string, ui UI) (err error) {
+
+	// Pre-flight checks
+	configPath, err := filesystem.FindConfigFile()
+	if err != nil {
+		return fmt.Errorf("error searching for config file: %w", err)
+	}
+	if configPath != "" {
+		fmt.Fprintf(ui.Err, "📑 Config file already exists: %s... Exiting\n", configPath)
+		return nil
+	}
+
+	idPath, err := filesystem.FindIdentityFile()
+	if err != nil {
+		return fmt.Errorf("error searching for identity file: %w", err)
+	}
+	if idPath != "" {
+		fmt.Fprintf(ui.Err, "🔑 privage key file already exists: %s... Exiting.\n", idPath)
+		return nil
+	}
+
+	currentDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
 
 	//
 	// identity
