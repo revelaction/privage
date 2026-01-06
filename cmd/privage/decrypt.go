@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -15,32 +14,10 @@ import (
 var ErrHeaderNotFound = errors.New("header not found")
 
 // decryptCommand decrypts an encrypted file
-func decryptCommand(s *setup.Setup, args []string, ui UI) (retErr error) {
-	fs := flag.NewFlagSet("decrypt", flag.ContinueOnError)
-	fs.SetOutput(ui.Err)
-	fs.Usage = func() {
-		fmt.Fprintf(ui.Err, "Usage: %s decrypt [label]\n", os.Args[0])
-		fmt.Fprintf(ui.Err, "\nDescription:\n")
-		fmt.Fprintf(ui.Err, "  Decrypt a file and write its content in a file named after the label\n")
-		fmt.Fprintf(ui.Err, "\nArguments:\n")
-		fmt.Fprintf(ui.Err, "  label  The label of the file to decrypt\n")
-	}
-
-	if err := fs.Parse(args); err != nil {
-		return err
-	}
-
-	args = fs.Args()
-
-	if len(args) == 0 {
-		return errors.New("decrypt command needs one argument (label)")
-	}
-
+func decryptCommand(s *setup.Setup, label string, ui UI) (retErr error) {
 	if s.Id.Id == nil {
 		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}
-
-	label := args[0]
 
 	found := false
 	for h := range headerGenerator(s.Repository, s.Id) {

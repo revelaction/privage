@@ -214,41 +214,125 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 			return showCommand(s, label, fieldName, ui)
 		}
 
-		// Legacy coordination for other commands (to be refactored next)
-		s, setupErr := setupEnv(opts)
+		if cmd == "delete" {
+			label, err := parseDeleteArgs(args, ui)
+			if err != nil {
+				if errors.Is(err, flag.ErrHelp) {
+					return nil
+				}
+				return err
+			}
 
-		var cmdErr error
-		switch cmd {
-		case "key":
-			cmdErr = keyCommand(s, args, ui)
-		case "status":
-			cmdErr = statusCommand(s, args, ui)
-		case "delete":
-			cmdErr = deleteCommand(s, args, ui)
-		case "list":
-			cmdErr = listCommand(s, args, ui)
-		case "clipboard":
-			cmdErr = clipboardCommand(s, args, ui)
-		case "decrypt":
-			cmdErr = decryptCommand(s, args, ui)
-		case "reencrypt":
-			cmdErr = reencryptCommand(s, args, ui)
-		case "rotate":
-			cmdErr = rotateCommand(s, args, ui)
+			s, setupErr := setupEnv(opts)
+			if setupErr != nil {
+				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+			}
+
+			return deleteCommand(s, label, ui)
 		}
 
-		// 1. If help was requested (-h), always prioritize it and return success.
-		if errors.Is(cmdErr, flag.ErrHelp) {
-			return nil
+		if cmd == "key" {
+			if err := parseKeyArgs(args, ui); err != nil {
+				if errors.Is(err, flag.ErrHelp) {
+					return nil
+				}
+				return err
+			}
+			s, setupErr := setupEnv(opts)
+			if setupErr != nil {
+				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+			}
+			return keyCommand(s, ui)
 		}
 
-		// 2. If it wasn't a help request and setup failed, report the setup error.
-		if setupErr != nil {
-			return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+		if cmd == "status" {
+			if err := parseStatusArgs(args, ui); err != nil {
+				if errors.Is(err, flag.ErrHelp) {
+					return nil
+				}
+				return err
+			}
+			s, setupErr := setupEnv(opts)
+			if setupErr != nil {
+				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+			}
+			return statusCommand(s, ui)
 		}
 
-		// 3. Otherwise, return the subcommand's actual error (if any).
-		return cmdErr
+		if cmd == "list" {
+			filter, err := parseListArgs(args, ui)
+			if err != nil {
+				if errors.Is(err, flag.ErrHelp) {
+					return nil
+				}
+				return err
+			}
+			s, setupErr := setupEnv(opts)
+			if setupErr != nil {
+				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+			}
+			return listCommand(s, filter, ui)
+		}
+
+		if cmd == "clipboard" {
+			label, err := parseClipboardArgs(args, ui)
+			if err != nil {
+				if errors.Is(err, flag.ErrHelp) {
+					return nil
+				}
+				return err
+			}
+			s, setupErr := setupEnv(opts)
+			if setupErr != nil {
+				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+			}
+			return clipboardCommand(s, label, ui)
+		}
+
+		if cmd == "decrypt" {
+			label, err := parseDecryptArgs(args, ui)
+			if err != nil {
+				if errors.Is(err, flag.ErrHelp) {
+					return nil
+				}
+				return err
+			}
+			s, setupErr := setupEnv(opts)
+			if setupErr != nil {
+				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+			}
+			return decryptCommand(s, label, ui)
+		}
+
+		if cmd == "reencrypt" {
+			force, clean, err := parseReencryptArgs(args, ui)
+			if err != nil {
+				if errors.Is(err, flag.ErrHelp) {
+					return nil
+				}
+				return err
+			}
+			s, setupErr := setupEnv(opts)
+			if setupErr != nil {
+				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+			}
+			return reencryptCommand(s, force, clean, ui)
+		}
+
+		if cmd == "rotate" {
+			clean, slot, err := parseRotateArgs(args, ui)
+			if err != nil {
+				if errors.Is(err, flag.ErrHelp) {
+					return nil
+				}
+				return err
+			}
+			s, setupErr := setupEnv(opts)
+			if setupErr != nil {
+				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+			}
+			return rotateCommand(s, clean, slot, ui)
+		}
 	}
 
 	return fmt.Errorf("unknown command: %s", cmd)
@@ -404,4 +488,241 @@ func parseShowArgs(args []string, ui UI) (string, string, error) {
 	}
 
 	return label, fieldName, nil
+}
+
+func parseDeleteArgs(args []string, ui UI) (string, error) {
+	fs := flag.NewFlagSet("delete", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	fs.Usage = func() {
+		fmt.Fprintf(fs.Output(), "Usage: %s delete [label]\n", os.Args[0])
+		fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		fmt.Fprintf(fs.Output(), "  Delete an encrypted file.\n")
+		fmt.Fprintf(fs.Output(), "\nArguments:\n")
+		fmt.Fprintf(fs.Output(), "  label  The label of the file to delete\n")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			fs.SetOutput(ui.Out)
+			fs.Usage()
+			return "", err
+		}
+		fs.SetOutput(ui.Err)
+		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		fs.Usage()
+		return "", err
+	}
+
+	deleteArgs := fs.Args()
+	if len(deleteArgs) == 0 {
+		fs.SetOutput(ui.Err)
+		fs.Usage()
+		return "", errors.New("delete command needs one argument (label)")
+	}
+
+	return deleteArgs[0], nil
+}
+
+func parseKeyArgs(args []string, ui UI) error {
+	fs := flag.NewFlagSet("key", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	fs.Usage = func() {
+		fmt.Fprintf(fs.Output(), "Usage: %s key\n", os.Args[0])
+		fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		fmt.Fprintf(fs.Output(), "  Decrypt the age private key with the PIV key defined in the .privage.conf file.\n")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			fs.SetOutput(ui.Out)
+			fs.Usage()
+			return err
+		}
+		fs.SetOutput(ui.Err)
+		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		fs.Usage()
+		return err
+	}
+	return nil
+}
+
+func parseStatusArgs(args []string, ui UI) error {
+	fs := flag.NewFlagSet("status", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	fs.Usage = func() {
+		fmt.Fprintf(fs.Output(), "Usage: %s status\n", os.Args[0])
+		fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		fmt.Fprintf(fs.Output(), "  Provide information about the current configuration.\n")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			fs.SetOutput(ui.Out)
+			fs.Usage()
+			return err
+		}
+		fs.SetOutput(ui.Err)
+		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		fs.Usage()
+		return err
+	}
+	return nil
+}
+
+func parseListArgs(args []string, ui UI) (string, error) {
+	fs := flag.NewFlagSet("list", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	fs.Usage = func() {
+		fmt.Fprintf(fs.Output(), "Usage: %s list [filter]\n", os.Args[0])
+		fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		fmt.Fprintf(fs.Output(), "  List metadata of all or some encrypted files.\n")
+		fmt.Fprintf(fs.Output(), "\nArguments:\n")
+		fmt.Fprintf(fs.Output(), "  filter  Optional filter for category or label name\n")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			fs.SetOutput(ui.Out)
+			fs.Usage()
+			return "", err
+		}
+		fs.SetOutput(ui.Err)
+		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		fs.Usage()
+		return "", err
+	}
+
+	listArgs := fs.Args()
+	filter := ""
+	if len(listArgs) > 0 {
+		filter = listArgs[0]
+	}
+	return filter, nil
+}
+
+func parseClipboardArgs(args []string, ui UI) (string, error) {
+	fs := flag.NewFlagSet("clipboard", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	fs.Usage = func() {
+		fmt.Fprintf(fs.Output(), "Usage: %s clipboard [options] [label]\n", os.Args[0])
+		fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		fmt.Fprintf(fs.Output(), "  Copy the credential password to the clipboard.\n")
+		fmt.Fprintf(fs.Output(), "\nOptions:\n")
+		fs.PrintDefaults()
+		fmt.Fprintf(fs.Output(), "\nArguments:\n")
+		fmt.Fprintf(fs.Output(), "  label  The label of the credential to copy\n")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			fs.SetOutput(ui.Out)
+			fs.Usage()
+			return "", err
+		}
+		fs.SetOutput(ui.Err)
+		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		fs.Usage()
+		return "", err
+	}
+
+	clipArgs := fs.Args()
+	if len(clipArgs) == 0 {
+		fs.SetOutput(ui.Err)
+		fs.Usage()
+		return "", errors.New("clipboard command needs one argument (label)")
+	}
+	return clipArgs[0], nil
+}
+
+func parseDecryptArgs(args []string, ui UI) (string, error) {
+	fs := flag.NewFlagSet("decrypt", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	fs.Usage = func() {
+		fmt.Fprintf(fs.Output(), "Usage: %s decrypt [label]\n", os.Args[0])
+		fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		fmt.Fprintf(fs.Output(), "  Decrypt a file and write its content in a file named after the label\n")
+		fmt.Fprintf(fs.Output(), "\nArguments:\n")
+		fmt.Fprintf(fs.Output(), "  label  The label of the file to decrypt\n")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			fs.SetOutput(ui.Out)
+			fs.Usage()
+			return "", err
+		}
+		fs.SetOutput(ui.Err)
+		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		fs.Usage()
+		return "", err
+	}
+
+	decArgs := fs.Args()
+	if len(decArgs) == 0 {
+		fs.SetOutput(ui.Err)
+		fs.Usage()
+		return "", errors.New("decrypt command needs one argument (label)")
+	}
+	return decArgs[0], nil
+}
+
+func parseReencryptArgs(args []string, ui UI) (bool, bool, error) {
+	fs := flag.NewFlagSet("reencrypt", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	var force, clean bool
+	fs.BoolVar(&force, "force", false, "Force encryption of the files.")
+	fs.BoolVar(&force, "f", false, "alias for -force")
+	fs.BoolVar(&clean, "clean", false, "Force encryption the files and also delete/clean the decrypted files.")
+	fs.BoolVar(&clean, "c", false, "alias for -clean")
+	fs.Usage = func() {
+		fmt.Fprintf(fs.Output(), "Usage: %s reencrypt [options]\n", os.Args[0])
+		fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		fmt.Fprintf(fs.Output(), "  Reencrypt all decrypted files that are already encrypted. (default is dry-run)\n")
+		fmt.Fprintf(fs.Output(), "\nOptions:\n")
+		fs.PrintDefaults()
+	}
+
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			fs.SetOutput(ui.Out)
+			fs.Usage()
+			return false, false, err
+		}
+		fs.SetOutput(ui.Err)
+		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		fs.Usage()
+		return false, false, err
+	}
+	return force, clean, nil
+}
+
+func parseRotateArgs(args []string, ui UI) (bool, string, error) {
+	fs := flag.NewFlagSet("rotate", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	var clean bool
+	var slot string
+	fs.BoolVar(&clean, "clean", false, "Delete old Key's encrypted files. Rename new encrypted files and the new key")
+	fs.BoolVar(&clean, "c", false, "alias for -clean")
+	fs.StringVar(&slot, "piv-slot", "", "Use the yubikey slot to encrypt the age private key with the RSA Key")
+	fs.StringVar(&slot, "p", "", "alias for -piv-slot")
+	fs.Usage = func() {
+		fmt.Fprintf(fs.Output(), "Usage: %s rotate [options]\n", os.Args[0])
+		fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		fmt.Fprintf(fs.Output(), "  Create a new age key and reencrypt every file with the new key.\n")
+		fmt.Fprintf(fs.Output(), "\nOptions:\n")
+		fs.PrintDefaults()
+	}
+
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			fs.SetOutput(ui.Out)
+			fs.Usage()
+			return false, "", err
+		}
+		fs.SetOutput(ui.Err)
+		fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		fs.Usage()
+		return false, "", err
+	}
+	return clean, slot, nil
 }

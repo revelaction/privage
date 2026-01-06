@@ -1,9 +1,7 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"os"
 
 	"github.com/revelaction/privage/config"
 	"github.com/revelaction/privage/setup"
@@ -11,19 +9,7 @@ import (
 
 // statusCommand prints on the terminal a status of the privage command
 // configuration
-func statusCommand(s *setup.Setup, args []string, ui UI) error {
-	fs := flag.NewFlagSet("status", flag.ContinueOnError)
-	fs.SetOutput(ui.Err)
-	fs.Usage = func() {
-		fmt.Fprintf(ui.Err, "Usage: %s status\n", os.Args[0])
-		fmt.Fprintf(ui.Err, "\nDescription:\n")
-		fmt.Fprintf(ui.Err, "  Provide information about the current configuration.\n")
-	}
-
-	if err := fs.Parse(args); err != nil {
-		return err
-	}
-
+func statusCommand(s *setup.Setup, ui UI) error {
 	fmt.Fprintln(ui.Out)
 
 	if s.Id.Id != nil {

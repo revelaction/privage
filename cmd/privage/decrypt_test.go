@@ -42,7 +42,7 @@ func TestDecryptCommand(t *testing.T) {
 	var outBuf, errBuf bytes.Buffer
 	ui := UI{Out: &outBuf, Err: &errBuf}
 	
-	err := decryptCommand(s, []string{label}, ui)
+	err := decryptCommand(s, label, ui)
 
 	// 4. Assert
 	if err != nil {
@@ -71,7 +71,7 @@ func TestDecryptCommand_NotFound(t *testing.T) {
 	var outBuf, errBuf bytes.Buffer
 	ui := UI{Out: &outBuf, Err: &errBuf}
 
-	err := decryptCommand(s, []string{"missing"}, ui)
+	err := decryptCommand(s, "missing", ui)
 
 	if err == nil {
 		t.Fatal("expected error, got nil")

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 
@@ -11,26 +10,7 @@ import (
 )
 
 // reencryptCommand reencrypts modified files
-func reencryptCommand(s *setup.Setup, args []string, ui UI) error {
-	fs := flag.NewFlagSet("reencrypt", flag.ContinueOnError)
-	fs.SetOutput(ui.Err)
-	var isForce, isClean bool
-	fs.BoolVar(&isForce, "force", false, "Force encryption of the files.")
-	fs.BoolVar(&isForce, "f", false, "alias for -force")
-	fs.BoolVar(&isClean, "clean", false, "Force encryption the files and also delete/clean the decrypted files.")
-	fs.BoolVar(&isClean, "c", false, "alias for -clean")
-	fs.Usage = func() {
-		fmt.Fprintf(ui.Err, "Usage: %s reencrypt [options]\n", os.Args[0])
-		fmt.Fprintf(ui.Err, "\nDescription:\n")
-		fmt.Fprintf(ui.Err, "  Reencrypt all decrypted files that are already encrypted. (default is dry-run)\n")
-		fmt.Fprintf(ui.Err, "\nOptions:\n")
-		fs.PrintDefaults()
-	}
-
-	if err := fs.Parse(args); err != nil {
-		return err
-	}
-
+func reencryptCommand(s *setup.Setup, isForce, isClean bool, ui UI) error {
 	if s.Id.Id == nil {
 		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}

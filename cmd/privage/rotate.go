@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -24,27 +23,7 @@ const (
 
 // rotateCommand generates a new age key and reencrypts all present encrypted
 // fields with the new key.
-func rotateCommand(s *setup.Setup, args []string, ui UI) (err error) {
-	fs := flag.NewFlagSet("rotate", flag.ContinueOnError)
-	fs.SetOutput(ui.Err)
-	var isClean bool
-	var slot string
-	fs.BoolVar(&isClean, "clean", false, "Delete old Key's encrypted files. Rename new encrypted files and the new key")
-	fs.BoolVar(&isClean, "c", false, "alias for -clean")
-	fs.StringVar(&slot, "piv-slot", "", "Use the yubikey slot to encrypt the age private key with the RSA Key")
-	fs.StringVar(&slot, "p", "", "alias for -piv-slot")
-	fs.Usage = func() {
-		fmt.Fprintf(ui.Err, "Usage: %s rotate [options]\n", os.Args[0])
-		fmt.Fprintf(ui.Err, "\nDescription:\n")
-		fmt.Fprintf(ui.Err, "  Create a new age key and reencrypt every file with the new key.\n")
-		fmt.Fprintf(ui.Err, "\nOptions:\n")
-		fs.PrintDefaults()
-	}
-
-	if err = fs.Parse(args); err != nil {
-		return err
-	}
-
+func rotateCommand(s *setup.Setup, isClean bool, slot string, ui UI) (err error) {
 	return rotate(s, isClean, slot, ui)
 }
 

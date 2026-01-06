@@ -1,9 +1,7 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"os"
 	"strconv"
 
 	"github.com/revelaction/privage/fs"
@@ -12,19 +10,7 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-func keyCommand(s *setup.Setup, args []string, ui UI) (err error) {
-	flagSet := flag.NewFlagSet("key", flag.ContinueOnError)
-	flagSet.SetOutput(ui.Err)
-	flagSet.Usage = func() {
-		fmt.Fprintf(ui.Err, "Usage: %s key\n", os.Args[0])
-		fmt.Fprintf(ui.Err, "\nDescription:\n")
-		fmt.Fprintf(ui.Err, "  Decrypt the age private key with the PIV key defined in the .privage.conf file.\n")
-	}
-
-	if err = flagSet.Parse(args); err != nil {
-		return err
-	}
-
+func keyCommand(s *setup.Setup, ui UI) (err error) {
 	// piv functionality requires conf piv slot
 	if s.C == nil || len(s.C.IdentityPivSlot) == 0 {
 		return fmt.Errorf("found no piv slot in conf")

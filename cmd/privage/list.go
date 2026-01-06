@@ -1,9 +1,7 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"os"
 	"sort"
 	"strings"
 
@@ -12,28 +10,7 @@ import (
 )
 
 // listCommand list encripted files
-func listCommand(s *setup.Setup, args []string, ui UI) error {
-	fs := flag.NewFlagSet("list", flag.ContinueOnError)
-	fs.SetOutput(ui.Err)
-	fs.Usage = func() {
-		fmt.Fprintf(ui.Err, "Usage: %s list [filter]\n", os.Args[0])
-		fmt.Fprintf(ui.Err, "\nDescription:\n")
-		fmt.Fprintf(ui.Err, "  List metadata of all or some encrypted files.\n")
-		fmt.Fprintf(ui.Err, "\nArguments:\n")
-		fmt.Fprintf(ui.Err, "  filter  Optional filter for category or label name\n")
-	}
-
-	if err := fs.Parse(args); err != nil {
-		return err
-	}
-
-	args = fs.Args()
-
-	filter := "" // no filter
-	if len(args) != 0 {
-		filter = args[0]
-	}
-
+func listCommand(s *setup.Setup, filter string, ui UI) error {
 	headers := []*header.Header{}
 
 	if s.Id.Id == nil {
