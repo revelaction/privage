@@ -180,3 +180,152 @@ func TestParseRotateArgs(t *testing.T) {
 		})
 	}
 }
+
+func TestParseListArgs(t *testing.T) {
+	tests := []struct {
+		name       string
+		args       []string
+		wantFilter string
+		wantErr    bool
+	}{
+		{"Default", []string{}, "", false},
+		{"Filter", []string{"myfilter"}, "myfilter", false},
+		{"Help", []string{"--help"}, "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var outBuf, errBuf bytes.Buffer
+			ui := UI{Out: &outBuf, Err: &errBuf}
+			filter, err := parseListArgs(tt.args, ui)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseListArgs() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if filter != tt.wantFilter {
+				t.Errorf("got filter %q, want %q", filter, tt.wantFilter)
+			}
+		})
+	}
+}
+
+func TestParseDeleteArgs(t *testing.T) {
+	tests := []struct {
+		name      string
+		args      []string
+		wantLabel string
+		wantErr   bool
+	}{
+		{"Valid label", []string{"mylabel"}, "mylabel", false},
+		{"Missing label", []string{}, "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var outBuf, errBuf bytes.Buffer
+			ui := UI{Out: &outBuf, Err: &errBuf}
+			label, err := parseDeleteArgs(tt.args, ui)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseDeleteArgs() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if label != tt.wantLabel {
+				t.Errorf("got label %q, want %q", label, tt.wantLabel)
+			}
+		})
+	}
+}
+
+func TestParseKeyArgs(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    []string
+		wantErr bool
+	}{
+		{"No args", []string{}, false},
+		{"Help", []string{"--help"}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var outBuf, errBuf bytes.Buffer
+			ui := UI{Out: &outBuf, Err: &errBuf}
+			err := parseKeyArgs(tt.args, ui)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseKeyArgs() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestParseStatusArgs(t *testing.T) {
+	tests := []struct {
+		name    string
+		args    []string
+		wantErr bool
+	}{
+		{"No args", []string{}, false},
+		{"Help", []string{"--help"}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var outBuf, errBuf bytes.Buffer
+			ui := UI{Out: &outBuf, Err: &errBuf}
+			err := parseStatusArgs(tt.args, ui)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseStatusArgs() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestParseClipboardArgs(t *testing.T) {
+	tests := []struct {
+		name      string
+		args      []string
+		wantLabel string
+		wantErr   bool
+	}{
+		{"Valid label", []string{"mylabel"}, "mylabel", false},
+		{"Missing label", []string{}, "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var outBuf, errBuf bytes.Buffer
+			ui := UI{Out: &outBuf, Err: &errBuf}
+			label, err := parseClipboardArgs(tt.args, ui)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseClipboardArgs() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if label != tt.wantLabel {
+				t.Errorf("got label %q, want %q", label, tt.wantLabel)
+			}
+		})
+	}
+}
+
+func TestParseDecryptArgs(t *testing.T) {
+	tests := []struct {
+		name      string
+		args      []string
+		wantLabel string
+		wantErr   bool
+	}{
+		{"Valid label", []string{"mylabel"}, "mylabel", false},
+		{"Missing label", []string{}, "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var outBuf, errBuf bytes.Buffer
+			ui := UI{Out: &outBuf, Err: &errBuf}
+			label, err := parseDecryptArgs(tt.args, ui)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseDecryptArgs() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if label != tt.wantLabel {
+				t.Errorf("got label %q, want %q", label, tt.wantLabel)
+			}
+		})
+	}
+}
