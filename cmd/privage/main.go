@@ -219,6 +219,60 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 			return catCommand(s, label, ui)
 		}
 
+		if cmd == "add" {
+			fs := flag.NewFlagSet("add", flag.ContinueOnError)
+			fs.SetOutput(io.Discard)
+			fs.Usage = func() {
+				fmt.Fprintf(fs.Output(), "Usage: %s add [category] [label]\n", os.Args[0])
+				fmt.Fprintf(fs.Output(), "\nDescription:\n")
+				fmt.Fprintf(fs.Output(), "  Add a new encrypted file.\n")
+				fmt.Fprintf(fs.Output(), "\nArguments:\n")
+				fmt.Fprintf(fs.Output(), "  category  A category (e.g., 'credential' or any custom string)\n")
+				fmt.Fprintf(fs.Output(), "  label     A label for credentials, or an existing file path\n")
+			}
+
+			if parseErr := fs.Parse(args); parseErr != nil {
+				if errors.Is(parseErr, flag.ErrHelp) {
+					fs.SetOutput(ui.Out)
+					fs.Usage()
+					return nil
+				}
+				fs.SetOutput(ui.Err)
+				fmt.Fprintf(ui.Err, "Error: %v\n", parseErr)
+				fs.Usage()
+				return parseErr
+			}
+
+			addArgs := fs.Args()
+			if len(addArgs) != 2 {
+				fs.SetOutput(ui.Err)
+				fs.Usage()
+				return errors.New("add command needs two arguments: <category> <label>")
+			}
+
+			cat := addArgs[0]
+			if len(cat) > 32 { // using literal for now to avoid dependency on internal constants
+				return errors.New("first argument (category) length is greater than max allowed")
+			}
+
+			label := addArgs[1]
+			if len(label) > 128 { // using literal for now
+				return errors.New("second argument (label) length is greater than max allowed")
+			}
+
+			s, setupErr := setupEnv(opts)
+			if setupErr != nil {
+				return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+			}
+
+			// Check label exists
+			if labelExists(label, s.Id) {
+				return errors.New("second argument (label) already exist")
+			}
+
+			return addCommand(s, cat, label, ui)
+		}
+
 		// Legacy coordination for other commands (to be refactored next)
 		s, setupErr := setupEnv(opts)
 
@@ -228,8 +282,6 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 			cmdErr = keyCommand(s, args, ui)
 		case "status":
 			cmdErr = statusCommand(s, args, ui)
-		case "add":
-			cmdErr = addCommand(s, args, ui)
 		case "delete":
 			cmdErr = deleteCommand(s, args, ui)
 		case "list":

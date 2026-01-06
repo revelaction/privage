@@ -2,10 +2,7 @@ package main
 
 import (
 	"bytes"
-	"errors"
-	"flag"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/revelaction/privage/credential"
@@ -14,63 +11,9 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-// addCommand adds a new privage encrypted file
-//
-// the first argument is a category. A category can be anything. There is a
-// predefined category (credential) that generates credential files.
-// the second one (label) is:
-// - a label for credentials
-// - a existing file in the current directory
-func addCommand(s *setup.Setup, args []string, ui UI) error {
-	fs := flag.NewFlagSet("add", flag.ContinueOnError)
-	fs.SetOutput(io.Discard)
-	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "Usage: %s add [category] [label]\n", os.Args[0])
-		fmt.Fprintf(fs.Output(), "\nDescription:\n")
-		fmt.Fprintf(fs.Output(), "  Add a new encrypted file.\n")
-		fmt.Fprintf(fs.Output(), "\nArguments:\n")
-		fmt.Fprintf(fs.Output(), "  category  A category (e.g., 'credential' or any custom string)\n")
-		fmt.Fprintf(fs.Output(), "  label     A label for credentials, or an existing file path\n")
-	}
-
-	if parseErr := fs.Parse(args); parseErr != nil {
-		if errors.Is(parseErr, flag.ErrHelp) {
-			fs.SetOutput(ui.Out)
-			fs.Usage()
-			return nil
-		}
-		fs.SetOutput(ui.Err)
-		fmt.Fprintf(ui.Err, "Error: %v\n", parseErr)
-		fs.Usage()
-		return parseErr
-	}
-
-	args = fs.Args()
-
-	if len(args) != 2 {
-		fs.SetOutput(ui.Err)
-		fs.Usage()
-		return errors.New("add command needs two arguments: <category> <label>")
-	}
-
-	if s.Id.Id == nil {
-		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
-	}
-
-	cat := args[0]
-	if len(cat) > header.MaxLenghtCategory {
-		return errors.New("first argument (category) length is greater than max allowed")
-	}
-
-	label := args[1]
-	if len(label) > header.MaxLenghtLabel {
-		return errors.New("second argument (label) length is greater than max allowed")
-	}
-
-	// Check label exists
-	if labelExists(label, s.Id) {
-		return errors.New("second argument (label) already exist")
-	}
+// addCommand is a pure logic worker for adding encrypted files.
+// It assumes that category and label have been validated by the driver in main.go.
+func addCommand(s *setup.Setup, cat string, label string, ui UI) error {
 
 	h := &header.Header{Label: label}
 
@@ -81,13 +24,8 @@ func addCommand(s *setup.Setup, args []string, ui UI) error {
 			return err
 		}
 	default:
-		// if custom category, label must be a existing file in the current directory
-		if _, err := os.Stat(label); os.IsNotExist(err) {
-			return errors.New("second argument (label) must be a existing file in this directory")
-		}
-
 		h.Category = cat
-		if err := addCustomCategory(h, s); err != nil {
+		if err := addCustomCategory(h, s, ui); err != nil {
 			return err
 		}
 	}
@@ -96,8 +34,6 @@ func addCommand(s *setup.Setup, args []string, ui UI) error {
 }
 
 // addCredential creates a encrypted credential file in the repository directory.
-//
-// credential files are toml files
 func addCredential(h *header.Header, s *setup.Setup, ui UI) error {
 
 	cred, err := credential.New(s.C)
@@ -115,15 +51,18 @@ func addCredential(h *header.Header, s *setup.Setup, ui UI) error {
 		return err
 	}
 
+	// Data output goes to ui.Out (handled by showCommand)
+	// We pass a slice because showCommand has not been refactored yet.
 	if err := showCommand(s, []string{h.Label}, ui); err != nil {
 		return err
 	}
 
+	// Diagnostic/Instruction output goes to ui.Err
 	fmt.Fprintln(ui.Err, "You can edit the credentials file by running these commands:")
 	fmt.Fprintln(ui.Err)
 	fmt.Fprintf(ui.Err, "   privage decrypt %s\n", h.Label)
 	fmt.Fprintf(ui.Err, "   vim %s # or your favorite editor\n", h.Label)
-	fmt.Fprintln(ui.Err, "   privage reencrypt")
+	fmt.Fprintf(ui.Err, "   privage reencrypt\n")
 	fmt.Fprintln(ui.Err)
 
 	return nil
@@ -131,7 +70,7 @@ func addCredential(h *header.Header, s *setup.Setup, ui UI) error {
 
 // addCustomCategory creates an encrypted file of the contents of a file
 // present in the repository directory
-func addCustomCategory(h *header.Header, s *setup.Setup) (err error) {
+func addCustomCategory(h *header.Header, s *setup.Setup, ui UI) (err error) {
 
 	content, err := os.Open(h.Label)
 	if err != nil {
@@ -147,6 +86,8 @@ func addCustomCategory(h *header.Header, s *setup.Setup) (err error) {
 	if err != nil {
 		return err
 	}
+
+	fmt.Fprintf(ui.Err, "Added file '%s' to category '%s' ✔️\n", h.Label, h.Category)
 
 	return nil
 }
