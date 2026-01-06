@@ -13,8 +13,6 @@ import (
 	"github.com/revelaction/privage/setup"
 )
 
-var global setup.Options
-
 var (
 	BuildCommit    string
 	BuildTag       string
@@ -29,6 +27,7 @@ type UI struct {
 }
 
 func main() {
+	var global setup.Options
 
 	flag.Usage = func() {
 		output := flag.CommandLine.Output()
