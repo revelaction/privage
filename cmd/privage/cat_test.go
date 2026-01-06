@@ -14,72 +14,90 @@ import (
 )
 
 func TestCatCommand(t *testing.T) {
-	// 1. Setup real environment in TempDir
-	tmpDir := t.TempDir()
-	
-	// Create identity
-	idPath := filepath.Join(tmpDir, "key.age")
-	f, err := os.Create(idPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := identity.GenerateAge(f); err != nil {
-		t.Fatal(err)
-	}
-	f.Close()
+	// setupTestEnv creates a standard environment with a valid age key
+	setupTestEnv := func(t *testing.T) (*setup.Setup, string) {
+		tmpDir := t.TempDir()
+		idPath := filepath.Join(tmpDir, "key.age")
+		f, err := os.Create(idPath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := identity.GenerateAge(f); err != nil {
+			t.Fatal(err)
+		}
+		f.Close()
 
-	// Load identity wrapper
-	f, _ = os.Open(idPath)
-	ident := identity.LoadAge(f, idPath)
-	f.Close()
+		f, _ = os.Open(idPath)
+		ident := identity.LoadAge(f, idPath)
+		f.Close()
 
-	s := &setup.Setup{
-		Id:         ident,
-		Repository: tmpDir,
+		return &setup.Setup{Id: ident, Repository: tmpDir}, tmpDir
 	}
 
-	// 2. Encrypt a real file
-	label := "secret.txt"
-	content := "real secret content"
-	h := &header.Header{Label: label}
-	if err := encryptSave(h, "", strings.NewReader(content), s); err != nil {
-		t.Fatalf("failed to encrypt: %v", err)
+	tests := []struct {
+		name           string
+		setupData      func(t *testing.T, s *setup.Setup)
+		label          string
+		expectedOutput string
+		expectedErr    string
+	}{
+		{
+			name: "Success",
+			setupData: func(t *testing.T, s *setup.Setup) {
+				label := "secret.txt"
+				content := "real secret content"
+				h := &header.Header{Label: label}
+				if err := encryptSave(h, "", strings.NewReader(content), s); err != nil {
+					t.Fatalf("failed to encrypt: %v", err)
+				}
+			},
+			label:          "secret.txt",
+			expectedOutput: "real secret content",
+		},
+		{
+			name: "Label Not Found",
+			setupData: func(t *testing.T, s *setup.Setup) {
+				// No files encrypted
+			},
+			label:       "missing.txt",
+			expectedErr: "file \"missing.txt\" not found in repository",
+		},
+		{
+			name: "Identity Error",
+			setupData: func(t *testing.T, s *setup.Setup) {
+				s.Id.Id = nil
+				s.Id.Err = errors.New("key failed")
+			},
+			label:       "any.txt",
+			expectedErr: "found no privage key file",
+		},
 	}
 
-	// 3. Run Command
-	var outBuf, errBuf bytes.Buffer
-	ui := UI{Out: &outBuf, Err: &errBuf}
-	
-	err = catCommand(s, label, ui)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, _ := setupTestEnv(t)
+			tt.setupData(t, s)
 
-	// 4. Assert
-	if err != nil {
-		t.Fatalf("catCommand failed: %v", err)
-	}
+			var outBuf, errBuf bytes.Buffer
+			ui := UI{Out: &outBuf, Err: &errBuf}
 
-	if outBuf.String() != content {
-		t.Errorf("expected output %q, got %q", content, outBuf.String())
-	}
-}
+			err := catCommand(s, tt.label, ui)
 
-func TestCatCommand_NotFound(t *testing.T) {
-	tmpDir := t.TempDir()
-	s := &setup.Setup{
-		Id:         identity.Identity{Path: "key.age"}, // Path is set but Id is nil
-		Repository: tmpDir,
-	}
-	// Note: In production s.Id.Err would be set if Id is nil.
-	s.Id.Err = errors.New("key not found")
-
-	var outBuf, errBuf bytes.Buffer
-	ui := UI{Out: &outBuf, Err: &errBuf}
-
-	err := catCommand(s, "missing", ui)
-	if err == nil {
-		t.Fatal("expected error, got nil")
-	}
-
-	if !strings.Contains(err.Error(), "found no privage key file") {
-		t.Errorf("expected key error, got %v", err)
+			if tt.expectedErr != "" {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				if !strings.Contains(err.Error(), tt.expectedErr) {
+					t.Errorf("expected error containing %q, got %q", tt.expectedErr, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Fatalf("unexpected error: %v", err)
+				}
+				if outBuf.String() != tt.expectedOutput {
+					t.Errorf("expected output %q, got %q", tt.expectedOutput, outBuf.String())
+				}
+			}
+		})
 	}
 }

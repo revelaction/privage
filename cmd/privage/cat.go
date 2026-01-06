@@ -43,5 +43,5 @@ func catCommand(s *setup.Setup, label string, ui UI) (err error) {
 		}
 	}
 
-	return nil
+	return fmt.Errorf("file %q not found in repository", label)
 }
