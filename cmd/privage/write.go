@@ -32,7 +32,12 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 		return fmt.Errorf("failed to create age encryptor for header: %w", err)
 	}
 
-	_, err = ageWr.Write(h.Pad())
+	headerBytes, err := h.Pad()
+	if err != nil {
+		return fmt.Errorf("failed to pad header: %w", err)
+	}
+
+	_, err = ageWr.Write(headerBytes)
 	if err != nil {
 		return fmt.Errorf("failed to write header: %w", err)
 	}
@@ -48,7 +53,11 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 	}
 
 	// Step 3: Create the output file
-	filePath := s.Repository + "/" + fileName(h, s.Id, suffix)
+	fname, err := fileName(h, s.Id, suffix)
+	if err != nil {
+		return fmt.Errorf("failed to generate filename: %w", err)
+	}
+	filePath := s.Repository + "/" + fname
 
 	f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
@@ -131,8 +140,12 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 
 // fileName generates the file name of a privage encrypted file.
 // The hash is a function of the header and the age public key.
-func fileName(h *header.Header, identity id.Identity, suffix string) string {
-	hash := append(h.Pad(), identity.Id.Recipient().String()...)
+func fileName(h *header.Header, identity id.Identity, suffix string) (string, error) {
+	padded, err := h.Pad()
+	if err != nil {
+		return "", fmt.Errorf("failed to pad header: %w", err)
+	}
+	hash := append(padded, identity.Id.Recipient().String()...)
 	hashStr := fmt.Sprintf("%x", sha256.Sum256(hash))
-	return hashStr + suffix + AgeExtension
+	return hashStr + suffix + AgeExtension, nil
 }

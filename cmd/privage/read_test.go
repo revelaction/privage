@@ -22,7 +22,11 @@ func createTestAgeFile(t *testing.T, dir, filename string, h *header.Header, ide
 	if err != nil {
 		t.Fatalf("failed to create age encryptor: %v", err)
 	}
-	if _, err := ageWr.Write(h.Pad()); err != nil {
+	headerBytes, err := h.Pad()
+	if err != nil {
+		t.Fatalf("failed to pad header: %v", err)
+	}
+	if _, err := ageWr.Write(headerBytes); err != nil {
 		t.Fatalf("failed to write padded header to age: %v", err)
 	}
 	if err := ageWr.Close(); err != nil {

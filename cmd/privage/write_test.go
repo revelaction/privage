@@ -98,7 +98,10 @@ func TestEncryptSave_HappyPath(t *testing.T) {
 	}
 
 	// Verify: file was created with expected name
-	expectedFileName := fileName(h, s.Id, ".age")
+	expectedFileName, err := fileName(h, s.Id, ".age")
+	if err != nil {
+		t.Fatalf("failed to generate filename: %v", err)
+	}
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	fileInfo, err := os.Stat(filePath)
@@ -161,7 +164,10 @@ func TestEncryptSave_EmptyContent(t *testing.T) {
 	}
 
 	// Verify file exists
-	expectedFileName := fileName(h, s.Id, ".age")
+	expectedFileName, err := fileName(h, s.Id, ".age")
+	if err != nil {
+		t.Fatalf("failed to generate filename: %v", err)
+	}
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	if _, err := os.Stat(filePath); err != nil {
@@ -200,7 +206,10 @@ func TestEncryptSave_LargeContent(t *testing.T) {
 		t.Fatalf("encryptSave with large content failed: %v", err)
 	}
 
-	expectedFileName := fileName(h, s.Id, ".age")
+	expectedFileName, err := fileName(h, s.Id, ".age")
+	if err != nil {
+		t.Fatalf("failed to generate filename: %v", err)
+	}
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	fileInfo, err := os.Stat(filePath)
@@ -361,7 +370,10 @@ func TestEncryptSave_ContentReadFailure(t *testing.T) {
 	}
 
 	// Verify partial file exists (we don't delete on error)
-	expectedFileName := fileName(h, s.Id, ".age")
+	expectedFileName, err := fileName(h, s.Id, ".age")
+	if err != nil {
+		t.Fatalf("failed to generate filename: %v", err)
+	}
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	if _, err := os.Stat(filePath); err != nil {
@@ -399,7 +411,10 @@ func TestEncryptSave_FileOverwrite(t *testing.T) {
 		t.Fatalf("first encryptSave failed: %v", err)
 	}
 
-	expectedFileName := fileName(h, s.Id, ".age")
+	expectedFileName, err := fileName(h, s.Id, ".age")
+	if err != nil {
+		t.Fatalf("failed to generate filename: %v", err)
+	}
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	firstFileInfo, err := os.Stat(filePath)
@@ -469,7 +484,10 @@ func TestFileName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			name := fileName(tt.header, testID, tt.suffix)
+			name, err := fileName(tt.header, testID, tt.suffix)
+			if err != nil {
+				t.Fatalf("fileName failed: %v", err)
+			}
 
 			// Verify filename format: [64 hex chars][suffix]
 			if !strings.HasSuffix(name, tt.suffix+AgeExtension) {
@@ -483,7 +501,10 @@ func TestFileName(t *testing.T) {
 			}
 
 			// Verify deterministic: same input = same output
-			name2 := fileName(tt.header, testID, tt.suffix)
+			name2, err := fileName(tt.header, testID, tt.suffix)
+			if err != nil {
+				t.Fatalf("fileName (2nd call) failed: %v", err)
+			}
 			if name != name2 {
 				t.Errorf("fileName not deterministic: %s != %s", name, name2)
 			}
@@ -506,9 +527,18 @@ func TestFileName_Uniqueness(t *testing.T) {
 	h2 := &header.Header{Label: "password2", Category: "work"}
 	h3 := &header.Header{Label: "password1", Category: "personal"}
 
-	name1 := fileName(h1, testID, ".age")
-	name2 := fileName(h2, testID, ".age")
-	name3 := fileName(h3, testID, ".age")
+	name1, err := fileName(h1, testID, ".age")
+	if err != nil {
+		t.Fatalf("fileName(h1) failed: %v", err)
+	}
+	name2, err := fileName(h2, testID, ".age")
+	if err != nil {
+		t.Fatalf("fileName(h2) failed: %v", err)
+	}
+	name3, err := fileName(h3, testID, ".age")
+	if err != nil {
+		t.Fatalf("fileName(h3) failed: %v", err)
+	}
 
 	// All should be different
 	if name1 == name2 {
@@ -536,8 +566,14 @@ func TestFileName_IncludesIdentity(t *testing.T) {
 
 	h := &header.Header{Label: "password", Category: "work"}
 
-	name1 := fileName(h, id.Identity{Id: identity1}, ".age")
-	name2 := fileName(h, id.Identity{Id: identity2}, ".age")
+	name1, err := fileName(h, id.Identity{Id: identity1}, ".age")
+	if err != nil {
+		t.Fatalf("fileName(identity1) failed: %v", err)
+	}
+	name2, err := fileName(h, id.Identity{Id: identity2}, ".age")
+	if err != nil {
+		t.Fatalf("fileName(identity2) failed: %v", err)
+	}
 
 	if name1 == name2 {
 		t.Error("same header with different identities produced same filename")
@@ -578,7 +614,10 @@ func TestEncryptSave_DifferentHeaders(t *testing.T) {
 			t.Fatalf("encryptSave for header %d failed: %v", i, err)
 		}
 
-		filename := fileName(h, s.Id, ".age")
+		filename, err := fileName(h, s.Id, ".age")
+		if err != nil {
+			t.Fatalf("fileName failed for header %d: %v", i, err)
+		}
 		filenames = append(filenames, filename)
 	}
 
@@ -770,7 +809,10 @@ func TestEncryptSave_HeaderFileWriteError(t *testing.T) {
 	}
 
 	// Pre-create the file and make it read-only
-	expectedFileName := fileName(h, s.Id, ".age")
+	expectedFileName, err := fileName(h, s.Id, ".age")
+	if err != nil {
+		t.Fatalf("failed to generate filename: %v", err)
+	}
 	filePath := filepath.Join(tempDir, expectedFileName)
 	
 	f, err := os.Create(filePath)
