@@ -41,8 +41,13 @@ func main() {
 		if errors.Is(err, flag.ErrHelp) {
 			os.Exit(0)
 		}
-		fatal(err)
+		FprintErr(ui.Err, err)
+		os.Exit(1)
 	}
+}
+
+func FprintErr(w io.Writer, err error) {
+	_, _ = fmt.Fprintf(w, "privage: %v\n", err)
 }
 
 func parseMainArgs(args []string, ui UI) (string, []string, setup.Options, error) {
@@ -68,7 +73,7 @@ func parseMainArgs(args []string, ui UI) (string, []string, setup.Options, error
 			return "", nil, opts, err
 		}
 		fs.SetOutput(ui.Err)
-		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		FprintErr(ui.Err, err)
 		fs.Usage()
 		return "", nil, opts, err
 	}
@@ -280,11 +285,6 @@ func runCommand(cmd string, args []string, opts setup.Options, ui UI) error {
 	}
 
 	return fmt.Errorf("unknown command: %s", cmd)
-}
-
-func fatal(err error) {
-	_, _ = fmt.Fprintf(os.Stderr, "privage: %v\n", err)
-	os.Exit(1)
 }
 
 func setupUsage(fs *flag.FlagSet) {

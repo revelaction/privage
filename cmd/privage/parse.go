@@ -26,7 +26,7 @@ func parseCatArgs(args []string, ui UI) (string, error) {
 			return "", err
 		}
 		fs.SetOutput(ui.Err)
-		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		FprintErr(ui.Err, err)
 		fs.Usage()
 		return "", err
 	}
@@ -62,7 +62,7 @@ func parseInitArgs(args []string, ui UI) (string, error) {
 			return "", parseErr
 		}
 		fs.SetOutput(ui.Err)
-		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", parseErr)
+		FprintErr(ui.Err, parseErr)
 		fs.Usage()
 		return "", parseErr
 	}
@@ -89,7 +89,7 @@ func parseAddArgs(args []string, ui UI) (string, string, error) {
 			return "", "", parseErr
 		}
 		fs.SetOutput(ui.Err)
-		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", parseErr)
+		FprintErr(ui.Err, parseErr)
 		fs.Usage()
 		return "", "", parseErr
 	}
@@ -173,7 +173,7 @@ func parseDeleteArgs(args []string, ui UI) (string, error) {
 			return "", err
 		}
 		fs.SetOutput(ui.Err)
-		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		FprintErr(ui.Err, err)
 		fs.Usage()
 		return "", err
 	}
@@ -252,7 +252,7 @@ func parseListArgs(args []string, ui UI) (string, error) {
 			return "", err
 		}
 		fs.SetOutput(ui.Err)
-		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		FprintErr(ui.Err, err)
 		fs.Usage()
 		return "", err
 	}
@@ -285,7 +285,7 @@ func parseClipboardArgs(args []string, ui UI) (string, error) {
 			return "", err
 		}
 		fs.SetOutput(ui.Err)
-		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		FprintErr(ui.Err, err)
 		fs.Usage()
 		return "", err
 	}
@@ -317,7 +317,7 @@ func parseDecryptArgs(args []string, ui UI) (string, error) {
 			return "", err
 		}
 		fs.SetOutput(ui.Err)
-		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		FprintErr(ui.Err, err)
 		fs.Usage()
 		return "", err
 	}
@@ -354,7 +354,7 @@ func parseReencryptArgs(args []string, ui UI) (bool, bool, error) {
 			return false, false, err
 		}
 		fs.SetOutput(ui.Err)
-		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		FprintErr(ui.Err, err)
 		fs.Usage()
 		return false, false, err
 	}
@@ -385,7 +385,7 @@ func parseRotateArgs(args []string, ui UI) (bool, string, error) {
 			return false, "", err
 		}
 		fs.SetOutput(ui.Err)
-		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		FprintErr(ui.Err, err)
 		fs.Usage()
 		return false, "", err
 	}

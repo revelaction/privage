@@ -68,37 +68,39 @@ func TestParseMainArgs(t *testing.T) {
 
 func TestRunCommand_Utility(t *testing.T) {
 	// Utility commands don't need a real setup environment
+	var out, err bytes.Buffer
+	ui := UI{Out: &out, Err: &err}
 	
 	t.Run("version", func(t *testing.T) {
-		err := runCommand("version", []string{}, setup.Options{})
+		err := runCommand("version", []string{}, setup.Options{}, ui)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 	})
 
 	t.Run("bash", func(t *testing.T) {
-		err := runCommand("bash", []string{}, setup.Options{})
+		err := runCommand("bash", []string{}, setup.Options{}, ui)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 	})
 
 	t.Run("help", func(t *testing.T) {
-		err := runCommand("help", []string{}, setup.Options{})
+		err := runCommand("help", []string{}, setup.Options{}, ui)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 	})
 
 	t.Run("help sub-command", func(t *testing.T) {
-		err := runCommand("help", []string{"cat"}, setup.Options{})
+		err := runCommand("help", []string{"cat"}, setup.Options{}, ui)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
 	})
 
 	t.Run("unknown command", func(t *testing.T) {
-		err := runCommand("not-a-command", []string{}, setup.Options{})
+		err := runCommand("not-a-command", []string{}, setup.Options{}, ui)
 		if err == nil {
 			t.Fatal("expected error for unknown command")
 		}
