@@ -53,7 +53,7 @@ func TestDecryptCommand(t *testing.T) {
 	// 3. Run Command
 	var outBuf, errBuf bytes.Buffer
 	ui := UI{Out: &outBuf, Err: &errBuf}
-	
+
 	err = decryptCommand(s, label, ui)
 
 	// 4. Assert

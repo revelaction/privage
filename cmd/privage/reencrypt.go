@@ -53,27 +53,27 @@ func reencrypt(s *setup.Setup, isForce, isClean bool, ui UI) error {
 	for _, h := range toEncrypt {
 
 		f, err := os.Open(s.Repository + "/" + h.Label)
-			if err != nil {
-				return err
-			}
+		if err != nil {
+			return err
+		}
 
 		// if is credential category -> validate as toml
 		if header.CategoryCredential == h.Category {
 			err := credential.ValidateFile(s.Repository + "/" + h.Label)
-				if err != nil {
-					return fmt.Errorf("invalid credential file %s. toml error: %w", h.Label, err)
-				}
+			if err != nil {
+				return fmt.Errorf("invalid credential file %s. toml error: %w", h.Label, err)
+			}
 		}
 
 		//encrypt and save the file
 		err = encryptSave(h, "", f, s)
-			if err != nil {
-				return err
-			}
+		if err != nil {
+			return err
+		}
 
-			if err := f.Close(); err != nil {
-				return err
-			}
+		if err := f.Close(); err != nil {
+			return err
+		}
 	}
 
 	_, _ = fmt.Fprintln(ui.Err, "The following files were reencrypted:")
@@ -120,9 +120,9 @@ func clean(s *setup.Setup, isForce bool, ui UI) error {
 
 		// contents as []byte
 		err := os.Remove(s.Repository + "/" + h.Label)
-			if err != nil {
-				return err
-			}
+		if err != nil {
+			return err
+		}
 	}
 
 	_, _ = fmt.Fprintln(ui.Err, "The following files were deleted:")

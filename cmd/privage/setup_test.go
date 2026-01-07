@@ -223,10 +223,10 @@ func TestSetupEnv_Validation(t *testing.T) {
 func TestSetupEnv_PIV_ParsingOnly(t *testing.T) {
 	// We only verify the behavior when a slot is provided.
 	// If a Yubikey happens to be present, this test might actually succeed or fail differently.
-	
+
 	tmpDir := t.TempDir()
 	t.Setenv("HOME", tmpDir)
-	
+
 	idPath := filepath.Join(tmpDir, "key.txt")
 	f, _ := os.Create(idPath)
 	_ = identity.GenerateAge(f)
@@ -242,14 +242,14 @@ func TestSetupEnv_PIV_ParsingOnly(t *testing.T) {
 	if err == nil {
 		// It might succeed if a Yubikey is actually plugged in and slot 9c is valid.
 		// But in most CI/dev envs it will fail.
-		return 
+		return
 	}
-	
+
 	// If it fails, it should be due to Yubikey missing or disabled build tag
 	errMsg := err.Error()
-	if !strings.Contains(errMsg, "card") && 
-	   !strings.Contains(errMsg, "yubikey") && 
-	   !strings.Contains(errMsg, "device") {
+	if !strings.Contains(errMsg, "card") &&
+		!strings.Contains(errMsg, "yubikey") &&
+		!strings.Contains(errMsg, "device") {
 		t.Errorf("expected yubikey related error, got: %v", err)
 	}
 }

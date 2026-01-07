@@ -1,9 +1,7 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"os"
 )
 
 const complete = `#! /bin/bash
@@ -35,17 +33,6 @@ complete -F _privage_autocomplete privage
 `
 
 func bashCommand(ui UI) error {
-	fs := flag.NewFlagSet("bash", flag.ContinueOnError)
-	fs.SetOutput(ui.Err)
-	fs.Usage = func() {
-		_, _ = fmt.Fprintf(ui.Err, "Usage: %s bash\n", os.Args[0])
-		_, _ = fmt.Fprintf(ui.Err, "\nDescription:\n")
-		_, _ = fmt.Fprintf(ui.Err, "  Dump bash complete script.\n")
-	}
-
-	// Note: args not passed to bashCommand anymore, but it had no args anyway
-	// If it needs them in the future we can adjust main.go
-
 	_, err := fmt.Fprint(ui.Out, complete)
 	return err
 }

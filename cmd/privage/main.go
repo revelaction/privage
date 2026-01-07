@@ -96,6 +96,12 @@ func runCommand(cmd string, args []string, opts setup.Options, ui UI) error {
 	case "version":
 		return versionCommand(ui)
 	case "bash":
+		if err := parseBashArgs(args, ui); err != nil {
+			if errors.Is(err, flag.ErrHelp) {
+				return nil
+			}
+			return err
+		}
 		return bashCommand(ui)
 	case "complete":
 		return completeCommand(opts, args, ui) // needs raw opts for sub-dispatch

@@ -70,7 +70,7 @@ func TestRunCommand_Utility(t *testing.T) {
 	// Utility commands don't need a real setup environment
 	var out, err bytes.Buffer
 	ui := UI{Out: &out, Err: &err}
-	
+
 	t.Run("version", func(t *testing.T) {
 		err := runCommand("version", []string{}, setup.Options{}, ui)
 		if err != nil {
@@ -114,7 +114,7 @@ func TestSetupUsage(t *testing.T) {
 	fs := flag.NewFlagSet("test", flag.ContinueOnError)
 	var buf bytes.Buffer
 	fs.SetOutput(&buf)
-	
+
 	setupUsage(fs)
 	fs.Usage()
 

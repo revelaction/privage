@@ -88,3 +88,9 @@ func fileName(h *header.Header, identity id.Identity, suffix string) string {
 	hashStr := fmt.Sprintf("%x", sha256.Sum256(hash))
 	return hashStr + suffix + AgeExtension
 }
+
+func fatal(err error) {
+	// TODO: Remove fatal() and refactor encryptSave to return errors properly.
+	_, _ = fmt.Fprintf(os.Stderr, "privage: %v\n", err)
+	os.Exit(1)
+}

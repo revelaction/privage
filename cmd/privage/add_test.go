@@ -13,8 +13,8 @@ func setupAddTest(t *testing.T) (*TestHelper, func()) {
 	t.Helper()
 	th := NewTestHelper(t)
 
-	// When key and repository are resolved (as in NewTestHelper), 
-	// C can be an empty struct. This prevents nil pointer dereference 
+	// When key and repository are resolved (as in NewTestHelper),
+	// C can be an empty struct. This prevents nil pointer dereference
 	// in credential.New while avoiding redundant path definitions.
 	th.C = &config.Config{}
 

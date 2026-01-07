@@ -77,17 +77,17 @@ func TestShow_Errors(t *testing.T) {
 			setupData: func(th *TestHelper) {
 				th.AddEncryptedFile("mycred", "credential", "login=\"u\"")
 			},
-			label:     "mycred",
-			field:     "bad_field",
-			wantErr:   ErrFieldNotFound,
+			label:   "mycred",
+			field:   "bad_field",
+			wantErr: ErrFieldNotFound,
 		},
 		{
 			name: "Wrong Category",
 			setupData: func(th *TestHelper) {
 				th.AddEncryptedFile("notes", "work", "stuff")
 			},
-			label:     "notes",
-			wantErr:   ErrNotCredential,
+			label:   "notes",
+			wantErr: ErrNotCredential,
 		},
 	}
 

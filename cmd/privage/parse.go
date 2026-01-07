@@ -392,3 +392,25 @@ func parseRotateArgs(args []string, ui UI) (bool, string, error) {
 	return clean, slot, nil
 }
 
+func parseBashArgs(args []string, ui UI) error {
+	fs := flag.NewFlagSet("bash", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	fs.Usage = func() {
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s bash\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  Dump bash complete script.\n")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			fs.SetOutput(ui.Out)
+			fs.Usage()
+			return err
+		}
+		fs.SetOutput(ui.Err)
+		FprintErr(ui.Err, err)
+		fs.Usage()
+		return err
+	}
+	return nil
+}
