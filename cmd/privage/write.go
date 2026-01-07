@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"filippo.io/age"
 
@@ -57,7 +58,7 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 	if err != nil {
 		return fmt.Errorf("failed to generate filename: %w", err)
 	}
-	filePath := s.Repository + "/" + fname
+	filePath := filepath.Join(s.Repository, fname)
 
 	f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
