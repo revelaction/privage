@@ -15,7 +15,10 @@ func TestHeader_PadAndParse(t *testing.T) {
 	}
 
 	// 2. Action
-	padded := original.Pad()
+	padded, err := original.Pad()
+	if err != nil {
+		t.Fatalf("unexpected error during Pad(): %v", err)
+	}
 	parsed := Parse(padded)
 
 	// 3. Assert
