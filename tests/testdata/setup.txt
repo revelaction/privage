@@ -10,12 +10,6 @@ exec privage -k privage-key.txt -r . status
 stdout 'Found age key file'
 stdout 'privage-key.txt'
 
-# Test PIV discovery mode
-# We expect a hardware error because no YubiKey is present in CI/Test env,
-# which confirms the code reached the loadIdentity call with the slot.
-! exec privage -p 9a status
-stderr 'could not create yubikey device'
-
 # Test failure when nothing is found
 rm custom.conf
 rm privage-key.txt

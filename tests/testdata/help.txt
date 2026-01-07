@@ -33,7 +33,7 @@ stderr 'cat command needs one argument'
 # Subcommand Usage triggered by invalid flag (Stderr)
 ! exec privage cat -invalid
 stderr 'Usage: .*privage cat'
-stderr 'Error: flag provided but not defined: -invalid'
+stderr 'privage: flag provided but not defined: -invalid'
 ! stdout 'Usage: .*privage cat'
 
 # Subcommand 'add' refactored as well
