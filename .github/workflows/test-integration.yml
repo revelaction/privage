@@ -24,4 +24,5 @@ jobs:
       - name: Run Integration Tests
         env:
           CGO_ENABLED: 1
-        run: go test -v ./tests/...
+        # We explicitly include the 'integration' tag to run tests excluded from the default suite
+        run: go test -v -tags=integration ./tests/...

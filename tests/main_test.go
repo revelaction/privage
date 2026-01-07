@@ -1,3 +1,7 @@
+//go:build integration
+// This tag ensures these tests are excluded from the default 'go test ./...' run
+// and are only executed when '-tags=integration' is explicitly provided.
+
 package tests
 
 import (

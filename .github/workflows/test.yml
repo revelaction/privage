@@ -29,6 +29,7 @@ jobs:
       - name: Test with coverage
         env:
           CGO_ENABLED: 1
+        # go test ./... automatically excludes files with build tags (like our integration tests)
         run: go test -v -cover ./... -coverprofile=coverage.out -coverpkg=./...
 
       - name: Show coverage by package
@@ -36,7 +37,7 @@ jobs:
           CGO_ENABLED: 1
         run: |
           echo "=== Package-level Coverage ==="
-          go list ./... | grep -v "^$(go list -m)$" | while read pkg; do
+          go list ./... | grep -v "^$(go list -m)$" | grep -v "/tests$" | while read pkg; do
             coverage=$(go test -cover "$pkg" 2>/dev/null | grep "coverage:" | awk '{print $5}')
             dir=$(echo "$pkg" | sed "s|^$(go list -m)||" | sed 's|^/||')
             
