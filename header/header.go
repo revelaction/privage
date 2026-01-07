@@ -15,6 +15,7 @@ const (
 	maxLenghtVersion = 5
 	version          = "v1"
 	ageHeaderPrefix  = "age-encryption.org/"
+	paddingChar      = ' '
 )
 
 // IsCredential returns true if the header belongs to the credential category.
@@ -58,7 +59,7 @@ func (h *Header) Pad() ([]byte, error) {
     if padLen < 0 {
         return nil, fmt.Errorf("version constant exceeds maximum length of %d bytes", maxLenghtVersion)
     }
-    buf.Write(bytes.Repeat([]byte{' '}, padLen))
+    buf.Write(bytes.Repeat([]byte{paddingChar}, padLen))
     buf.Write(vBytes)
 
     // 2. Category
@@ -67,7 +68,7 @@ func (h *Header) Pad() ([]byte, error) {
     if padLen < 0 {
         return nil, fmt.Errorf("category exceeds maximum length of %d bytes", MaxLenghtCategory)
     }
-    buf.Write(bytes.Repeat([]byte{' '}, padLen))
+    buf.Write(bytes.Repeat([]byte{paddingChar}, padLen))
     buf.Write(catBytes)
 
     // 3. Label
@@ -76,7 +77,7 @@ func (h *Header) Pad() ([]byte, error) {
     if padLen < 0 {
         return nil, fmt.Errorf("label exceeds maximum length of %d bytes", MaxLenghtLabel)
     }
-    buf.Write(bytes.Repeat([]byte{' '}, padLen))
+    buf.Write(bytes.Repeat([]byte{paddingChar}, padLen))
     buf.Write(labelBytes)
 
     // 4. Safety Check
@@ -92,22 +93,22 @@ func Parse(h []byte) *Header {
     res := &Header{}
 
     // Slice strictly by byte offsets
-    res.Version = string(bytes.TrimLeft(h[:maxLenghtVersion], " "))
+    res.Version = string(bytes.TrimLeft(h[:maxLenghtVersion], string(paddingChar)))
 
     offset := maxLenghtVersion
-    res.Category = string(bytes.TrimLeft(h[offset:offset+MaxLenghtCategory], " "))
+    res.Category = string(bytes.TrimLeft(h[offset:offset+MaxLenghtCategory], string(paddingChar)))
 
     offset += MaxLenghtCategory
-    res.Label = string(bytes.TrimLeft(h[offset:], " "))
+    res.Label = string(bytes.TrimLeft(h[offset:], string(paddingChar)))
 
     return res
 }
 
-// PadEncrypted fills the encrypted (with age) header up to BlockSize with 0x20
+// PadEncrypted fills the encrypted (with age) header up to BlockSize with paddingChar
 // characters
 func PadEncrypted(header []byte) ([]byte, error) {
 	diff := BlockSize - len(header)
-	pad := bytes.Repeat([]byte{0x20}, diff)
+	pad := bytes.Repeat([]byte{paddingChar}, diff)
 	padded := append(pad, header...)
 	return padded, nil
 }
