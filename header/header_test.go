@@ -102,3 +102,144 @@ func TestHeader_String(t *testing.T) {
 		t.Errorf("expected file icon, got %s", fileHeader.String())
 	}
 }
+
+func TestHeader_PadAndParse_UTF8(t *testing.T) {
+	tests := []struct {
+		name     string
+		category string
+		label    string
+		wantErr  bool
+	}{
+		{
+			name:     "Standard ASCII",
+			category: "personal",
+			label:    "bank_account",
+			wantErr:  false,
+		},
+		{
+			name:     "Emoji in Label",
+			category: "social",
+			label:    "Instagram 📸", // 11 chars, 13 bytes (📸 is 4 bytes)
+			wantErr:  false,
+		},
+		{
+			name:     "Emoji in Category",
+			category: "work💼", // 5 chars, 8 bytes (💼 is 4 bytes)
+			label:    "report",
+			wantErr:  false,
+		},
+		{
+			name:     "Multi-byte Script (Chinese)",
+			category: "finance",
+			label:    "银行账户", // 4 chars, 12 bytes (3 bytes each)
+			wantErr:  false,
+		},
+		{
+			name:     "Mixed Script and Emojis",
+			category: "旅行✈️", // Mixed
+			label:    "Passport 🛂 & Ticket 🎫",
+			wantErr:  false,
+		},
+		{
+			name:     "Exact Limit Category (ASCII)",
+			category: strings.Repeat("a", MaxLenghtCategory),
+			label:    "limit_test",
+			wantErr:  false,
+		},
+		{
+			name:     "Exact Limit Label (ASCII)",
+			category: "test",
+			label:    strings.Repeat("b", MaxLenghtLabel),
+			wantErr:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := &Header{
+				Version:  "v1",
+				Category: tt.category,
+				Label:    tt.label,
+			}
+
+			// 1. Pad
+			padded, err := h.Pad()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Header.Pad() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if tt.wantErr {
+				return
+			}
+
+			// 2. Verify Total Length
+			// BlockSize checking is internal to Pad, but we know the sum of fields
+			// version(5) + category(40) + label(200) = 245 bytes
+			expectedLen := maxLenghtVersion + MaxLenghtCategory + MaxLenghtLabel
+			if len(padded) != expectedLen {
+				t.Errorf("Padded length = %d, want %d", len(padded), expectedLen)
+			}
+
+			// 3. Parse back
+			parsed := Parse(padded)
+
+			// 4. Verify Content matches original
+			if parsed.Category != tt.category {
+				t.Errorf("Category mismatch. Got %q, want %q", parsed.Category, tt.category)
+			}
+			if parsed.Label != tt.label {
+				t.Errorf("Label mismatch. Got %q, want %q", parsed.Label, tt.label)
+			}
+		})
+	}
+}
+
+func TestHeader_Pad_UTF8_Overflow(t *testing.T) {
+	// Calculate how many 3-byte characters fit in Category (Max 40 bytes)
+	// 13 chars * 3 bytes = 39 bytes (Fits)
+	// 14 chars * 3 bytes = 42 bytes (Overflows)
+	// Note: 14 chars would fit if we counted characters (length 14 < 40), 
+	// but fails correctly because we count bytes.
+	
+	overflowCategory := strings.Repeat("字", 14) // 14 Chinese chars
+	
+h := &Header{
+		Version:  "v1",
+		Category: overflowCategory,
+		Label:    "test",
+	}
+
+	_, err := h.Pad()
+	if err == nil {
+		t.Error("Header.Pad() expected error for UTF-8 byte overflow, got nil")
+	} else {
+		// Optional: check error message
+		if !strings.Contains(err.Error(), "category exceeds maximum length") {
+			t.Errorf("Unexpected error message: %v", err)
+		}
+	}
+}
+
+func TestHeader_Pad_Emoji_Boundary(t *testing.T) {
+	// Test a label that is exactly the max length in bytes using emojis
+	// MaxLenghtLabel = 200
+	// 🔒 is 4 bytes. 
+	// 50 * 4 = 200 bytes.
+	
+	exactLabel := strings.Repeat("🔒", 50)
+	
+h := &Header{
+		Version:  "v1",
+		Category: "boundary",
+		Label:    exactLabel,
+	}
+	padded, err := h.Pad()
+	if err != nil {
+		t.Fatalf("Header.Pad() failed on exact boundary: %v", err)
+	}
+	
+	parsed := Parse(padded)
+	if parsed.Label != exactLabel {
+		t.Errorf("Label mismatch on boundary.\nGot length: %d\nWant length: %d", len(parsed.Label), len(exactLabel))
+	}
+}
