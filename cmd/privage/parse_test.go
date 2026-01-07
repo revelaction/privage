@@ -536,95 +536,52 @@ func TestParseDecryptArgs(t *testing.T) {
 	})
 
 	t.Run("MissingLabel", func(t *testing.T) {
-
 		var outBuf, errBuf bytes.Buffer
-
 		ui := UI{Out: &outBuf, Err: &errBuf}
-
 		_, err := parseDecryptArgs([]string{}, ui)
-
 		if err == nil {
-
 			t.Fatal("expected error for missing label")
-
 		}
-
 		if errBuf.Len() == 0 {
-
 			t.Error("expected error message in Err buffer")
-
 		}
-
 	})
-
 }
 
 func TestParseBashArgs(t *testing.T) {
-
 	t.Run("Success", func(t *testing.T) {
-
 		var outBuf, errBuf bytes.Buffer
-
 		ui := UI{Out: &outBuf, Err: &errBuf}
-
 		err := parseBashArgs([]string{}, ui)
-
 		if err != nil {
-
 			t.Fatalf("unexpected error: %v", err)
-
 		}
-
 	})
 
 	t.Run("Help", func(t *testing.T) {
-
 		var outBuf, errBuf bytes.Buffer
-
 		ui := UI{Out: &outBuf, Err: &errBuf}
-
 		err := parseBashArgs([]string{"--help"}, ui)
-
 		if !errors.Is(err, flag.ErrHelp) {
-
 			t.Fatalf("expected flag.ErrHelp, got %v", err)
-
 		}
-
 		if outBuf.Len() == 0 {
-
 			t.Error("expected usage output in Out buffer")
-
 		}
-
 		if !strings.Contains(outBuf.String(), "Usage:") {
-
 			t.Errorf("expected usage output to contain 'Usage:', got %q", outBuf.String())
-
 		}
-
 	})
 
 	t.Run("UnknownFlag", func(t *testing.T) {
-
 		var outBuf, errBuf bytes.Buffer
-
 		ui := UI{Out: &outBuf, Err: &errBuf}
-
 		err := parseBashArgs([]string{"--foo"}, ui)
-
 		if err == nil {
-
 			t.Fatal("expected error for unknown flag")
-
 		}
-
 		if errBuf.Len() == 0 {
-
 			t.Error("expected error message in Err buffer")
-
 		}
-
 	})
-
 }
