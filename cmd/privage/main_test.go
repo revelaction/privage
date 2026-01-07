@@ -2,12 +2,69 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"flag"
 	"strings"
 	"testing"
 
 	"github.com/revelaction/privage/setup"
 )
+
+func TestParseMainArgs(t *testing.T) {
+	t.Run("Valid flags and command", func(t *testing.T) {
+		var out, err bytes.Buffer
+		ui := UI{Out: &out, Err: &err}
+		cmd, args, opts, parseErr := parseMainArgs([]string{"-c", "my.conf", "list", "filter"}, ui)
+		if parseErr != nil {
+			t.Fatalf("unexpected error: %v", parseErr)
+		}
+		if cmd != "list" {
+			t.Errorf("got cmd %q, want list", cmd)
+		}
+		if len(args) != 1 || args[0] != "filter" {
+			t.Errorf("got args %v, want [filter]", args)
+		}
+		if opts.ConfigFile != "my.conf" {
+			t.Errorf("got config %q, want my.conf", opts.ConfigFile)
+		}
+	})
+
+	t.Run("Help", func(t *testing.T) {
+		var out, err bytes.Buffer
+		ui := UI{Out: &out, Err: &err}
+		_, _, _, parseErr := parseMainArgs([]string{"--help"}, ui)
+		if !errors.Is(parseErr, flag.ErrHelp) {
+			t.Fatalf("expected ErrHelp, got %v", parseErr)
+		}
+		if out.Len() == 0 {
+			t.Error("expected help output in Out")
+		}
+	})
+
+	t.Run("No command", func(t *testing.T) {
+		var out, err bytes.Buffer
+		ui := UI{Out: &out, Err: &err}
+		_, _, _, parseErr := parseMainArgs([]string{"-k", "key", "-r", "repo"}, ui)
+		if parseErr == nil {
+			t.Fatal("expected error for missing command")
+		}
+		if err.Len() == 0 {
+			t.Error("expected usage in Err")
+		}
+	})
+
+	t.Run("Unknown flag", func(t *testing.T) {
+		var out, err bytes.Buffer
+		ui := UI{Out: &out, Err: &err}
+		_, _, _, parseErr := parseMainArgs([]string{"--foo"}, ui)
+		if parseErr == nil {
+			t.Fatal("expected error for unknown flag")
+		}
+		if err.Len() == 0 {
+			t.Error("expected error message in Err")
+		}
+	})
+}
 
 func TestRunCommand_Utility(t *testing.T) {
 	// Utility commands don't need a real setup environment
@@ -52,12 +109,12 @@ func TestRunCommand_Utility(t *testing.T) {
 }
 
 func TestSetupUsage(t *testing.T) {
-	// Verify that setupUsage correctly configures the global flag.Usage
+	fs := flag.NewFlagSet("test", flag.ContinueOnError)
 	var buf bytes.Buffer
-	flag.CommandLine.SetOutput(&buf)
+	fs.SetOutput(&buf)
 	
-	setupUsage()
-	flag.Usage()
+	setupUsage(fs)
+	fs.Usage()
 
 	output := buf.String()
 	expectedContents := []string{

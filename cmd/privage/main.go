@@ -26,23 +26,18 @@ type UI struct {
 }
 
 func main() {
-	setupUsage()
+	ui := UI{Out: os.Stdout, Err: os.Stderr}
 
-	// Global -h/--help should go to Stdout
-	flag.CommandLine.SetOutput(os.Stdout)
-
-	cmd, args, global, err := parseMainArgs()
+	cmd, args, global, err := parseMainArgs(os.Args[1:], ui)
 	if err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			os.Exit(0)
 		}
-		// If no command was provided, show usage and exit with 1
-		flag.CommandLine.SetOutput(os.Stderr)
-		flag.Usage()
+		// Error message already printed by parseMainArgs to ui.Err
 		os.Exit(1)
 	}
 
-	if err := runCommand(cmd, args, global); err != nil {
+	if err := runCommand(cmd, args, global, ui); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			os.Exit(0)
 		}
@@ -50,31 +45,46 @@ func main() {
 	}
 }
 
-func parseMainArgs() (string, []string, setup.Options, error) {
+func parseMainArgs(args []string, ui UI) (string, []string, setup.Options, error) {
+	fs := flag.NewFlagSet("privage", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	setupUsage(fs)
+
 	var opts setup.Options
 
-	flag.StringVar(&opts.ConfigFile, "conf", "", "Use file as privage configuration file")
-	flag.StringVar(&opts.ConfigFile, "c", "", "alias for -conf")
-	flag.StringVar(&opts.KeyFile, "key", "", "Use file path for private key")
-	flag.StringVar(&opts.KeyFile, "k", "", "alias for -key")
-	flag.StringVar(&opts.PivSlot, "piv-slot", "", "The PIV slot for decryption of the age key")
-	flag.StringVar(&opts.PivSlot, "p", "", "alias for -piv-slot")
-	flag.StringVar(&opts.RepoPath, "repository", "", "Use file path as path for the repository")
-	flag.StringVar(&opts.RepoPath, "r", "", "alias for -repository")
+	fs.StringVar(&opts.ConfigFile, "conf", "", "Use file as privage configuration file")
+	fs.StringVar(&opts.ConfigFile, "c", "", "alias for -conf")
+	fs.StringVar(&opts.KeyFile, "key", "", "Use file path for private key")
+	fs.StringVar(&opts.KeyFile, "k", "", "alias for -key")
+	fs.StringVar(&opts.PivSlot, "piv-slot", "", "The PIV slot for decryption of the age key")
+	fs.StringVar(&opts.PivSlot, "p", "", "alias for -piv-slot")
+	fs.StringVar(&opts.RepoPath, "repository", "", "Use file path as path for the repository")
+	fs.StringVar(&opts.RepoPath, "r", "", "alias for -repository")
 
-	flag.Parse()
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			fs.SetOutput(ui.Out)
+			fs.Usage()
+			return "", nil, opts, err
+		}
+		fs.SetOutput(ui.Err)
+		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
+		fs.Usage()
+		return "", nil, opts, err
+	}
 
-	if flag.NArg() == 0 {
+	if fs.NArg() == 0 {
+		fs.SetOutput(ui.Err)
+		fs.Usage()
 		return "", nil, opts, errors.New("no command provided")
 	}
 
-	cmd := flag.Arg(0)
-	args := flag.Args()[1:]
-	return cmd, args, opts, nil
+	cmd := fs.Arg(0)
+	cmdArgs := fs.Args()[1:]
+	return cmd, cmdArgs, opts, nil
 }
 
-func runCommand(cmd string, args []string, opts setup.Options) error {
-	ui := UI{Out: os.Stdout, Err: os.Stderr}
+func runCommand(cmd string, args []string, opts setup.Options, ui UI) error {
 
 	switch cmd {
 	// 1. Utility commands (No setup needed)
@@ -86,10 +96,13 @@ func runCommand(cmd string, args []string, opts setup.Options) error {
 		return completeCommand(opts, args, ui) // needs raw opts for sub-dispatch
 	case "help":
 		if len(args) > 0 {
-			return runCommand(args[0], []string{"--help"}, opts)
+			return runCommand(args[0], []string{"--help"}, opts, ui)
 		}
-		flag.CommandLine.SetOutput(ui.Out)
-		flag.Usage()
+		// For general help, we show the main usage to ui.Out
+		fs := flag.NewFlagSet("privage", flag.ContinueOnError)
+		fs.SetOutput(ui.Out)
+		setupUsage(fs)
+		fs.Usage()
 		return nil
 
 	// 2. Bootstrap commands (Needs raw Options, not Setup)
@@ -274,10 +287,9 @@ func fatal(err error) {
 	os.Exit(1)
 }
 
-
-func setupUsage() {
-	flag.Usage = func() {
-		output := flag.CommandLine.Output()
+func setupUsage(fs *flag.FlagSet) {
+	fs.Usage = func() {
+		output := fs.Output()
 		_, _ = fmt.Fprintf(output, "Usage: %s [global options] command [command options] [arguments...]\n", os.Args[0])
 		_, _ = fmt.Fprintf(output, "\nCommands:\n")
 		_, _ = fmt.Fprintf(output, "  init       Add a .gitignore, age/yubikey key file to the current directory. Add a config file in the home directory.\n")
