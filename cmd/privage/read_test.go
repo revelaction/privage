@@ -192,14 +192,14 @@ func TestHeaderGenerator(t *testing.T) {
 		
 		aw, err := age.Encrypt(f, identity.Recipient())
 		if err != nil {
-			f.Close()
+			_ = f.Close()
 			t.Fatalf("failed to create age writer: %v", err)
 		}
 		if _, err := aw.Write([]byte("some content")); err != nil {
 			t.Errorf("failed to write content: %v", err)
 		}
-		aw.Close()
-		f.Close()
+		_ = aw.Close()
+		_ = f.Close()
 
 		gen := headerGenerator(tmpDir, privageId)
 		h := <-gen
@@ -227,7 +227,7 @@ func TestHeaderGenerator(t *testing.T) {
 		
 		aw, err := age.Encrypt(f, identity.Recipient())
 		if err != nil {
-			f.Close()
+			_ = f.Close()
 			t.Fatalf("failed to create age writer: %v", err)
 		}
 		// Write > 512 bytes
@@ -235,8 +235,8 @@ func TestHeaderGenerator(t *testing.T) {
 		if _, err := aw.Write(largeData); err != nil {
 			t.Errorf("failed to write content: %v", err)
 		}
-		aw.Close()
-		f.Close()
+		_ = aw.Close()
+		_ = f.Close()
 
 		gen := headerGenerator(tmpDir, privageId)
 		h := <-gen

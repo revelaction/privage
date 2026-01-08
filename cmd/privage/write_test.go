@@ -261,7 +261,7 @@ func TestEncryptSave_ReadOnlyRepository(t *testing.T) {
 	if err := os.Chmod(tempDir, 0444); err != nil {
 		t.Fatalf("failed to make directory read-only: %v", err)
 	}
-	defer os.Chmod(tempDir, 0755) // Restore permissions for cleanup
+	defer func() { _ = os.Chmod(tempDir, 0755) }() // Restore permissions for cleanup
 
 	identity, err := age.GenerateX25519Identity()
 	if err != nil {
@@ -566,12 +566,10 @@ func TestEncryptSave_DifferentHeaders(t *testing.T) {
 		{Label: "gmail", Category: "work"},
 	}
 
-	content := strings.NewReader("test content")
-
 	var filenames []string
 	for i, h := range headers {
 		// Reset reader for each iteration
-		content = strings.NewReader("test content")
+		content := strings.NewReader("test content")
 
 		err := encryptSave(h, "", content, s)
 		if err != nil {
@@ -606,9 +604,6 @@ func TestEncryptSave_DifferentHeaders(t *testing.T) {
 
 // malformedHeader is a header implementation that causes Pad() to fail
 // by returning data that can't be encrypted properly.
-type malformedHeader struct {
-	header.Header
-}
 
 // If your header.Header has methods that can fail, you might need to test those
 // However, if Pad() always succeeds on valid header structs, this path is hard to test.
@@ -777,13 +772,13 @@ func TestEncryptSave_HeaderFileWriteError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create test file: %v", err)
 	}
-	f.Close()
+	_ = f.Close()
 
 	// Make file read-only
 	if err := os.Chmod(filePath, 0444); err != nil {
 		t.Fatalf("failed to make file read-only: %v", err)
 	}
-	defer os.Chmod(filePath, 0644) // Restore for cleanup
+	defer func() { _ = os.Chmod(filePath, 0644) }() // Restore for cleanup
 
 	content := strings.NewReader("test content")
 
