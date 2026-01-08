@@ -36,18 +36,18 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 
 	headerBytes, err := h.Pad()
 	if err != nil {
-		// Attempt to close, and join any closing error with the write error
+		// Join the error from Close (if any) with the padding error
 		if closeErr := ageWr.Close(); closeErr != nil {
-			err = errors.Join(err, closeErr)
+			err = errors.Join(err, fmt.Errorf("failed to close header encryptor: %w", closeErr))
 		}
 		return fmt.Errorf("failed to pad header: %w", err)
 	}
 
 	_, err = ageWr.Write(headerBytes)
 	if err != nil {
-		// Attempt to close, and join any closing error with the write error
+		// Join the error from Close (if any) with the write error
 		if closeErr := ageWr.Close(); closeErr != nil {
-			err = errors.Join(err, closeErr)
+			err = errors.Join(err, fmt.Errorf("failed to close header encryptor: %w", closeErr))
 		}
 		return fmt.Errorf("failed to write header: %w", err)
 	}
@@ -82,15 +82,14 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 	// If Rename success, it sees no error and does nothing. This is correct because the temp file is already gone.
 	defer func() {
 		if err != nil {
-			// Attempt removal, join any removal error with the existing error
-			if removeErr := os.Remove(tmpPath); removeErr != nil {
-				err = errors.Join(err, fmt.Errorf("failed to cleanup temp file: %w", removeErr))
+			if remErr := os.Remove(tmpPath); remErr != nil {
+				err = errors.Join(err, fmt.Errorf("failed to remove temp file: %w", remErr))
 			}
 		}
 	}()
 
 	// DEFER 2 (executes THIRD): Atomic rename if successful
-	// Fix: Moved here (after Remove) so it executes BEFORE Remove.
+	// Only runs if no errors yet.
 	// This ensures that if os.Rename fails, the 'err' is captured, and Defer 1 cleans up.
 	defer func() {
 		if err == nil {
@@ -101,10 +100,11 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 	}()
 
 	// DEFER 3 (executes SECOND): Close file
-	// Must execute before Rename (Defer 2).
+	// If an error already exists, we keep it AND add the close error.
+	// If err is nil, Join(nil, cerr) sets err to cerr.
 	defer func() {
-		if cerr := f.Close(); cerr != nil && err == nil {
-			err = fmt.Errorf("failed to close file: %w", cerr)
+		if cerr := f.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("failed to close file: %w", cerr))
 		}
 	}()
 
@@ -119,16 +119,17 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 	var bufFile *bufio.Writer
 
 	// DEFER 4 (executes FIRST): Close age writer and flush buffer
+	// Using Join to capture flush/close errors without losing main errors.
 	defer func() {
 		if ageContentWr != nil {
-			if cerr := ageContentWr.Close(); cerr != nil && err == nil {
-				err = fmt.Errorf("failed to close content encryptor: %w", cerr)
+			if cerr := ageContentWr.Close(); cerr != nil {
+				err = errors.Join(err, fmt.Errorf("failed to close content encryptor: %w", cerr))
 			}
 		}
 
 		if bufFile != nil {
-			if ferr := bufFile.Flush(); ferr != nil && err == nil {
-				err = fmt.Errorf("failed to flush buffered writer: %w", ferr)
+			if ferr := bufFile.Flush(); ferr != nil {
+				err = errors.Join(err, fmt.Errorf("failed to flush buffered writer: %w", ferr))
 			}
 		}
 	}()
@@ -141,9 +142,8 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 		return fmt.Errorf("failed to create age encryptor for content: %w", err)
 	}
 
-	// Step 7: Stream content through the encryption stack
+	// Step 7: Stream content
 	bufContent := bufio.NewReader(content)
-
 	if _, err := io.Copy(ageContentWr, bufContent); err != nil {
 		return fmt.Errorf("failed to copy content: %w", err)
 	}
