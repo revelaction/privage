@@ -98,7 +98,10 @@ func TestEncryptSave_HappyPath(t *testing.T) {
 	}
 
 	// Verify: file was created with expected name
-	expectedFileName := fileName(h, s.Id, "")
+	expectedFileName, err := fileName(h, s.Id, "")
+	if err != nil {
+		t.Fatalf("fileName failed: %v", err)
+	}
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	fileInfo, err := os.Stat(filePath)
@@ -161,7 +164,10 @@ func TestEncryptSave_EmptyContent(t *testing.T) {
 	}
 
 	// Verify file exists
-	expectedFileName := fileName(h, s.Id, "")
+	expectedFileName, err := fileName(h, s.Id, "")
+	if err != nil {
+		t.Fatalf("fileName failed: %v", err)
+	}
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	if _, err := os.Stat(filePath); err != nil {
@@ -200,7 +206,10 @@ func TestEncryptSave_LargeContent(t *testing.T) {
 		t.Fatalf("encryptSave with large content failed: %v", err)
 	}
 
-	expectedFileName := fileName(h, s.Id, "")
+	expectedFileName, err := fileName(h, s.Id, "")
+	if err != nil {
+		t.Fatalf("fileName failed: %v", err)
+	}
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	fileInfo, err := os.Stat(filePath)
@@ -365,7 +374,10 @@ func TestEncryptSave_ContentReadFailure(t *testing.T) {
 	}
 
 	// Verify partial file exists (we don't delete on error)
-	expectedFileName := fileName(h, s.Id, "")
+	expectedFileName, err := fileName(h, s.Id, "")
+	if err != nil {
+		t.Fatalf("fileName failed: %v", err)
+	}
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	if _, err := os.Stat(filePath); err != nil {
@@ -403,7 +415,10 @@ func TestEncryptSave_FileOverwrite(t *testing.T) {
 		t.Fatalf("first encryptSave failed: %v", err)
 	}
 
-	expectedFileName := fileName(h, s.Id, "")
+	expectedFileName, err := fileName(h, s.Id, "")
+	if err != nil {
+		t.Fatalf("fileName failed: %v", err)
+	}
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	firstFileInfo, err := os.Stat(filePath)
@@ -516,9 +531,18 @@ func TestFileName_Uniqueness(t *testing.T) {
 	h2 := &header.Header{Label: "password2", Category: "work"}
 	h3 := &header.Header{Label: "password1", Category: "personal"}
 
-	name1 := fileName(h1, testID, "")
-	name2 := fileName(h2, testID, "")
-	name3 := fileName(h3, testID, "")
+	name1, err := fileName(h1, testID, "")
+	if err != nil {
+		t.Fatalf("fileName 1 failed: %v", err)
+	}
+	name2, err := fileName(h2, testID, "")
+	if err != nil {
+		t.Fatalf("fileName 2 failed: %v", err)
+	}
+	name3, err := fileName(h3, testID, "")
+	if err != nil {
+		t.Fatalf("fileName 3 failed: %v", err)
+	}
 
 	// All should be different
 	if name1 == name2 {
@@ -546,8 +570,14 @@ func TestFileName_IncludesIdentity(t *testing.T) {
 
 	h := &header.Header{Label: "password", Category: "work"}
 
-	name1 := fileName(h, id.Identity{Id: identity1}, "")
-	name2 := fileName(h, id.Identity{Id: identity2}, "")
+	name1, err := fileName(h, id.Identity{Id: identity1}, "")
+	if err != nil {
+		t.Fatalf("fileName 1 failed: %v", err)
+	}
+	name2, err := fileName(h, id.Identity{Id: identity2}, "")
+	if err != nil {
+		t.Fatalf("fileName 2 failed: %v", err)
+	}
 
 	if name1 == name2 {
 		t.Error("same header with different identities produced same filename")
@@ -587,7 +617,10 @@ func TestEncryptSave_DifferentHeaders(t *testing.T) {
 			t.Fatalf("encryptSave for header %d failed: %v", i, err)
 		}
 
-		filename := fileName(h, s.Id, "")
+		filename, err := fileName(h, s.Id, "")
+		if err != nil {
+			t.Fatalf("fileName failed: %v", err)
+		}
 		filenames = append(filenames, filename)
 	}
 
@@ -771,7 +804,10 @@ func TestEncryptSave_HeaderFileWriteError(t *testing.T) {
 	}
 
 	// Pre-create the file and make it read-only
-	expectedFileName := fileName(h, s.Id, "")
+	expectedFileName, err := fileName(h, s.Id, "")
+	if err != nil {
+		t.Fatalf("fileName failed: %v", err)
+	}
 	filePath := filepath.Join(tempDir, expectedFileName)
 	
 	f, err := os.Create(filePath)
