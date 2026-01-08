@@ -302,7 +302,10 @@ func cleanRotate(s *setup.Setup, idRotate id.Identity, slot string, ui UI) error
 			return h.Err
 		}
 
-		stardardPath := strings.TrimSuffix(h.Path, suffix+AgeExtension) + AgeExtension
+		// The file currently has a path like:  .../hash.rotate.privage
+		// We want to remove the .rotate suffix.
+		// Since fileName() now uses PrivageExtension, we construct the standard name with it.
+		stardardPath := strings.TrimSuffix(h.Path, suffix+PrivageExtension) + PrivageExtension
 		err := os.Rename(h.Path, stardardPath)
 		if err != nil {
 			return err
@@ -311,7 +314,7 @@ func cleanRotate(s *setup.Setup, idRotate id.Identity, slot string, ui UI) error
 		numRenamed++
 	}
 
-	_, _ = fmt.Fprintf(ui.Err, "Renamed %d rotated files to %s extension\n", numRenamed, AgeExtension)
+	_, _ = fmt.Fprintf(ui.Err, "Renamed %d rotated files to %s extension\n", numRenamed, PrivageExtension)
 	_, _ = fmt.Fprintln(ui.Err)
 
 	// 3) rename old key to back

@@ -92,13 +92,13 @@ func TestEncryptSave_HappyPath(t *testing.T) {
 	content := strings.NewReader("secret password content")
 
 	// Execute: encrypt and save
-	err = encryptSave(h, ".age", content, s)
+	err = encryptSave(h, "", content, s)
 	if err != nil {
 		t.Fatalf("encryptSave failed: %v", err)
 	}
 
 	// Verify: file was created with expected name
-	expectedFileName := fileName(h, s.Id, ".age")
+	expectedFileName := fileName(h, s.Id, "")
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	fileInfo, err := os.Stat(filePath)
@@ -155,13 +155,13 @@ func TestEncryptSave_EmptyContent(t *testing.T) {
 	// Empty content
 	content := strings.NewReader("")
 
-	err = encryptSave(h, ".age", content, s)
+	err = encryptSave(h, "", content, s)
 	if err != nil {
 		t.Fatalf("encryptSave with empty content failed: %v", err)
 	}
 
 	// Verify file exists
-	expectedFileName := fileName(h, s.Id, ".age")
+	expectedFileName := fileName(h, s.Id, "")
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	if _, err := os.Stat(filePath); err != nil {
@@ -195,12 +195,12 @@ func TestEncryptSave_LargeContent(t *testing.T) {
 	largeContent := bytes.Repeat([]byte("x"), 1024*1024)
 	content := bytes.NewReader(largeContent)
 
-	err = encryptSave(h, ".age", content, s)
+	err = encryptSave(h, "", content, s)
 	if err != nil {
 		t.Fatalf("encryptSave with large content failed: %v", err)
 	}
 
-	expectedFileName := fileName(h, s.Id, ".age")
+	expectedFileName := fileName(h, s.Id, "")
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	fileInfo, err := os.Stat(filePath)
@@ -238,7 +238,7 @@ func TestEncryptSave_InvalidRepository(t *testing.T) {
 
 	content := strings.NewReader("test content")
 
-	err = encryptSave(h, ".age", content, s)
+	err = encryptSave(h, "", content, s)
 	if err == nil {
 		t.Fatal("expected error with invalid repository, got nil")
 	}
@@ -282,7 +282,7 @@ func TestEncryptSave_ReadOnlyRepository(t *testing.T) {
 
 	content := strings.NewReader("test content")
 
-	err = encryptSave(h, ".age", content, s)
+	err = encryptSave(h, "", content, s)
 	if err == nil {
 		t.Fatal("expected error with read-only repository, got nil")
 	}
@@ -350,7 +350,7 @@ func TestEncryptSave_ContentReadFailure(t *testing.T) {
 		failAfter: 100,
 	}
 
-	err = encryptSave(h, ".age", content, s)
+	err = encryptSave(h, "", content, s)
 	if err == nil {
 		t.Fatal("expected error when content reading fails, got nil")
 	}
@@ -361,7 +361,7 @@ func TestEncryptSave_ContentReadFailure(t *testing.T) {
 	}
 
 	// Verify partial file exists (we don't delete on error)
-	expectedFileName := fileName(h, s.Id, ".age")
+	expectedFileName := fileName(h, s.Id, "")
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	if _, err := os.Stat(filePath); err != nil {
@@ -394,12 +394,12 @@ func TestEncryptSave_FileOverwrite(t *testing.T) {
 
 	// First write
 	content1 := strings.NewReader("first content")
-	err = encryptSave(h, ".age", content1, s)
+	err = encryptSave(h, "", content1, s)
 	if err != nil {
 		t.Fatalf("first encryptSave failed: %v", err)
 	}
 
-	expectedFileName := fileName(h, s.Id, ".age")
+	expectedFileName := fileName(h, s.Id, "")
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	firstFileInfo, err := os.Stat(filePath)
@@ -409,7 +409,7 @@ func TestEncryptSave_FileOverwrite(t *testing.T) {
 
 	// Second write with different content (same header = same filename)
 	content2 := strings.NewReader("second content that is much longer")
-	err = encryptSave(h, ".age", content2, s)
+	err = encryptSave(h, "", content2, s)
 	if err != nil {
 		t.Fatalf("second encryptSave failed: %v", err)
 	}
@@ -447,7 +447,7 @@ func TestFileName(t *testing.T) {
 				Label:    "password",
 				Category: "work",
 			},
-			suffix: ".age",
+			suffix: "",
 		},
 		{
 			name: "empty category",
@@ -455,7 +455,7 @@ func TestFileName(t *testing.T) {
 				Label:    "password",
 				Category: "",
 			},
-			suffix: ".age",
+			suffix: "",
 		},
 		{
 			name: "different suffix",
@@ -472,12 +472,12 @@ func TestFileName(t *testing.T) {
 			name := fileName(tt.header, testID, tt.suffix)
 
 			// Verify filename format: [64 hex chars][suffix]
-			if !strings.HasSuffix(name, tt.suffix+AgeExtension) {
+			if !strings.HasSuffix(name, tt.suffix+PrivageExtension) {
 				t.Errorf("filename doesn't have expected suffix: %s", name)
 			}
 
 			// Verify it's a valid hex string before suffix
-			withoutSuffix := strings.TrimSuffix(name, tt.suffix+AgeExtension)
+			withoutSuffix := strings.TrimSuffix(name, tt.suffix+PrivageExtension)
 			if len(withoutSuffix) != 64 {
 				t.Errorf("hash part length = %d, want 64", len(withoutSuffix))
 			}
@@ -506,9 +506,9 @@ func TestFileName_Uniqueness(t *testing.T) {
 	h2 := &header.Header{Label: "password2", Category: "work"}
 	h3 := &header.Header{Label: "password1", Category: "personal"}
 
-	name1 := fileName(h1, testID, ".age")
-	name2 := fileName(h2, testID, ".age")
-	name3 := fileName(h3, testID, ".age")
+	name1 := fileName(h1, testID, "")
+	name2 := fileName(h2, testID, "")
+	name3 := fileName(h3, testID, "")
 
 	// All should be different
 	if name1 == name2 {
@@ -536,8 +536,8 @@ func TestFileName_IncludesIdentity(t *testing.T) {
 
 	h := &header.Header{Label: "password", Category: "work"}
 
-	name1 := fileName(h, id.Identity{Id: identity1}, ".age")
-	name2 := fileName(h, id.Identity{Id: identity2}, ".age")
+	name1 := fileName(h, id.Identity{Id: identity1}, "")
+	name2 := fileName(h, id.Identity{Id: identity2}, "")
 
 	if name1 == name2 {
 		t.Error("same header with different identities produced same filename")
@@ -573,12 +573,12 @@ func TestEncryptSave_DifferentHeaders(t *testing.T) {
 		// Reset reader for each iteration
 		content = strings.NewReader("test content")
 
-		err := encryptSave(h, ".age", content, s)
+		err := encryptSave(h, "", content, s)
 		if err != nil {
 			t.Fatalf("encryptSave for header %d failed: %v", i, err)
 		}
 
-		filename := fileName(h, s.Id, ".age")
+		filename := fileName(h, s.Id, "")
 		filenames = append(filenames, filename)
 	}
 
@@ -688,7 +688,7 @@ func TestEncryptSave_NilIdentity(t *testing.T) {
 		}
 	}()
 
-	err := encryptSave(h, ".age", content, s)
+	err := encryptSave(h, "", content, s)
 	
 	// If we reach here without panic, check for error
 	if err == nil {
@@ -723,7 +723,7 @@ func TestEncryptSave_NilHeader(t *testing.T) {
 		}
 	}()
 
-	err = encryptSave(nil, ".age", content, s)
+	err = encryptSave(nil, "", content, s)
 	
 	if err == nil {
 		t.Fatal("expected error with nil header, got nil")
@@ -770,7 +770,7 @@ func TestEncryptSave_HeaderFileWriteError(t *testing.T) {
 	}
 
 	// Pre-create the file and make it read-only
-	expectedFileName := fileName(h, s.Id, ".age")
+	expectedFileName := fileName(h, s.Id, "")
 	filePath := filepath.Join(tempDir, expectedFileName)
 	
 	f, err := os.Create(filePath)
@@ -787,7 +787,7 @@ func TestEncryptSave_HeaderFileWriteError(t *testing.T) {
 
 	content := strings.NewReader("test content")
 
-	err = encryptSave(h, ".age", content, s)
+	err = encryptSave(h, "", content, s)
 	if err == nil {
 		t.Fatal("expected error when writing to read-only file, got nil")
 	}

@@ -134,5 +134,5 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 func fileName(h *header.Header, identity id.Identity, suffix string) string {
 	hash := append(h.Pad(), identity.Id.Recipient().String()...)
 	hashStr := fmt.Sprintf("%x", sha256.Sum256(hash))
-	return hashStr + suffix + AgeExtension
+	return hashStr + suffix + PrivageExtension
 }
