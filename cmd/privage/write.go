@@ -67,16 +67,24 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 		return fmt.Errorf("failed to create temp file %s: %w", tmpPath, err)
 	}
 
-	// Defer cleanup: remove temp file on error
-	// This executes LAST (first registered)
+	// DEFER 1 (executes LAST): Atomic rename if successful
+	// This runs after everything is closed and flushed
 	defer func() {
-		if err != nil {
-			_ = os.Remove(tmpPath) // Ignore error: we're already in error state, original error takes precedence
+		if err == nil {
+			if rerr := os.Rename(tmpPath, finalPath); rerr != nil {
+				err = fmt.Errorf("failed to rename temp file: %w", rerr)
+			}
 		}
 	}()
 
-	// Defer file close
-	// This executes THIRD (second registered)
+	// DEFER 2 (executes THIRD): Cleanup temp file on error
+	defer func() {
+		if err != nil {
+			_ = os.Remove(tmpPath)
+		}
+	}()
+
+	// DEFER 3 (executes SECOND): Close file
 	defer func() {
 		if cerr := f.Close(); cerr != nil && err == nil {
 			err = fmt.Errorf("failed to close file: %w", cerr)
@@ -93,14 +101,8 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 	var ageContentWr io.WriteCloser
 	var bufFile *bufio.Writer
 
-	// CLEANUP DEFER: Handles proper shutdown of the writer stack.
-	// This executes FIRST (last registered)
-	//
-	// Cleanup order:
-	//   - ageContentWr.Close() finalizes encryption and writes auth tags
-	//   - bufFile.Flush() pushes buffered data to file descriptor
-	//   - f.Close() (in defer above) syncs to disk
-	//   - os.Rename() (explicit, after all defers) atomically replaces file
+	// DEFER 4 (executes FIRST): Close age writer and flush buffer
+	// This ensures cleanup happens on ANY error path
 	defer func() {
 		if ageContentWr != nil {
 			if cerr := ageContentWr.Close(); cerr != nil && err == nil {
@@ -130,24 +132,12 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 		return fmt.Errorf("failed to copy content: %w", err)
 	}
 
-	// Step 8: Explicit completion
-	// All defers execute here in correct order:
+	// Step 8: Return and let defers handle everything
+	// Execution order when returning:
 	//   1. Close age writer (finalize encryption)
 	//   2. Flush buffer (push to file)
 	//   3. Close file (sync to disk)
-	//   4. Cleanup temp on error (if err != nil)
-	//
-	// After defers, if no error, atomically rename
-	if err != nil {
-		return err
-	}
-
-	// Step 9: Atomic rename (only after file is closed and no errors)
-	if err := os.Rename(tmpPath, finalPath); err != nil {
-		// Cleanup will happen automatically since we're setting err
-		return fmt.Errorf("failed to rename temp file: %w", err)
-	}
-
+	//   4. Cleanup temp (if err != nil) OR Rename (if err == nil)
 	return nil
 }
 
