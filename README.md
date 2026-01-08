@@ -103,7 +103,7 @@ The `init` command does three things:
 1. it creates a secret key file named `privage-key.txt` (if no one is found in
    the system). The key is a standard unencrypted `age` key or a [Yubikey](#markdown-header-yubikey)  
    encrypted age key.
-2. it creates a `.gitignore` file to make sure that only encrypted (.age) files
+2. it creates a `.gitignore` file to make sure that only encrypted (.privage) files
    are commited in the repository. The file content is:
 
         # Ignore everything
@@ -111,7 +111,7 @@ The `init` command does three things:
 
         # But not these files...
         !.gitignore
-        !*.age
+        !*.privage
 
 3. it creates a `.privage.conf` file in your home directory. The config file
    contains references to the secret key and the repository path. These
@@ -157,7 +157,7 @@ ls -al
 
 drwxrwxr-x  3 user user 4096 Sep 26 18:27 .
 drwxr-xr-x 29 user user 4096 Sep 25 21:43 ..
--rw-rw-r--  1 user user  347 Sep 26 18:27 66ceb74807d0fd997566360b22ecbda1590ec35fbd3dd0ce88e15311a4e53faf.age
+-rw-rw-r--  1 user user  347 Sep 26 18:27 66ceb74807d0fd997566360b22ecbda1590ec35fbd3dd0ce88e15311a4e53faf.privage
 drwxrwxr-x  7 user user 4096 Sep 26 18:16 .git
 -rw-------  1 user user    0 Sep 26 18:21 .gitignore
 -rw-------  1 user user  189 Sep 26 18:21 privage-key.txt
@@ -373,7 +373,7 @@ The first encrypted payload (the header) contains the file name and a category
 
 The second encrypted payload contains the file contents.
 
-`privage` uses a **flat repository structure**: all encrypted `.age` files are
+`privage` uses a **flat repository structure**: all encrypted `.privage` files are
 stored directly in the repository directory. Subdirectories are not supported
 and are ignored during scanning.
 
@@ -385,8 +385,8 @@ key, and uses the hash as name of the encrypted file. Encrypted
 `privage` file names look like this:
 
 ```console
-425020f87e753ebe4dba67a872de04b7ce7350a63af9f74c1b7c4d633b41573c.age
-5e107b8e3b57411d5661d05e54f755408dd12c831a6b63e8033885c211da1317.age
+425020f87e753ebe4dba67a872de04b7ce7350a63af9f74c1b7c4d633b41573c.privage
+5e107b8e3b57411d5661d05e54f755408dd12c831a6b63e8033885c211da1317.privage
 ```
 
 

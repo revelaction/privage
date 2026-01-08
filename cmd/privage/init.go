@@ -18,7 +18,7 @@ const (
 
 # But not these files...
 !.gitignore
-!*.age`
+!*.privage`
 )
 
 // initCommand is a pure logic worker for environment initialization.

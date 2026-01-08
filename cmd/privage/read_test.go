@@ -40,7 +40,7 @@ func createTestAgeFile(t *testing.T, dir, filename string, h *header.Header, ide
 	}
 
 	// 3. Write to file
-	path := filepath.Join(dir, filename+AgeExtension)
+	path := filepath.Join(dir, filename+PrivageExtension)
 	if err := os.WriteFile(path, padded, 0600); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
@@ -126,7 +126,7 @@ func TestHeaderGenerator(t *testing.T) {
 		createTestAgeFile(t, tmpDir, "valid", &header.Header{Label: "valid"}, identity)
 
 		// 2. Malformed file (too short)
-		shortPath := filepath.Join(tmpDir, "short"+AgeExtension)
+		shortPath := filepath.Join(tmpDir, "short"+PrivageExtension)
 		if err := os.WriteFile(shortPath, []byte("too short"), 0600); err != nil {
 			t.Fatalf("failed to write short test file: %v", err)
 		}
@@ -147,28 +147,28 @@ func TestHeaderGenerator(t *testing.T) {
 		}
 
 		// Verify valid
-		if results["valid.age"].Err != nil {
-			t.Errorf("valid file should not have error: %v", results["valid.age"].Err)
+		if results["valid.privage"].Err != nil {
+			t.Errorf("valid file should not have error: %v", results["valid.privage"].Err)
 		}
 
 		// Verify short
-		if results["short.age"].Err == nil {
+		if results["short.privage"].Err == nil {
 			t.Error("short file should have error")
-		} else if !bytes.Contains([]byte(results["short.age"].Err.Error()), []byte("could not read header")) {
-			t.Errorf("unexpected error message for short file: %v", results["short.age"].Err)
+		} else if !bytes.Contains([]byte(results["short.privage"].Err.Error()), []byte("could not read header")) {
+			t.Errorf("unexpected error message for short file: %v", results["short.privage"].Err)
 		}
 
 		// Verify wrong key
-		if results["wrong_key.age"].Err == nil {
+		if results["wrong_key.privage"].Err == nil {
 			t.Error("wrong_key file should have error")
-		} else if !bytes.Contains([]byte(results["wrong_key.age"].Err.Error()), []byte("could not Decrypt header")) {
-			t.Errorf("unexpected error message for wrong_key file: %v", results["wrong_key.age"].Err)
+		} else if !bytes.Contains([]byte(results["wrong_key.privage"].Err.Error()), []byte("could not Decrypt header")) {
+			t.Errorf("unexpected error message for wrong_key file: %v", results["wrong_key.privage"].Err)
 		}
 	})
 
 	t.Run("PermissionDenied", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		path := filepath.Join(tmpDir, "unreadable"+AgeExtension)
+		path := filepath.Join(tmpDir, "unreadable"+PrivageExtension)
 		if err := os.WriteFile(path, []byte("data"), 0000); err != nil { // No permissions
 			t.Fatalf("failed to write unreadable test file: %v", err)
 		}
@@ -187,7 +187,7 @@ func TestHeaderGenerator(t *testing.T) {
 
 	t.Run("StandardAgeFile_Collision", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		path := filepath.Join(tmpDir, "standard.age")
+		path := filepath.Join(tmpDir, "standard.privage")
 		
 		f, err := os.Create(path)
 		if err != nil {
@@ -226,7 +226,7 @@ func TestHeaderGenerator(t *testing.T) {
 
 	t.Run("StandardAgeFile_Large_Collision", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		path := filepath.Join(tmpDir, "large.age")
+		path := filepath.Join(tmpDir, "large.privage")
 		
 		f, err := os.Create(path)
 		if err != nil {

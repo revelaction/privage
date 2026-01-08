@@ -288,7 +288,7 @@ func filesForAddCmd(root string) ([]string, error) {
 		}
 
 		ext := filepath.Ext(d.Name())
-		if ext == AgeExtension || ext == PrivageExtension {
+		if ext == PrivageExtension {
 			return nil
 		}
 
