@@ -87,6 +87,22 @@ func TestUnpad_Logic(t *testing.T) {
 			t.Fatal("expected error, got nil")
 		}
 	})
+
+	// Scenario 3: Error (Corruption - Non-padding bytes before prefix)
+	t.Run("Error_Corruption", func(t *testing.T) {
+		payload := []byte("age-encryption.org/header-data")
+		// Simulate corruption: padding + garbage + payload
+		// Using paddingChar (space) then 'x' (garbage)
+		input := append([]byte("   x   "), payload...)
+
+		_, err := Unpad(input)
+		if err == nil {
+			t.Fatal("expected error for corrupted padding, got nil")
+		}
+		if !strings.Contains(err.Error(), "header corruption") {
+			t.Errorf("unexpected error message: %v", err)
+		}
+	})
 }
 
 func TestHeader_String(t *testing.T) {

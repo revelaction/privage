@@ -14,8 +14,15 @@ const (
 
 	maxLenghtVersion = 5
 	version          = "v1"
-	ageHeaderPrefix  = "age-encryption.org/"
-	paddingChar      = ' '
+	// ageHeaderPrefix is the magic string that marks the start of an age binary file header.
+	//
+	// Per the Age specification (https://age-encryption.org/v1):
+	// "The textual file header wraps the file key for one or more recipients...
+	// It starts with a version line...
+	// The version line always starts with "age-encryption.org/", is followed by an arbitrary version string...
+	// version-line = %s"age-encryption.org/" version LF"
+	ageHeaderPrefix = "age-encryption.org/"
+	paddingChar     = ' '
 )
 
 // IsCredential returns true if the header belongs to the credential category.
@@ -114,11 +121,18 @@ func PadEncrypted(header []byte) ([]byte, error) {
 }
 
 // Unpad removes the filled characters of a encrypted header.
+// It strictly verifies that all bytes preceding the age header prefix are valid padding characters.
 func Unpad(header []byte) ([]byte, error) {
 
 	idx := bytes.Index(header, []byte(ageHeaderPrefix))
 	if idx == -1 {
 		return nil, errors.New("could not unpad header, age prefix not found")
+	}
+
+	// Integrity check: Ensure skipped bytes are valid padding
+	padding := header[:idx]
+	if len(bytes.Trim(padding, string(paddingChar))) > 0 {
+		return nil, errors.New("header corruption: non-padding bytes found before age prefix")
 	}
 
 	return header[idx:], nil
