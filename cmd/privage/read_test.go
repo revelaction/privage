@@ -180,4 +180,75 @@ func TestHeaderGenerator(t *testing.T) {
 			t.Errorf("unexpected error message: %v", h.Err)
 		}
 	})
+
+	t.Run("StandardAgeFile_Collision", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		path := filepath.Join(tmpDir, "standard.age")
+		
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("failed to create standard age file: %v", err)
+		}
+		
+		aw, err := age.Encrypt(f, identity.Recipient())
+		if err != nil {
+			f.Close()
+			t.Fatalf("failed to create age writer: %v", err)
+		}
+		if _, err := aw.Write([]byte("some content")); err != nil {
+			t.Errorf("failed to write content: %v", err)
+		}
+		aw.Close()
+		f.Close()
+
+		gen := headerGenerator(tmpDir, privageId)
+		h := <-gen
+		
+		if h == nil {
+			t.Fatal("expected result for standard age file")
+		}
+		
+		// We expect an error because it's not a valid privage file
+		if h.Err == nil {
+			t.Errorf("expected error for standard age file, got success. Parsed header: %+v", h)
+		} else {
+			t.Logf("Got expected error for standard age file: %v", h.Err)
+		}
+	})
+
+	t.Run("StandardAgeFile_Large_Collision", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		path := filepath.Join(tmpDir, "large.age")
+		
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("failed to create standard age file: %v", err)
+		}
+		
+		aw, err := age.Encrypt(f, identity.Recipient())
+		if err != nil {
+			f.Close()
+			t.Fatalf("failed to create age writer: %v", err)
+		}
+		// Write > 512 bytes
+		largeData := bytes.Repeat([]byte("A"), 1024)
+		if _, err := aw.Write(largeData); err != nil {
+			t.Errorf("failed to write content: %v", err)
+		}
+		aw.Close()
+		f.Close()
+
+		gen := headerGenerator(tmpDir, privageId)
+		h := <-gen
+		
+		if h == nil {
+			t.Fatal("expected result for large standard age file")
+		}
+		
+		if h.Err == nil {
+			t.Errorf("expected error for large standard age file, got success")
+		} else {
+			t.Logf("Got expected error for large standard age file: %v", h.Err)
+		}
+	})
 }
