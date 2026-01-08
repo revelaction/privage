@@ -71,7 +71,7 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 	// This executes LAST (first registered)
 	defer func() {
 		if err != nil {
-			os.Remove(tmpPath)
+			_ = os.Remove(tmpPath) // Ignore error: we're already in error state, original error takes precedence
 		}
 	}()
 
