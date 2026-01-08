@@ -119,6 +119,54 @@ func TestHeader_String(t *testing.T) {
 	}
 }
 
+func TestHeader_Hash(t *testing.T) {
+	h := &Header{
+		Version:  "v1",
+		Category: "test_cat",
+		Label:    "test_label",
+	}
+	ageIdentity := "age1recipient"
+
+	// Test 1: Determinism
+	hash1, err := h.Hash(ageIdentity)
+	if err != nil {
+		t.Fatalf("Hash() failed: %v", err)
+	}
+	
+	hash2, err := h.Hash(ageIdentity)
+	if err != nil {
+		t.Fatalf("Hash() failed second time: %v", err)
+	}
+
+	if hash1 != hash2 {
+		t.Errorf("Hash() is not deterministic: %s != %s", hash1, hash2)
+	}
+
+	// Test 2: Different inputs produce different hashes
+	h2 := &Header{
+		Version:  "v1",
+		Category: "test_cat",
+		Label:    "other_label",
+	}
+	hash3, err := h2.Hash(ageIdentity)
+	if err != nil {
+		t.Fatalf("Hash() failed for h2: %v", err)
+	}
+
+	if hash1 == hash3 {
+		t.Error("Different headers produced same hash")
+	}
+
+	// Test 3: Different recipient produces different hash
+	hash4, err := h.Hash("age1otherrecipient")
+	if err != nil {
+		t.Fatalf("Hash() failed for other recipient: %v", err)
+	}
+	if hash1 == hash4 {
+		t.Error("Different recipients produced same hash")
+	}
+}
+
 func TestHeader_PadAndParse_UTF8(t *testing.T) {
 	tests := []struct {
 		name     string

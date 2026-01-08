@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
@@ -154,11 +153,9 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 // fileName generates the file name of a privage encrypted file.
 // The hash is a function of the header and the age public key.
 func fileName(h *header.Header, identity id.Identity, suffix string) (string, error) {
-	padded, err := h.Pad()
+	hashStr, err := h.Hash(identity.Id.Recipient().String())
 	if err != nil {
-		return "", fmt.Errorf("failed to pad header: %w", err)
+		return "", fmt.Errorf("failed to generate header hash: %w", err)
 	}
-	hash := append(padded, identity.Id.Recipient().String()...)
-	hashStr := fmt.Sprintf("%x", sha256.Sum256(hash))
 	return hashStr + suffix + PrivageExtension, nil
 }

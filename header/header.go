@@ -2,6 +2,7 @@ package header
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 )
@@ -28,6 +29,23 @@ const (
 // IsCredential returns true if the header belongs to the credential category.
 func (h *Header) IsCredential() bool {
 	return h.Category == CategoryCredential
+}
+
+// Hash generates a deterministic hash of the header and the age identity.
+//
+// ageIdentity is the string representation of the age public key (recipient).
+// This hash is used to generate unique filenames for encrypted content, ensuring
+// that the same content encrypted for different identities results in different files.
+func (h *Header) Hash(ageIdentity string) (string, error) {
+	padded, err := h.Pad()
+	if err != nil {
+		return "", fmt.Errorf("failed to pad header for hashing: %w", err)
+	}
+
+	hashInput := append(padded, []byte(ageIdentity)...)
+	sum := sha256.Sum256(hashInput)
+
+	return fmt.Sprintf("%x", sum), nil
 }
 
 // Header represents the metadata of an encrypted file.
