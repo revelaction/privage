@@ -14,9 +14,12 @@ import (
 	id "github.com/revelaction/privage/identity"
 )
 
-const AgeExtension = ".age"
+const (
+	AgeExtension     = ".age"
+	PrivageExtension = ".privage"
+)
 
-// headerGenerator iterates all .age file in the repository directory and
+// headerGenerator iterates all .age and .privage files in the repository directory and
 // yields the decrypted header.
 //
 // The repository is expected to be flat; subdirectories are ignored.
@@ -44,8 +47,9 @@ func headerGenerator(repoDir string, identity id.Identity) <-chan *header.Header
 				return nil
 			}
 
-			// Only process .age files
-			if filepath.Ext(d.Name()) != AgeExtension {
+			// Only process .age and .privage files
+			ext := filepath.Ext(d.Name())
+			if ext != AgeExtension && ext != PrivageExtension {
 				return nil
 			}
 

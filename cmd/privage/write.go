@@ -148,5 +148,5 @@ func fileName(h *header.Header, identity id.Identity, suffix string) (string, er
 	}
 	hash := append(padded, identity.Id.Recipient().String()...)
 	hashStr := fmt.Sprintf("%x", sha256.Sum256(hash))
-	return hashStr + suffix + AgeExtension, nil
+	return hashStr + suffix + PrivageExtension
 }
