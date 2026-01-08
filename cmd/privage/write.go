@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -35,11 +36,19 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 
 	headerBytes, err := h.Pad()
 	if err != nil {
+		// Attempt to close, and join any closing error with the write error
+		if closeErr := ageWr.Close(); closeErr != nil {
+			err = errors.Join(err, closeErr)
+		}
 		return fmt.Errorf("failed to pad header: %w", err)
 	}
 
 	_, err = ageWr.Write(headerBytes)
 	if err != nil {
+		// Attempt to close, and join any closing error with the write error
+		if closeErr := ageWr.Close(); closeErr != nil {
+			err = errors.Join(err, closeErr)
+		}
 		return fmt.Errorf("failed to write header: %w", err)
 	}
 
@@ -67,8 +76,22 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 		return fmt.Errorf("failed to create temp file %s: %w", tmpPath, err)
 	}
 
-	// DEFER 1 (executes LAST): Atomic rename if successful
-	// This runs after everything is closed and flushed
+	// DEFER 1 (executes LAST): Cleanup temp file on error
+	// Fix: Defined BEFORE Rename, so it executes AFTER Rename.
+	// If defer Rename fails, it updates 'err', and this defer will see the error and remove the file.
+	// If Rename success, it sees no error and does nothing. This is correct because the temp file is already gone.
+	defer func() {
+		if err != nil {
+			// Attempt removal, join any removal error with the existing error
+			if removeErr := os.Remove(tmpPath); removeErr != nil {
+				err = errors.Join(err, fmt.Errorf("failed to cleanup temp file: %w", removeErr))
+			}
+		}
+	}()
+
+	// DEFER 2 (executes THIRD): Atomic rename if successful
+	// Fix: Moved here (after Remove) so it executes BEFORE Remove.
+	// This ensures that if os.Rename fails, the 'err' is captured, and Defer 1 cleans up.
 	defer func() {
 		if err == nil {
 			if rerr := os.Rename(tmpPath, finalPath); rerr != nil {
@@ -77,14 +100,8 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 		}
 	}()
 
-	// DEFER 2 (executes THIRD): Cleanup temp file on error
-	defer func() {
-		if err != nil {
-			_ = os.Remove(tmpPath)
-		}
-	}()
-
 	// DEFER 3 (executes SECOND): Close file
+	// Must execute before Rename (Defer 2).
 	defer func() {
 		if cerr := f.Close(); cerr != nil && err == nil {
 			err = fmt.Errorf("failed to close file: %w", cerr)
@@ -102,7 +119,6 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 	var bufFile *bufio.Writer
 
 	// DEFER 4 (executes FIRST): Close age writer and flush buffer
-	// This ensures cleanup happens on ANY error path
 	defer func() {
 		if ageContentWr != nil {
 			if cerr := ageContentWr.Close(); cerr != nil && err == nil {
@@ -132,12 +148,6 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 		return fmt.Errorf("failed to copy content: %w", err)
 	}
 
-	// Step 8: Return and let defers handle everything
-	// Execution order when returning:
-	//   1. Close age writer (finalize encryption)
-	//   2. Flush buffer (push to file)
-	//   3. Close file (sync to disk)
-	//   4. Cleanup temp (if err != nil) OR Rename (if err == nil)
 	return nil
 }
 
