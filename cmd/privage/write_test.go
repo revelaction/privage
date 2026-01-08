@@ -253,8 +253,8 @@ func TestEncryptSave_InvalidRepository(t *testing.T) {
 	}
 
 	// Verify error mentions file creation failure
-	if !strings.Contains(err.Error(), "failed to create file") {
-		t.Errorf("expected 'failed to create file' in error, got: %v", err)
+	if !strings.Contains(err.Error(), "failed to create temp file") {
+		t.Errorf("expected 'failed to create temp file' in error, got: %v", err)
 	}
 }
 
@@ -300,8 +300,8 @@ func TestEncryptSave_ReadOnlyRepository(t *testing.T) {
 		t.Fatal("expected error with read-only repository, got nil")
 	}
 
-	if !strings.Contains(err.Error(), "failed to create file") {
-		t.Errorf("expected 'failed to create file' in error, got: %v", err)
+	if !strings.Contains(err.Error(), "failed to create temp file") {
+		t.Errorf("expected 'failed to create temp file' in error, got: %v", err)
 	}
 }
 
@@ -803,13 +803,15 @@ func TestEncryptSave_HeaderFileWriteError(t *testing.T) {
 		},
 	}
 
-	// Pre-create the file and make it read-only
+	// Pre-create the temp file and make it read-only
+	// This simulates a collision or permission issue with the temporary file
 	expectedFileName, err := fileName(h, s.Id, "")
 	if err != nil {
 		t.Fatalf("fileName failed: %v", err)
 	}
-	filePath := filepath.Join(tempDir, expectedFileName)
-	
+	// Target the .tmp file because that's what encryptSave tries to create/open
+	filePath := filepath.Join(tempDir, expectedFileName+".tmp")
+
 	f, err := os.Create(filePath)
 	if err != nil {
 		t.Fatalf("failed to create test file: %v", err)
@@ -836,7 +838,7 @@ func TestEncryptSave_HeaderFileWriteError(t *testing.T) {
 	}
 
 	// OpenFile with O_TRUNC on read-only file should fail
-	if !strings.Contains(err.Error(), "failed to create file") {
+	if !strings.Contains(err.Error(), "failed to create temp file") {
 		t.Logf("Got error (may vary by OS): %v", err)
 	}
 }
