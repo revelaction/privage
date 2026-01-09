@@ -1,0 +1,20 @@
+# Setup
+exec privage init
+stderr 'Generated age key file'
+
+# Add valid file
+exec privage add custom input.txt
+stderr 'Added file'
+
+# Run list and check for both valid output and error output
+exec privage list
+stdout 'Found 1 total encrypted tracked files'
+stdout 'input.txt'
+stdout 'Found 1 files with errors:'
+stdout '💥 broken.privage Error:.*could not read header'
+
+-- input.txt --
+secret content
+
+-- broken.privage --
+garbage data
