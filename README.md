@@ -35,6 +35,9 @@ You may want to use privage if:
   [here](https://github.com/FiloSottile/age#passphrase-protected-key-files).
   privage supports yubikeys to encrypt the age secret key.  
 
+
+# Contents
+
 - [Features](#features)
 - [Installation](#installation)
   - [Migration from v0.30.0 or older](#migration-from-v0300-or-older)
