@@ -5,11 +5,11 @@ exists privage-key.txt
 
 # 1. Test 'cat' with missing file
 ! exec privage cat missing_file
-stderr 'file not found in repository: "missing_file"'
+stderr 'file not found in directory: "missing_file"'
 
 # 2. Test 'show' with missing file
 ! exec privage show missing_file
-stderr 'file not found in repository: "missing_file"'
+stderr 'file not found in directory: "missing_file"'
 
 # 3. Test 'show' with missing field (on existing file)
 stdin input.txt
