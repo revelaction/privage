@@ -54,6 +54,46 @@ func createTestAgeFile(t *testing.T, dir, filename string, h *header.Header, ide
 	return path
 }
 
+func TestIsPrivageFile(t *testing.T) {
+	validHash := validHexName("test")
+
+	tests := []struct {
+		name     string
+		filename string
+		want     bool
+	}{
+		// Valid cases
+		{"Valid hash", validHash + PrivageExtension, true},
+		{"Valid hash with suffix", validHash + ".rotate" + PrivageExtension, true},
+		{"Valid hash with alphanumeric suffix", validHash + ".v1-backup" + PrivageExtension, true},
+
+		// Invalid lengths / extensions
+		{"Too short", "abc.privage", false},
+		{"Wrong extension", validHash + ".age", false},
+		{"No extension", validHash, false},
+		{"Empty string", "", false},
+
+		// Invalid hex prefix
+		{"Invalid hex (non-hex char)", "g" + validHash[1:] + PrivageExtension, false},
+		{"Invalid hex (uppercase)", "A" + validHash[1:] + PrivageExtension, false},
+		{"Invalid hex (too short prefix)", validHash[:63] + ".privage", false},
+
+		// Path traversal and security
+		{"Path separator /", validHash + "/suffix" + PrivageExtension, false},
+		{"Path separator \\", validHash + "\\suffix" + PrivageExtension, false},
+		{"Path traversal ..", validHash + "..suffix" + PrivageExtension, true}, // Dots are OK
+		{"Root path", "/" + validHash + PrivageExtension, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isPrivageFile(tt.filename); got != tt.want {
+				t.Errorf("isPrivageFile(%q) = %v, want %v", tt.filename, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestHeaderGenerator(t *testing.T) {
 	// Create test identity
 	identity, err := age.GenerateX25519Identity()
