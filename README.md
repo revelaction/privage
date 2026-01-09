@@ -81,23 +81,16 @@ Pre-built binaries for multiple platforms (Linux, macOS, Windows, FreeBSD) and a
 
 If your system has a supported version of Go, you can build from source.
 
-## Migration from v0.30.0 or older
 
-Version `v0.30.0` was the last version that allowed the `.age` suffix for encrypted files. Starting from `v0.31.0`, `privage` strictly enforces the `.privage` extension.
+## Build
 
-If you are migrating from an older version, you must rename your existing `.age` files to `.privage`. You can use the following command in your secrets directory:
-
-```bash
-find . -maxdepth 1 -name "*.age" -type f -exec sh -c 'mv "$1" "${1%.age}.privage"' _ {} \;
-```
-
-## Dependencies
+### Dependencies
 
 ```console
 sudo apt-get -y install pkg-config libpcsclite-dev libpcsclite1 pcscd pcsc-tools build-essential pkg-config
 ```
 
-## privage
+### privage
 
 ```console
  go install github.com/revelaction/privage/cmd...@v0.24.0
@@ -112,6 +105,16 @@ go build -tags noyubikey ./cmd/privage
 ```
 
 This will produce a binary that does not require `libpcsclite-dev` and can be built with `CGO_ENABLED=0`. Attempting to use Yubikey-related features in such a build will result in an error message.
+
+## Migration from v0.30.0 or older
+
+Version `v0.30.0` was the last version that allowed the `.age` suffix for encrypted files. Starting from `v0.31.0`, `privage` strictly enforces the `.privage` extension.
+
+If you are migrating from an older version, you must rename your existing `.age` files to `.privage`. You can use the following command in your secrets directory:
+
+```bash
+find . -maxdepth 1 -name "*.age" -type f -exec sh -c 'mv "$1" "${1%.age}.privage"' _ {} \;
+```
 
 # Usage
 
