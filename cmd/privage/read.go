@@ -165,7 +165,7 @@ func isPrivageFile(name string) bool {
     // We only check the first 64 bytes of the original string
     for i := 0; i < hexLen; i++ {
         c := name[i]
-        if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
+        if (c < '0' || c > '9') && (c < 'a' || c > 'f') {
             return false
         }
     }
@@ -181,3 +181,4 @@ func isPrivageFile(name string) bool {
     
     return true
 }
+
