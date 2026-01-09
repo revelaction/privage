@@ -40,10 +40,11 @@ You may want to use privage if:
 
 - [Features](#features)
 - [Installation](#installation)
-  - [Migration from v0.30.0 or older](#migration-from-v0300-or-older)
-  - [Dependencies](#dependencies)
-  - [privage](#privage)
+  - [Build](#build)
+    - [Dependencies](#dependencies)
+    - [privage](#privage)
     - [Build without Yubikey support](#build-without-yubikey-support)
+  - [Migration from v0.30.0 or older](#migration-from-v0300-or-older)
 - [Usage](#usage)
   - [Initialize a directory for your credentials and other encrypted files](#initialize-a-directory-for-your-credentials-and-other-encrypted-files)
   - [Create a credentials file](#create-a-credentials-file)
@@ -55,7 +56,7 @@ You may want to use privage if:
   - [Cat the contents of an encrypted file](#cat-the-contents-of-an-encrypted-file)
   - [Decrypt a file for manual edition](#decrypt-a-file-for-manual-edition)
   - [Reencrypt edited files](#reencrypt-edited-files)
-  - [Delete a encrypted file](#delete-a-encrypted-file)
+  - [Delete an encrypted file](#delete-an-encrypted-file)
   - [Get information about the configuration](#get-information-about-the-configuration)
   - [Rotate](#rotate)
 - [Design](#design)
@@ -351,9 +352,9 @@ Found the following files to be reencrypted:
 Without flags, `reencrypt` will only show (dry-run) the files that will be reencrypted.
 Use the flag `-f` or `-c` to force the reencryption. 
 
-## Delete a encrypted file 
+## Delete an encrypted file 
 
-the command `delete` deletes a encryted file:
+the command `delete` deletes an encrypted file:
 
 ```console
 privage delete somewebsite.com@loginname
@@ -389,7 +390,7 @@ You can add the flag `--clean` to delete the old key encrypted files, and swap t
 
 
 ```console
-private rotate --clean
+privage rotate --clean
 ```
 
 To generate a yubikey encrypted age secret key, use the flag `--piv-slot`,
@@ -399,7 +400,7 @@ values](https://developers.yubico.com/PIV/Introduction/Certificate_slots.html).
 
 ```console
 # f. ex: use the 0x86 slot of the yubikey 5 
-private rotate -p 86 --clean
+privage rotate -p 86 --clean
 ```
 
 # Design
