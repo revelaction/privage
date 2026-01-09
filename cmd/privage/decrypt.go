@@ -69,7 +69,7 @@ func decryptCommand(s *setup.Setup, label string, ui UI) (retErr error) {
 	}
 
 	if !found {
-		return fmt.Errorf("file %q not found in repository", label)
+		return fmt.Errorf("file %q not found in directory", label)
 	}
 
 	_, _ = fmt.Fprintf(ui.Err, "The file %s was decrypted in the directory %s.\n", label, s.Repository)

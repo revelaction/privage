@@ -16,16 +16,16 @@ relies on [age](https://age-encryption.org/v1) for encryption. Optionally it use
 [yubikey](https://developers.yubico.com/PIV/) for encryption of the age key.
 
 The main goal of privage is to have your secrets (credentials and other
-files) securely backed up in untrusted 3-party repositories whitout revealing
-any secret information (not even the file name) to those 3-party repositories.
+files) securely backed up in untrusted 3-party locations whitout revealing
+any secret information (not even the file name) to those 3-party services.
 
 
 **WARNING: The author is not a cryptographer, and the code has not been reviewed. Use at your own risk.**
 
 You may want to use privage if:
 
-- You want to have your encrypted credentials and other secrets files in a revision control system repository (ex: git)
-- You want to have backups of this repository in untrusted 3 party services (github, gitlab, bitbucket)
+- You want to keep your encrypted credentials and other secrets files in a directory managed by a revision control system (ex: git)
+- You want to have backups of this directory in untrusted 3 party services (github, gitlab, bitbucket)
 - You do not want to leak any information (not even the name of the files) in
   case of a breach of those 3 party services, which you otherwise should always assume.
   privage guarantees not leaking information because it also encrypts the metadata of the files. 
@@ -45,7 +45,7 @@ You may want to use privage if:
 - privage encrypts any kind of file, not only credentials/passwords.
 - privage can easily (with one command) change the secret key and reencode all the files with the new key. See [rotate](#rotate)   
 - privage tries to be simple: it does not wrap `git` or your editor: Use git to control your
-  repository and use your preferred editor to edit credentials files.
+  files and use your preferred editor to edit credentials files.
 - Powerful command completion. All commands have completion. See [Bash Completion](#bash-completion)   
 
 # Installation
@@ -78,10 +78,10 @@ This will produce a binary that does not require `libpcsclite-dev` and can be bu
 
 # Usage
 
-## Initialize a repository for your credentials and other encrypted files
+## Initialize a directory for your credentials and other encrypted files
 
-Create a repository to contain your encrypted credentials and other secret
-files. This repository can be pushed to untrusted 3-party services.
+Create a directory to contain your encrypted credentials and other secret
+files. This directory can be backed up to untrusted 3-party services.
 
 ```console
 mkdir /home/user/mysecrets
@@ -104,7 +104,7 @@ The `init` command does three things:
    the system). The key is a standard unencrypted `age` key or a [Yubikey](#markdown-header-yubikey)  
    encrypted age key.
 2. it creates a `.gitignore` file to make sure that only encrypted (.privage) files
-   are commited in the repository. The file content is:
+   are stored in the directory. The file content is:
 
         # Ignore everything
         *
@@ -114,7 +114,7 @@ The `init` command does three things:
         !*.privage
 
 3. it creates a `.privage.conf` file in your home directory. The config file
-   contains references to the secret key and the repository path. These
+   contains references to the secret key and the path to the encrypted files. These
    references allows `privage` to be used in any directory of your computer.
 
 To create a encrypted age secret key with a
@@ -282,7 +282,7 @@ The file somewebsite.com@loginname was decrypted in the directory /home/user/mys
 (Use "privage reencrypt --clean" to reencrypt all decrypted files and after that delete them)
 ```
 
-`decrypt` will write a decrypted file in the repository directory. In the case
+`decrypt` will write a decrypted file in the same directory. In the case
 of credentials files, the decrypted file is a `.toml` file. You can use now
 your favorite editor to change the password, user, email
 and other predefined fields.
@@ -296,7 +296,7 @@ After manually changing the file, you have to reencrypt the file...
 ## Reencrypt edited files
 
 Use the `reencrypt` command to reencrypt `all` files that were decrypted and are present in
-the repository directory:
+the directory:
 
 ```console
 ⤷ privage reencrypt
@@ -373,8 +373,8 @@ The first encrypted payload (the header) contains the file name and a category
 
 The second encrypted payload contains the file contents.
 
-`privage` uses a **flat repository structure**: all encrypted `.privage` files are
-stored directly in the repository directory. Subdirectories are not supported
+`privage` uses a **flat directory structure**: all encrypted `.privage` files are
+stored directly in the same directory. Subdirectories are not supported
 and are ignored during scanning.
 
 When listing the encrypted files, `privage` scans all encrypted files, retrieves the
@@ -431,6 +431,6 @@ reencrypt  Reencrypt all decrypted files that are already encrypted. (default is
     --conf value, -c value        Use file as privage configuration file
     --key value, -k value         Use file path for private key
     --piv-slot value, -p value    The PIV slot for decryption of the age key
-    --repository value, -r value  Use file path as path for the repository
+    --repository value, -r value  Use file path as path for the encrypted files
     --help, -h                    show help
 ```

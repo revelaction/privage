@@ -19,20 +19,20 @@ const (
 	PrivageExtension = ".privage"
 )
 
-// headerGenerator iterates all .privage files in the repository directory and
+// headerGenerator iterates all .privage files in the directory and
 // yields the decrypted header.
 //
-// The repository is expected to be flat; subdirectories are ignored.
-// Returns an error if the repository directory cannot be accessed.
+// The directory is expected to be flat; subdirectories are ignored.
+// Returns an error if the directory cannot be accessed.
 func headerGenerator(repoDir string, identity id.Identity) (<-chan *header.Header, error) {
 
-	// 1. Synchronous check for repository directory
+	// 1. Synchronous check for directory
 	info, err := os.Stat(repoDir)
 	if err != nil {
-		return nil, fmt.Errorf("could not access repository directory: %w", err)
+		return nil, fmt.Errorf("could not access directory: %w", err)
 	}
 	if !info.IsDir() {
-		return nil, fmt.Errorf("repository path '%s' is not a directory", repoDir)
+		return nil, fmt.Errorf("path '%s' is not a directory", repoDir)
 	}
 
 	ch := make(chan *header.Header)
