@@ -47,11 +47,15 @@ func statusCommand(s *setup.Setup, ui UI) error {
 
 	cnt := 0
 	if s.Id.Id != nil {
-		for range headerGenerator(s.Repository, s.Id) {
-			cnt++
+		ch, err := headerGenerator(s.Repository, s.Id)
+		if err != nil {
+			_, _ = fmt.Fprintf(ui.Out, "🔐  Could not count files: %v\n", err)
+		} else {
+			for range ch {
+				cnt++
+			}
+			_, _ = fmt.Fprintf(ui.Out, "🔐  Found %d encrypted files for the age key %s\n", cnt, s.Id.Path)
 		}
-
-		_, _ = fmt.Fprintf(ui.Out, "🔐  Found %d encrypted files for the age key %s\n", cnt, s.Id.Path)
 	}
 
 	return nil

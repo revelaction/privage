@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"filippo.io/age"
 
@@ -15,15 +16,24 @@ import (
 )
 
 const (
-	AgeExtension     = ".age"
 	PrivageExtension = ".privage"
 )
 
-// headerGenerator iterates all .age and .privage files in the repository directory and
+// headerGenerator iterates all .privage files in the directory and
 // yields the decrypted header.
 //
-// The repository is expected to be flat; subdirectories are ignored.
-func headerGenerator(repoDir string, identity id.Identity) <-chan *header.Header {
+// The directory is expected to be flat; subdirectories are ignored.
+// Returns an error if the directory cannot be accessed.
+func headerGenerator(repoDir string, identity id.Identity) (<-chan *header.Header, error) {
+
+	// 1. Synchronous check for directory
+	info, err := os.Stat(repoDir)
+	if err != nil {
+		return nil, fmt.Errorf("could not access directory: %w", err)
+	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("path '%s' is not a directory", repoDir)
+	}
 
 	ch := make(chan *header.Header)
 
@@ -47,9 +57,9 @@ func headerGenerator(repoDir string, identity id.Identity) <-chan *header.Header
 				return nil
 			}
 
-			// Only process .age and .privage files
-			ext := filepath.Ext(d.Name())
-			if ext != AgeExtension && ext != PrivageExtension {
+			// Only process files that match the privage naming convention:
+			// Must end in .privage and start with 64 hex characters.
+			if !isPrivageFile(d.Name()) {
 				return nil
 			}
 
@@ -122,7 +132,7 @@ func headerGenerator(repoDir string, identity id.Identity) <-chan *header.Header
 		close(ch)
 	}()
 
-	return ch
+	return ch, nil
 }
 
 // contentReader returns an `age` reader that provides the decrypted content
@@ -135,4 +145,39 @@ func contentReader(src io.Reader, identity id.Identity) (io.Reader, error) {
 	}
 
 	return age.Decrypt(src, identity.Id)
+}
+
+func isPrivageFile(name string) bool {
+    const hexLen = 64
+    
+    // 1. Check minimum length
+    if len(name) < hexLen+len(PrivageExtension) {
+        return false
+    }
+    
+    // 2. Check extension
+    if !strings.HasSuffix(name, PrivageExtension) {
+        return false
+    }
+    
+    // 3. Check Hex Prefix
+    // Iterate over bytes, not runes (avoids UTF-8 decoding overhead)
+    // We only check the first 64 bytes of the original string
+    for i := 0; i < hexLen; i++ {
+        c := name[i]
+        if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
+            return false
+        }
+    }
+    
+	// 4. No path separators allowed between prefix and extension (prevent
+	// directory traversal in filename)
+    for i := hexLen; i < len(name)-len(PrivageExtension); i++ {
+        c := name[i]
+        if c == '/' || c == '\\' {
+            return false
+        }
+    }
+    
+    return true
 }

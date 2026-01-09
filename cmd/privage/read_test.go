@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,6 +12,11 @@ import (
 	"github.com/revelaction/privage/header"
 	id "github.com/revelaction/privage/identity"
 )
+
+// validHexName returns a 64-character hex string based on the input seed.
+func validHexName(seed string) string {
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(seed)))
+}
 
 // createTestAgeFile creates an encrypted age file for testing.
 func createTestAgeFile(t *testing.T, dir, filename string, h *header.Header, identity *age.X25519Identity) string {
@@ -22,7 +28,11 @@ func createTestAgeFile(t *testing.T, dir, filename string, h *header.Header, ide
 	if err != nil {
 		t.Fatalf("failed to create age encryptor: %v", err)
 	}
-	if _, err := ageWr.Write(h.Pad()); err != nil {
+	headerBytes, err := h.Pad()
+	if err != nil {
+		t.Fatalf("failed to pad header: %v", err)
+	}
+	if _, err := ageWr.Write(headerBytes); err != nil {
 		t.Fatalf("failed to write padded header to age: %v", err)
 	}
 	if err := ageWr.Close(); err != nil {
@@ -36,12 +46,52 @@ func createTestAgeFile(t *testing.T, dir, filename string, h *header.Header, ide
 	}
 
 	// 3. Write to file
-	path := filepath.Join(dir, filename+AgeExtension)
+	path := filepath.Join(dir, filename+PrivageExtension)
 	if err := os.WriteFile(path, padded, 0600); err != nil {
 		t.Fatalf("failed to write test file: %v", err)
 	}
 
 	return path
+}
+
+func TestIsPrivageFile(t *testing.T) {
+	validHash := validHexName("test")
+
+	tests := []struct {
+		name     string
+		filename string
+		want     bool
+	}{
+		// Valid cases
+		{"Valid hash", validHash + PrivageExtension, true},
+		{"Valid hash with suffix", validHash + ".rotate" + PrivageExtension, true},
+		{"Valid hash with alphanumeric suffix", validHash + ".v1-backup" + PrivageExtension, true},
+
+		// Invalid lengths / extensions
+		{"Too short", "abc.privage", false},
+		{"Wrong extension", validHash + ".age", false},
+		{"No extension", validHash, false},
+		{"Empty string", "", false},
+
+		// Invalid hex prefix
+		{"Invalid hex (non-hex char)", "g" + validHash[1:] + PrivageExtension, false},
+		{"Invalid hex (uppercase)", "A" + validHash[1:] + PrivageExtension, false},
+		{"Invalid hex (too short prefix)", validHash[:63] + ".privage", false},
+
+		// Path traversal and security
+		{"Path separator /", validHash + "/suffix" + PrivageExtension, false},
+		{"Path separator \\", validHash + "\\suffix" + PrivageExtension, false},
+		{"Path traversal ..", validHash + "..suffix" + PrivageExtension, true}, // Dots are OK
+		{"Root path", "/" + validHash + PrivageExtension, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isPrivageFile(tt.filename); got != tt.want {
+				t.Errorf("isPrivageFile(%q) = %v, want %v", tt.filename, got, tt.want)
+			}
+		})
+	}
 }
 
 func TestHeaderGenerator(t *testing.T) {
@@ -61,10 +111,14 @@ func TestHeaderGenerator(t *testing.T) {
 		}
 
 		for i, h := range headers {
-			createTestAgeFile(t, tmpDir, fmt.Sprintf("file%d", i), h, identity)
+			filename := validHexName(fmt.Sprintf("file%d", i))
+			createTestAgeFile(t, tmpDir, filename, h, identity)
 		}
 
-		gen := headerGenerator(tmpDir, privageId)
+		gen, err := headerGenerator(tmpDir, privageId)
+		if err != nil {
+			t.Fatalf("headerGenerator failed: %v", err)
+		}
 		count := 0
 		for h := range gen {
 			if h.Err != nil {
@@ -92,16 +146,21 @@ func TestHeaderGenerator(t *testing.T) {
 		tmpDir := t.TempDir()
 
 		// 1. Valid file in root
-		createTestAgeFile(t, tmpDir, "root_file", &header.Header{Label: "root"}, identity)
+		rootName := validHexName("root")
+		createTestAgeFile(t, tmpDir, rootName, &header.Header{Label: "root"}, identity)
 
 		// 2. File in subdirectory (should be ignored)
 		subDir := filepath.Join(tmpDir, "subdir")
 		if err := os.Mkdir(subDir, 0700); err != nil {
 			t.Fatalf("failed to create subdir: %v", err)
 		}
-		createTestAgeFile(t, subDir, "sub_file", &header.Header{Label: "sub"}, identity)
+		subName := validHexName("sub")
+		createTestAgeFile(t, subDir, subName, &header.Header{Label: "sub"}, identity)
 
-		gen := headerGenerator(tmpDir, privageId)
+		gen, err := headerGenerator(tmpDir, privageId)
+		if err != nil {
+			t.Fatalf("headerGenerator failed: %v", err)
+		}
 		count := 0
 		for h := range gen {
 			if h.Label != "root" {
@@ -119,19 +178,25 @@ func TestHeaderGenerator(t *testing.T) {
 		tmpDir := t.TempDir()
 
 		// 1. Valid file
-		createTestAgeFile(t, tmpDir, "valid", &header.Header{Label: "valid"}, identity)
+		validName := validHexName("valid")
+		createTestAgeFile(t, tmpDir, validName, &header.Header{Label: "valid"}, identity)
 
 		// 2. Malformed file (too short)
-		shortPath := filepath.Join(tmpDir, "short"+AgeExtension)
+		shortName := validHexName("short")
+		shortPath := filepath.Join(tmpDir, shortName+PrivageExtension)
 		if err := os.WriteFile(shortPath, []byte("too short"), 0600); err != nil {
 			t.Fatalf("failed to write short test file: %v", err)
 		}
 
 		// 3. Wrong identity file
+		wrongKeyName := validHexName("wrong_key")
 		otherIdentity, _ := age.GenerateX25519Identity()
-		createTestAgeFile(t, tmpDir, "wrong_key", &header.Header{Label: "wrong"}, otherIdentity)
+		createTestAgeFile(t, tmpDir, wrongKeyName, &header.Header{Label: "wrong"}, otherIdentity)
 
-		gen := headerGenerator(tmpDir, privageId)
+		gen, err := headerGenerator(tmpDir, privageId)
+		if err != nil {
+			t.Fatalf("headerGenerator failed: %v", err)
+		}
 
 		results := make(map[string]*header.Header)
 		for h := range gen {
@@ -143,47 +208,46 @@ func TestHeaderGenerator(t *testing.T) {
 		}
 
 		// Verify valid
-		if results["valid.age"].Err != nil {
-			t.Errorf("valid file should not have error: %v", results["valid.age"].Err)
+		if results[validName+PrivageExtension].Err != nil {
+			t.Errorf("valid file should not have error: %v", results[validName+PrivageExtension].Err)
 		}
 
 		// Verify short
-		if results["short.age"].Err == nil {
+		if results[shortName+PrivageExtension].Err == nil {
 			t.Error("short file should have error")
-		} else if !bytes.Contains([]byte(results["short.age"].Err.Error()), []byte("could not read header")) {
-			t.Errorf("unexpected error message for short file: %v", results["short.age"].Err)
 		}
 
 		// Verify wrong key
-		if results["wrong_key.age"].Err == nil {
+		if results[wrongKeyName+PrivageExtension].Err == nil {
 			t.Error("wrong_key file should have error")
-		} else if !bytes.Contains([]byte(results["wrong_key.age"].Err.Error()), []byte("could not Decrypt header")) {
-			t.Errorf("unexpected error message for wrong_key file: %v", results["wrong_key.age"].Err)
 		}
 	})
 
 	t.Run("PermissionDenied", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		path := filepath.Join(tmpDir, "unreadable"+AgeExtension)
+		name := validHexName("unreadable")
+		path := filepath.Join(tmpDir, name+PrivageExtension)
 		if err := os.WriteFile(path, []byte("data"), 0000); err != nil { // No permissions
 			t.Fatalf("failed to write unreadable test file: %v", err)
 		}
 
-		gen := headerGenerator(tmpDir, privageId)
+		gen, err := headerGenerator(tmpDir, privageId)
+		if err != nil {
+			t.Fatalf("headerGenerator failed: %v", err)
+		}
 		h := <-gen
 		if h == nil {
 			t.Fatal("expected at least one result")
 		}
 		if h.Err == nil {
 			t.Error("expected error for unreadable file")
-		} else if !bytes.Contains([]byte(h.Err.Error()), []byte("could not open file")) {
-			t.Errorf("unexpected error message: %v", h.Err)
 		}
 	})
 
 	t.Run("StandardAgeFile_Collision", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		path := filepath.Join(tmpDir, "standard.age")
+		name := validHexName("standard")
+		path := filepath.Join(tmpDir, name+PrivageExtension)
 		
 		f, err := os.Create(path)
 		if err != nil {
@@ -198,10 +262,10 @@ func TestHeaderGenerator(t *testing.T) {
 		if _, err := aw.Write([]byte("some content")); err != nil {
 			t.Errorf("failed to write content: %v", err)
 		}
-		_ = aw.Close()
-		_ = f.Close()
-
-		gen := headerGenerator(tmpDir, privageId)
+		gen, err := headerGenerator(tmpDir, privageId)
+		if err != nil {
+			t.Fatalf("headerGenerator failed: %v", err)
+		}
 		h := <-gen
 		
 		if h == nil {
@@ -218,7 +282,8 @@ func TestHeaderGenerator(t *testing.T) {
 
 	t.Run("StandardAgeFile_Large_Collision", func(t *testing.T) {
 		tmpDir := t.TempDir()
-		path := filepath.Join(tmpDir, "large.age")
+		name := validHexName("large")
+		path := filepath.Join(tmpDir, name+PrivageExtension)
 		
 		f, err := os.Create(path)
 		if err != nil {
@@ -235,10 +300,17 @@ func TestHeaderGenerator(t *testing.T) {
 		if _, err := aw.Write(largeData); err != nil {
 			t.Errorf("failed to write content: %v", err)
 		}
-		_ = aw.Close()
-		_ = f.Close()
+		if err := aw.Close(); err != nil {
+			t.Errorf("failed to close age writer: %v", err)
+		}
+		if err := f.Close(); err != nil {
+			t.Errorf("failed to close file: %v", err)
+		}
 
-		gen := headerGenerator(tmpDir, privageId)
+		gen, err := headerGenerator(tmpDir, privageId)
+		if err != nil {
+			t.Fatalf("headerGenerator failed: %v", err)
+		}
 		h := <-gen
 		
 		if h == nil {

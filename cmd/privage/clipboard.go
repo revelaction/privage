@@ -14,7 +14,11 @@ func clipboardCommand(s *setup.Setup, label string, ui UI) (err error) {
 		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}
 
-	for h := range headerGenerator(s.Repository, s.Id) {
+	ch, err := headerGenerator(s.Repository, s.Id)
+	if err != nil {
+		return err
+	}
+	for h := range ch {
 		if h.Label == label {
 			f, err := os.Open(h.Path)
 			if err != nil {

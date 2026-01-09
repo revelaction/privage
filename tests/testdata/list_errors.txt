@@ -1,0 +1,29 @@
+# Setup
+exec privage init
+stderr 'Generated age key file'
+
+# Add valid file
+exec privage add custom input.txt
+stderr 'Added file'
+
+# Run list
+exec privage list
+
+# Verify valid file is present
+stdout 'input.txt'
+
+# Verify the file with a valid hash name but corrupt content shows up in errors
+stdout 'Found 1 files with errors:'
+stdout '💥 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.privage'
+
+# Verify that 'ignored.privage' is completely ignored (not in list, not in errors)
+! stdout 'ignored.privage'
+
+-- input.txt --
+secret content
+
+-- aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.privage --
+garbage data
+
+-- ignored.privage --
+this file should be ignored by the generator because it is not a hex hash

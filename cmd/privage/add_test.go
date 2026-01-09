@@ -47,7 +47,11 @@ func TestAddCommand_CredentialSuccess(t *testing.T) {
 	}
 
 	// Verify it was created
-	if !labelExists("my-cred", th.Id) {
+	exists, err := labelExists("my-cred", th.Id)
+	if err != nil {
+		t.Fatalf("labelExists failed: %v", err)
+	}
+	if !exists {
 		t.Error("expected label 'my-cred' to exist")
 	}
 
@@ -104,7 +108,11 @@ func TestAddCommand_CustomCategorySuccess(t *testing.T) {
 	}
 
 	// Verify it was created
-	if !labelExists(fileName, th.Id) {
+	exists, err := labelExists(fileName, th.Id)
+	if err != nil {
+		t.Fatalf("labelExists failed: %v", err)
+	}
+	if !exists {
 		t.Error("expected label to exist")
 	}
 

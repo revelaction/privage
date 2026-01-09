@@ -63,7 +63,7 @@ func parseMainArgs(args []string, ui UI) (string, []string, setup.Options, error
 	fs.StringVar(&opts.KeyFile, "k", "", "alias for -key")
 	fs.StringVar(&opts.PivSlot, "piv-slot", "", "The PIV slot for decryption of the age key")
 	fs.StringVar(&opts.PivSlot, "p", "", "alias for -piv-slot")
-	fs.StringVar(&opts.RepoPath, "repository", "", "Use file path as path for the repository")
+	fs.StringVar(&opts.RepoPath, "repository", "", "Use file path as path for the encrypted files")
 	fs.StringVar(&opts.RepoPath, "r", "", "alias for -repository")
 
 	if err := fs.Parse(args); err != nil {
@@ -314,16 +314,11 @@ func setupUsage(fs *flag.FlagSet) {
 		_, _ = fmt.Fprintf(output, "  version    Show version information\n")
 		_, _ = fmt.Fprintf(output, "  help       Show help for a command.\n")
 		_, _ = fmt.Fprintf(output, "\nGlobal Options:\n")
-		_, _ = fmt.Fprintf(output, "  -h, --help\n")
-		_, _ = fmt.Fprintf(output, "    \tShow help for privage\n")
-		_, _ = fmt.Fprintf(output, "  -c, -conf string\n")
-		_, _ = fmt.Fprintf(output, "    \tUse file as privage configuration file\n")
-		_, _ = fmt.Fprintf(output, "  -k, -key string\n")
-		_, _ = fmt.Fprintf(output, "    \tUse file path for private key\n")
-		_, _ = fmt.Fprintf(output, "  -p, -piv-slot string\n")
-		_, _ = fmt.Fprintf(output, "    \tThe PIV slot for decryption of the age key\n")
-		_, _ = fmt.Fprintf(output, "  -r, -repository string\n")
-		_, _ = fmt.Fprintf(output, "    \tUse file path as path for the repository\n")
+		_, _ = fmt.Fprintf(output, "  -h, --help             Show help for privage\n")
+		_, _ = fmt.Fprintf(output, "  -c, -conf string       Use file as privage configuration file\n")
+		_, _ = fmt.Fprintf(output, "  -k, -key string        Use file path for private key\n")
+		_, _ = fmt.Fprintf(output, "  -p, -piv-slot string   The PIV slot for decryption of the age key\n")
+		_, _ = fmt.Fprintf(output, "  -r, -repository string Use file path as path for the encrypted files\n")
 		_, _ = fmt.Fprintf(output, "\nVersion: %s, commit %s, yubikey %s\n", BuildTag, BuildCommit, YubikeySupport)
 	}
 }

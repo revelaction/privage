@@ -98,7 +98,10 @@ func TestEncryptSave_HappyPath(t *testing.T) {
 	}
 
 	// Verify: file was created with expected name
-	expectedFileName := fileName(h, s.Id, "")
+	expectedFileName, err := fileName(h, s.Id, "")
+	if err != nil {
+		t.Fatalf("fileName failed: %v", err)
+	}
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	fileInfo, err := os.Stat(filePath)
@@ -161,7 +164,10 @@ func TestEncryptSave_EmptyContent(t *testing.T) {
 	}
 
 	// Verify file exists
-	expectedFileName := fileName(h, s.Id, "")
+	expectedFileName, err := fileName(h, s.Id, "")
+	if err != nil {
+		t.Fatalf("fileName failed: %v", err)
+	}
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	if _, err := os.Stat(filePath); err != nil {
@@ -200,7 +206,10 @@ func TestEncryptSave_LargeContent(t *testing.T) {
 		t.Fatalf("encryptSave with large content failed: %v", err)
 	}
 
-	expectedFileName := fileName(h, s.Id, "")
+	expectedFileName, err := fileName(h, s.Id, "")
+	if err != nil {
+		t.Fatalf("fileName failed: %v", err)
+	}
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	fileInfo, err := os.Stat(filePath)
@@ -244,8 +253,8 @@ func TestEncryptSave_InvalidRepository(t *testing.T) {
 	}
 
 	// Verify error mentions file creation failure
-	if !strings.Contains(err.Error(), "failed to create file") {
-		t.Errorf("expected 'failed to create file' in error, got: %v", err)
+	if !strings.Contains(err.Error(), "failed to create temp file") {
+		t.Errorf("expected 'failed to create temp file' in error, got: %v", err)
 	}
 }
 
@@ -261,7 +270,11 @@ func TestEncryptSave_ReadOnlyRepository(t *testing.T) {
 	if err := os.Chmod(tempDir, 0444); err != nil {
 		t.Fatalf("failed to make directory read-only: %v", err)
 	}
-	defer func() { _ = os.Chmod(tempDir, 0755) }() // Restore permissions for cleanup
+	defer func() {
+		if err := os.Chmod(tempDir, 0755); err != nil {
+			t.Errorf("failed to restore directory permissions: %v", err)
+		}
+	}() // Restore permissions for cleanup
 
 	identity, err := age.GenerateX25519Identity()
 	if err != nil {
@@ -287,8 +300,8 @@ func TestEncryptSave_ReadOnlyRepository(t *testing.T) {
 		t.Fatal("expected error with read-only repository, got nil")
 	}
 
-	if !strings.Contains(err.Error(), "failed to create file") {
-		t.Errorf("expected 'failed to create file' in error, got: %v", err)
+	if !strings.Contains(err.Error(), "failed to create temp file") {
+		t.Errorf("expected 'failed to create temp file' in error, got: %v", err)
 	}
 }
 
@@ -361,7 +374,10 @@ func TestEncryptSave_ContentReadFailure(t *testing.T) {
 	}
 
 	// Verify partial file exists (we don't delete on error)
-	expectedFileName := fileName(h, s.Id, "")
+	expectedFileName, err := fileName(h, s.Id, "")
+	if err != nil {
+		t.Fatalf("fileName failed: %v", err)
+	}
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	if _, err := os.Stat(filePath); err != nil {
@@ -399,7 +415,10 @@ func TestEncryptSave_FileOverwrite(t *testing.T) {
 		t.Fatalf("first encryptSave failed: %v", err)
 	}
 
-	expectedFileName := fileName(h, s.Id, "")
+	expectedFileName, err := fileName(h, s.Id, "")
+	if err != nil {
+		t.Fatalf("fileName failed: %v", err)
+	}
 	filePath := filepath.Join(tempDir, expectedFileName)
 
 	firstFileInfo, err := os.Stat(filePath)
@@ -469,7 +488,10 @@ func TestFileName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			name := fileName(tt.header, testID, tt.suffix)
+			name, err := fileName(tt.header, testID, tt.suffix)
+			if err != nil {
+				t.Fatalf("fileName failed: %v", err)
+			}
 
 			// Verify filename format: [64 hex chars][suffix]
 			if !strings.HasSuffix(name, tt.suffix+PrivageExtension) {
@@ -483,7 +505,10 @@ func TestFileName(t *testing.T) {
 			}
 
 			// Verify deterministic: same input = same output
-			name2 := fileName(tt.header, testID, tt.suffix)
+			name2, err := fileName(tt.header, testID, tt.suffix)
+			if err != nil {
+				t.Fatalf("fileName (2nd call) failed: %v", err)
+			}
 			if name != name2 {
 				t.Errorf("fileName not deterministic: %s != %s", name, name2)
 			}
@@ -506,9 +531,18 @@ func TestFileName_Uniqueness(t *testing.T) {
 	h2 := &header.Header{Label: "password2", Category: "work"}
 	h3 := &header.Header{Label: "password1", Category: "personal"}
 
-	name1 := fileName(h1, testID, "")
-	name2 := fileName(h2, testID, "")
-	name3 := fileName(h3, testID, "")
+	name1, err := fileName(h1, testID, "")
+	if err != nil {
+		t.Fatalf("fileName 1 failed: %v", err)
+	}
+	name2, err := fileName(h2, testID, "")
+	if err != nil {
+		t.Fatalf("fileName 2 failed: %v", err)
+	}
+	name3, err := fileName(h3, testID, "")
+	if err != nil {
+		t.Fatalf("fileName 3 failed: %v", err)
+	}
 
 	// All should be different
 	if name1 == name2 {
@@ -536,8 +570,14 @@ func TestFileName_IncludesIdentity(t *testing.T) {
 
 	h := &header.Header{Label: "password", Category: "work"}
 
-	name1 := fileName(h, id.Identity{Id: identity1}, "")
-	name2 := fileName(h, id.Identity{Id: identity2}, "")
+	name1, err := fileName(h, id.Identity{Id: identity1}, "")
+	if err != nil {
+		t.Fatalf("fileName 1 failed: %v", err)
+	}
+	name2, err := fileName(h, id.Identity{Id: identity2}, "")
+	if err != nil {
+		t.Fatalf("fileName 2 failed: %v", err)
+	}
 
 	if name1 == name2 {
 		t.Error("same header with different identities produced same filename")
@@ -566,6 +606,13 @@ func TestEncryptSave_DifferentHeaders(t *testing.T) {
 		{Label: "gmail", Category: "work"},
 	}
 
+<<<<<<< HEAD
+||||||| fbcf912
+	content := strings.NewReader("test content")
+
+=======
+	var content *strings.Reader
+>>>>>>> audit
 	var filenames []string
 	for i, h := range headers {
 		// Reset reader for each iteration
@@ -576,7 +623,10 @@ func TestEncryptSave_DifferentHeaders(t *testing.T) {
 			t.Fatalf("encryptSave for header %d failed: %v", i, err)
 		}
 
-		filename := fileName(h, s.Id, "")
+		filename, err := fileName(h, s.Id, "")
+		if err != nil {
+			t.Fatalf("fileName failed: %v", err)
+		}
 		filenames = append(filenames, filename)
 	}
 
@@ -600,11 +650,23 @@ func TestEncryptSave_DifferentHeaders(t *testing.T) {
 	t.Logf("Created %d unique encrypted files", len(filenames))
 }
 
+<<<<<<< HEAD
 
 
 // malformedHeader is a header implementation that causes Pad() to fail
 // by returning data that can't be encrypted properly.
 
+||||||| fbcf912
+
+
+// malformedHeader is a header implementation that causes Pad() to fail
+// by returning data that can't be encrypted properly.
+type malformedHeader struct {
+	header.Header
+}
+
+=======
+>>>>>>> audit
 // If your header.Header has methods that can fail, you might need to test those
 // However, if Pad() always succeeds on valid header structs, this path is hard to test.
 
@@ -764,21 +826,44 @@ func TestEncryptSave_HeaderFileWriteError(t *testing.T) {
 		},
 	}
 
-	// Pre-create the file and make it read-only
-	expectedFileName := fileName(h, s.Id, "")
-	filePath := filepath.Join(tempDir, expectedFileName)
-	
+	// Pre-create the temp file and make it read-only
+	// This simulates a collision or permission issue with the temporary file
+	expectedFileName, err := fileName(h, s.Id, "")
+	if err != nil {
+		t.Fatalf("fileName failed: %v", err)
+	}
+	// Target the .tmp file because that's what encryptSave tries to create/open
+	filePath := filepath.Join(tempDir, expectedFileName+".tmp")
+
 	f, err := os.Create(filePath)
 	if err != nil {
 		t.Fatalf("failed to create test file: %v", err)
 	}
+<<<<<<< HEAD
 	_ = f.Close()
+||||||| fbcf912
+	f.Close()
+=======
+	if err := f.Close(); err != nil {
+		t.Fatalf("failed to close test file: %v", err)
+	}
+>>>>>>> audit
 
 	// Make file read-only
 	if err := os.Chmod(filePath, 0444); err != nil {
 		t.Fatalf("failed to make file read-only: %v", err)
 	}
+<<<<<<< HEAD
 	defer func() { _ = os.Chmod(filePath, 0644) }() // Restore for cleanup
+||||||| fbcf912
+	defer os.Chmod(filePath, 0644) // Restore for cleanup
+=======
+	defer func() {
+		if err := os.Chmod(filePath, 0644); err != nil {
+			t.Errorf("failed to restore file permissions: %v", err)
+		}
+	}() // Restore for cleanup
+>>>>>>> audit
 
 	content := strings.NewReader("test content")
 
@@ -788,7 +873,7 @@ func TestEncryptSave_HeaderFileWriteError(t *testing.T) {
 	}
 
 	// OpenFile with O_TRUNC on read-only file should fail
-	if !strings.Contains(err.Error(), "failed to create file") {
+	if !strings.Contains(err.Error(), "failed to create temp file") {
 		t.Logf("Got error (may vary by OS): %v", err)
 	}
 }

@@ -3,10 +3,11 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"filippo.io/age"
 
@@ -18,22 +19,35 @@ import (
 // encryptSave encrypts the Header h and the content separately and
 // concatenates both encrypted payloads.
 //
-// It saves the concatenated encrypted payloads on an age file. The name of the
-// file is a hash of the header (label and category) and the public age key.
+// It saves the concatenated encrypted payloads on an age file atomically.
+// The name of the file is a hash of the header (label and category) and the 
+// public age key.
 //
-// If an error occurs during content writing, a partial file may remain on disk.
+// Uses atomic write pattern: writes to temp file, then renames on success.
 func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Setup) (err error) {
 
 	// Step 1: Encrypt header to memory buffer
-	// This is done first because it's independent and writes to memory only.
 	buf := new(bytes.Buffer)
 	ageWr, err := age.Encrypt(buf, s.Id.Id.Recipient())
 	if err != nil {
 		return fmt.Errorf("failed to create age encryptor for header: %w", err)
 	}
 
-	_, err = ageWr.Write(h.Pad())
+	headerBytes, err := h.Pad()
 	if err != nil {
+		// Join the error from Close (if any) with the padding error
+		if closeErr := ageWr.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("failed to close header encryptor: %w", closeErr))
+		}
+		return fmt.Errorf("failed to pad header: %w", err)
+	}
+
+	_, err = ageWr.Write(headerBytes)
+	if err != nil {
+		// Join the error from Close (if any) with the write error
+		if closeErr := ageWr.Close(); closeErr != nil {
+			err = errors.Join(err, fmt.Errorf("failed to close header encryptor: %w", closeErr))
+		}
 		return fmt.Errorf("failed to write header: %w", err)
 	}
 
@@ -47,65 +61,74 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 		return fmt.Errorf("failed to pad encrypted header: %w", err)
 	}
 
-	// Step 3: Create the output file
-	filePath := s.Repository + "/" + fileName(h, s.Id, suffix)
-
-	f, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	// Step 3: Generate final and temporary file paths
+	fname, err := fileName(h, s.Id, suffix)
 	if err != nil {
-		return fmt.Errorf("failed to create file %s: %w", filePath, err)
+		return fmt.Errorf("failed to generate filename: %w", err)
+	}
+	finalPath := filepath.Join(s.Repository, fname)
+	tmpPath := finalPath + ".tmp"
+
+	// Step 4: Create temporary file
+	f, err := os.OpenFile(tmpPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return fmt.Errorf("failed to create temp file %s: %w", tmpPath, err)
 	}
 
-	// Defer file close - this will run last (defers execute in LIFO order)
+	// DEFER 1 (executes LAST): Cleanup temp file on error
+	// Fix: Defined BEFORE Rename, so it executes AFTER Rename.
+	// If defer Rename fails, it updates 'err', and this defer will see the error and remove the file.
+	// If Rename success, it sees no error and does nothing. This is correct because the temp file is already gone.
 	defer func() {
-		if cerr := f.Close(); cerr != nil && err == nil {
-			err = fmt.Errorf("failed to close file: %w", cerr)
+		if err != nil {
+			if remErr := os.Remove(tmpPath); remErr != nil {
+				err = errors.Join(err, fmt.Errorf("failed to remove temp file: %w", remErr))
+			}
 		}
 	}()
 
-	// Step 4: Write the encrypted header to file
+	// DEFER 2 (executes THIRD): Atomic rename if successful
+	// Only runs if no errors yet.
+	// This ensures that if os.Rename fails, the 'err' is captured, and Defer 1 cleans up.
+	defer func() {
+		if err == nil {
+			if rerr := os.Rename(tmpPath, finalPath); rerr != nil {
+				err = fmt.Errorf("failed to rename temp file: %w", rerr)
+			}
+		}
+	}()
+
+	// DEFER 3 (executes SECOND): Close file
+	// If an error already exists, we keep it AND add the close error.
+	// If err is nil, Join(nil, cerr) sets err to cerr.
+	defer func() {
+		if cerr := f.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("failed to close file: %w", cerr))
+		}
+	}()
+
+	// Step 5: Write the encrypted header to temp file
 	_, err = f.Write(headerPadded)
 	if err != nil {
 		return fmt.Errorf("failed to write encrypted header to file: %w", err)
 	}
 
-	// Step 5: Set up the content encryption writer stack
-	// Stack: file ← bufFile (buffered) ← ageContentWr (encrypted)
-	//
-	// Variables declared here so they're in scope for the cleanup defer below.
+	// Step 6: Set up the content encryption writer stack
 	var ageContentWr io.WriteCloser
 	var bufFile *bufio.Writer
 
-	// CLEANUP DEFER: Handles proper shutdown of the writer stack.
-	//
-	// This defer will execute BEFORE the file close defer above (LIFO order).
-	// It ensures that even if errors occur during writing, we attempt to:
-	// 1. Finalize encryption (close ageContentWr)
-	// 2. Flush buffered data (flush bufFile)
-	//
-	// Cleanup order is critical:
-	//   - ageContentWr.Close() must happen first to finalize encryption and
-	//     write authentication tags to bufFile
-	//   - bufFile.Flush() must happen second to push buffered data to the file
-	//   - f.Close() happens last (in the defer above) to sync to disk
-	//
-	// Error handling strategy: preserve the first error (the root cause),
-	// but still attempt all cleanup steps. This means if writing fails,
-	// we still try to close/flush everything to leave the file in the most
-	// consistent state possible.
+	// DEFER 4 (executes FIRST): Close age writer and flush buffer
+	// Using Join to capture flush/close errors without losing main errors.
 	defer func() {
-		// Close the age encryption writer to finalize encryption
 		if ageContentWr != nil {
-			if cerr := ageContentWr.Close(); cerr != nil && err == nil {
-				// Only capture this error if no previous error occurred
-				err = fmt.Errorf("failed to close content encryptor: %w", cerr)
+			if cerr := ageContentWr.Close(); cerr != nil {
+				err = errors.Join(err, fmt.Errorf("failed to close content encryptor: %w", cerr))
 			}
 		}
 
-		// Flush the buffered writer to push remaining data to file
 		if bufFile != nil {
-			if ferr := bufFile.Flush(); ferr != nil && err == nil {
-				// Only capture this error if no previous error occurred
-				err = fmt.Errorf("failed to flush buffered writer: %w", ferr)
+			if ferr := bufFile.Flush(); ferr != nil {
+				err = errors.Join(err, fmt.Errorf("failed to flush buffered writer: %w", ferr))
 			}
 		}
 	}()
@@ -118,21 +141,21 @@ func encryptSave(h *header.Header, suffix string, content io.Reader, s *setup.Se
 		return fmt.Errorf("failed to create age encryptor for content: %w", err)
 	}
 
-	// Step 6: Stream content through the encryption stack
+	// Step 7: Stream content
 	bufContent := bufio.NewReader(content)
-
 	if _, err := io.Copy(ageContentWr, bufContent); err != nil {
 		return fmt.Errorf("failed to copy content: %w", err)
 	}
 
-	// Cleanup happens in defer above - no need to explicitly close/flush here
 	return nil
 }
 
 // fileName generates the file name of a privage encrypted file.
 // The hash is a function of the header and the age public key.
-func fileName(h *header.Header, identity id.Identity, suffix string) string {
-	hash := append(h.Pad(), identity.Id.Recipient().String()...)
-	hashStr := fmt.Sprintf("%x", sha256.Sum256(hash))
-	return hashStr + suffix + PrivageExtension
+func fileName(h *header.Header, identity id.Identity, suffix string) (string, error) {
+	hashStr, err := h.Hash(identity.Id.Recipient().String())
+	if err != nil {
+		return "", fmt.Errorf("failed to generate header hash: %w", err)
+	}
+	return hashStr + suffix + PrivageExtension, nil
 }

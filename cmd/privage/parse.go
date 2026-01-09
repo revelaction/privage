@@ -52,7 +52,7 @@ func parseInitArgs(args []string, ui UI) (string, error) {
 		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
 		_, _ = fmt.Fprintf(fs.Output(), "  Add a .gitignore, age/yubikey key file to the current directory. Add a config file in the home directory.\n")
 		_, _ = fmt.Fprintf(fs.Output(), "\nOptions:\n")
-		fs.PrintDefaults()
+		_, _ = fmt.Fprintf(fs.Output(), "  -p, -piv-slot string  Use the yubikey slot key to encrypt the age private key\n")
 	}
 
 	if parseErr := fs.Parse(args); parseErr != nil {
@@ -344,7 +344,8 @@ func parseReencryptArgs(args []string, ui UI) (bool, bool, error) {
 		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
 		_, _ = fmt.Fprintf(fs.Output(), "  Reencrypt all decrypted files that are already encrypted. (default is dry-run)\n")
 		_, _ = fmt.Fprintf(fs.Output(), "\nOptions:\n")
-		fs.PrintDefaults()
+		_, _ = fmt.Fprintf(fs.Output(), "  -f, -force  Force encryption of the files.\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  -c, -clean  Force encryption the files and also delete/clean the decrypted files.\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -375,7 +376,8 @@ func parseRotateArgs(args []string, ui UI) (bool, string, error) {
 		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
 		_, _ = fmt.Fprintf(fs.Output(), "  Create a new age key and reencrypt every file with the new key.\n")
 		_, _ = fmt.Fprintf(fs.Output(), "\nOptions:\n")
-		fs.PrintDefaults()
+		_, _ = fmt.Fprintf(fs.Output(), "  -c, -clean           Delete old Key's encrypted files. Rename new encrypted files and the new key\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  -p, -piv-slot string  Use the yubikey slot to encrypt the age private key with the RSA Key\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
