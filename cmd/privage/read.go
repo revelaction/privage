@@ -22,7 +22,17 @@ const (
 // yields the decrypted header.
 //
 // The repository is expected to be flat; subdirectories are ignored.
-func headerGenerator(repoDir string, identity id.Identity) <-chan *header.Header {
+// Returns an error if the repository directory cannot be accessed.
+func headerGenerator(repoDir string, identity id.Identity) (<-chan *header.Header, error) {
+
+	// 1. Synchronous check for repository directory
+	info, err := os.Stat(repoDir)
+	if err != nil {
+		return nil, fmt.Errorf("could not access repository directory: %w", err)
+	}
+	if !info.IsDir() {
+		return nil, fmt.Errorf("repository path '%s' is not a directory", repoDir)
+	}
 
 	ch := make(chan *header.Header)
 
@@ -121,7 +131,7 @@ func headerGenerator(repoDir string, identity id.Identity) <-chan *header.Header
 		close(ch)
 	}()
 
-	return ch
+	return ch, nil
 }
 
 // contentReader returns an `age` reader that provides the decrypted content

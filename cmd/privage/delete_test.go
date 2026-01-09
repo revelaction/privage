@@ -26,7 +26,11 @@ func TestDeleteCommand_Success(t *testing.T) {
 
 	// Verify file is actually gone
 	found := false
-	for h := range headerGenerator(th.Repository, th.Id) {
+	ch, err := headerGenerator(th.Repository, th.Id)
+	if err != nil {
+		t.Fatalf("headerGenerator failed: %v", err)
+	}
+	for h := range ch {
 		if h.Label == label {
 			found = true
 			break

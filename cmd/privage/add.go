@@ -16,7 +16,11 @@ import (
 func addCommand(s *setup.Setup, cat string, label string, ui UI) error {
 
 	// Check label exists
-	if labelExists(label, s.Id) {
+	exists, err := labelExists(label, s.Id)
+	if err != nil {
+		return fmt.Errorf("failed to check if label exists: %w", err)
+	}
+	if exists {
 		return fmt.Errorf("second argument (label) %q already exist", label)
 	}
 
@@ -96,10 +100,14 @@ func addCustomCategory(h *header.Header, s *setup.Setup, ui UI) (err error) {
 	return nil
 }
 
-func labelExists(label string, identity id.Identity) bool {
+func labelExists(label string, identity id.Identity) (bool, error) {
 	labels := map[string]struct{}{}
 
-	for h := range headerGenerator(".", identity) {
+	ch, err := headerGenerator(".", identity)
+	if err != nil {
+		return false, err
+	}
+	for h := range ch {
 		if _, ok := labels[h.Label]; !ok {
 			labels[h.Label] = struct{}{}
 		}
@@ -107,9 +115,9 @@ func labelExists(label string, identity id.Identity) bool {
 
 	for k := range labels {
 		if k == label {
-			return true
+			return true, nil
 		}
 	}
 
-	return false
+	return false, nil
 }

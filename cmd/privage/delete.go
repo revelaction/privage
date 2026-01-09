@@ -14,7 +14,11 @@ func deleteCommand(s *setup.Setup, label string, ui UI) error {
 	}
 
 	found := false
-	for h := range headerGenerator(s.Repository, s.Id) {
+	ch, err := headerGenerator(s.Repository, s.Id)
+	if err != nil {
+		return err
+	}
+	for h := range ch {
 		if h.Label == label {
 			err := os.Remove(h.Path)
 			if err != nil {

@@ -23,7 +23,11 @@ func reencrypt(s *setup.Setup, isForce, isClean bool, ui UI) error {
 
 	headers := []*header.Header{}
 
-	for h := range headerGenerator(s.Repository, s.Id) {
+	ch, err := headerGenerator(s.Repository, s.Id)
+	if err != nil {
+		return err
+	}
+	for h := range ch {
 		headers = append(headers, h)
 	}
 
@@ -89,7 +93,11 @@ func reencrypt(s *setup.Setup, isForce, isClean bool, ui UI) error {
 func clean(s *setup.Setup, isForce bool, ui UI) error {
 	headers := []*header.Header{}
 
-	for h := range headerGenerator(s.Repository, s.Id) {
+	ch, err := headerGenerator(s.Repository, s.Id)
+	if err != nil {
+		return err
+	}
+	for h := range ch {
 		headers = append(headers, h)
 	}
 

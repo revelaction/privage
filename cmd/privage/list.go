@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -12,13 +13,23 @@ import (
 // listCommand list encripted files
 func listCommand(s *setup.Setup, filter string, ui UI) error {
 	headers := []*header.Header{}
+	failures := []*header.Header{}
 
 	if s.Id.Id == nil {
 		return fmt.Errorf("%w: %v", ErrNoIdentity, s.Id.Err)
 	}
 
-	for h := range headerGenerator(s.Repository, s.Id) {
-		headers = append(headers, h)
+	ch, err := headerGenerator(s.Repository, s.Id)
+	if err != nil {
+		return err
+	}
+
+	for h := range ch {
+		if h.Err != nil {
+			failures = append(failures, h)
+		} else {
+			headers = append(headers, h)
+		}
 	}
 
 	var toList, toListForCat, toListForLabel []*header.Header
@@ -29,38 +40,44 @@ func listCommand(s *setup.Setup, filter string, ui UI) error {
 		for _, h := range sorted {
 			_, _ = fmt.Fprintf(ui.Out, "%8s%s\n", "", h)
 		}
+	} else {
 
-		return nil
-	}
+		toListForCat = headersForFilterCat(filter, headers)
+		toListForLabel = headersForFilterLabel(filter, headers)
 
-	toListForCat = headersForFilterCat(filter, headers)
-	toListForLabel = headersForFilterLabel(filter, headers)
-
-	if len(toListForCat) == 0 && len(toListForLabel) == 0 {
-		_, _ = fmt.Fprintf(ui.Out, "Found no encrypted tracked files matching '%s'\n", filter)
-		return nil
-	}
-
-	if len(toListForCat) > 0 {
-		_, _ = fmt.Fprintf(ui.Out, "Found %d files with category matching '%s':\n", len(toListForCat), filter)
-		_, _ = fmt.Fprintln(ui.Out)
-		sorted := sortList(toListForCat)
-		for _, h := range sorted {
-			_, _ = fmt.Fprintf(ui.Out, "%8s%s\n", "", h)
+		if len(toListForCat) == 0 && len(toListForLabel) == 0 {
+			_, _ = fmt.Fprintf(ui.Out, "Found no encrypted tracked files matching '%s'\n", filter)
 		}
 
-		_, _ = fmt.Fprintln(ui.Out)
-	}
+		if len(toListForCat) > 0 {
+			_, _ = fmt.Fprintf(ui.Out, "Found %d files with category matching '%s':\n", len(toListForCat), filter)
+			_, _ = fmt.Fprintln(ui.Out)
+			sorted := sortList(toListForCat)
+			for _, h := range sorted {
+				_, _ = fmt.Fprintf(ui.Out, "%8s%s\n", "", h)
+			}
 
-	if len(toListForLabel) > 0 {
-		_, _ = fmt.Fprintf(ui.Out, "Found %d files with name matching '%s':\n", len(toListForLabel), filter)
-		_, _ = fmt.Fprintln(ui.Out)
-		sorted := sortList(toListForLabel)
-		for _, h := range sorted {
-			_, _ = fmt.Fprintf(ui.Out, "%8s%s\n", "", h)
+			_, _ = fmt.Fprintln(ui.Out)
 		}
 
-		_, _ = fmt.Fprintln(ui.Out)
+		if len(toListForLabel) > 0 {
+			_, _ = fmt.Fprintf(ui.Out, "Found %d files with name matching '%s':\n", len(toListForLabel), filter)
+			_, _ = fmt.Fprintln(ui.Out)
+			sorted := sortList(toListForLabel)
+			for _, h := range sorted {
+				_, _ = fmt.Fprintf(ui.Out, "%8s%s\n", "", h)
+			}
+
+			_, _ = fmt.Fprintln(ui.Out)
+		}
+	}
+
+	if len(failures) > 0 {
+		_, _ = fmt.Fprintf(ui.Out, "\nFound %d files with errors:\n", len(failures))
+		for _, f := range failures {
+			name := filepath.Base(f.Path)
+			_, _ = fmt.Fprintf(ui.Out, "💥 %s Error: %v\n", name, f.Err)
+		}
 	}
 
 	return nil

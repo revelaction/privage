@@ -33,7 +33,10 @@ func rotate(s *setup.Setup, isClean bool, slot string, ui UI) (err error) {
 		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}
 
-	numFiles := numFilesForIdentity(s.Repository, s.Id)
+	numFiles, err := numFilesForIdentity(s.Repository, s.Id)
+	if err != nil {
+		return fmt.Errorf("failed to count files: %w", err)
+	}
 	if numFiles == 0 {
 		return fmt.Errorf("found no encrypted files with key %s", s.Id.Path)
 	}
@@ -91,7 +94,10 @@ func rotate(s *setup.Setup, isClean bool, slot string, ui UI) (err error) {
 
 	numFilesRotate := 0
 	if idRotate.Err == nil {
-		numFilesRotate = numFilesForIdentity(s.Repository, idRotate)
+		numFilesRotate, err = numFilesForIdentity(s.Repository, idRotate)
+		if err != nil {
+			return fmt.Errorf("failed to count rotated files: %w", err)
+		}
 		_, _ = fmt.Fprintf(ui.Err, "Found %d files encrypted with the rotated key %s\n", numFilesRotate, idRotate.Path)
 
 		if numFiles == numFilesRotate {
@@ -201,7 +207,11 @@ func rotate(s *setup.Setup, isClean bool, slot string, ui UI) (err error) {
 	// some age files present in the repo will be encrypted with the old key and
 	// some with the new one.
 	numReencrypted := 0
-	for h := range headerGenerator(s.Repository, s.Id) {
+	ch, err := headerGenerator(s.Repository, s.Id)
+	if err != nil {
+		return err
+	}
+	for h := range ch {
 		if h.Err != nil {
 			var e *age.NoIdentityMatchError
 			if errors.As(h.Err, &e) {
@@ -267,7 +277,11 @@ func cleanRotate(s *setup.Setup, idRotate id.Identity, slot string, ui UI) error
 
 	// 1) remove all age encrypted fields of old key
 	numDeleted := 0
-	for h := range headerGenerator(s.Repository, s.Id) {
+	ch, err := headerGenerator(s.Repository, s.Id)
+	if err != nil {
+		return err
+	}
+	for h := range ch {
 		if h.Err != nil {
 			var e *age.NoIdentityMatchError
 			if !errors.As(h.Err, &e) {
@@ -291,7 +305,11 @@ func cleanRotate(s *setup.Setup, idRotate id.Identity, slot string, ui UI) error
 
 	// 2) rename
 	numRenamed := 0
-	for h := range headerGenerator(s.Repository, idRotate) {
+	ch2, err := headerGenerator(s.Repository, idRotate)
+	if err != nil {
+		return err
+	}
+	for h := range ch2 {
 		if h.Err != nil {
 			var e *age.NoIdentityMatchError
 			if errors.As(h.Err, &e) {
@@ -319,7 +337,7 @@ func cleanRotate(s *setup.Setup, idRotate id.Identity, slot string, ui UI) error
 
 	// 3) rename old key to back
 	backupKeyPath := id.BackupFilePath(s.Repository)
-	err := os.Rename(s.Id.Path, backupKeyPath)
+	err = os.Rename(s.Id.Path, backupKeyPath)
 	if err != nil {
 		return err
 	}
@@ -352,9 +370,13 @@ func cleanRotate(s *setup.Setup, idRotate id.Identity, slot string, ui UI) error
 	return nil
 }
 
-func numFilesForIdentity(repoDir string, identity id.Identity) int {
+func numFilesForIdentity(repoDir string, identity id.Identity) (int, error) {
 	num := 0
-	for h := range headerGenerator(repoDir, identity) {
+	ch, err := headerGenerator(repoDir, identity)
+	if err != nil {
+		return 0, err
+	}
+	for h := range ch {
 		if h.Err != nil {
 			var e *age.NoIdentityMatchError
 			if errors.As(h.Err, &e) {
@@ -365,5 +387,5 @@ func numFilesForIdentity(repoDir string, identity id.Identity) int {
 		num++
 	}
 
-	return num
+	return num, nil
 }

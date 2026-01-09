@@ -16,7 +16,11 @@ func showCommand(s *setup.Setup, label string, fieldName string, ui UI) (err err
 		return fmt.Errorf("%w: %v", ErrNoIdentity, s.Id.Err)
 	}
 
-	for h := range headerGenerator(s.Repository, s.Id) {
+	ch, err := headerGenerator(s.Repository, s.Id)
+	if err != nil {
+		return err
+	}
+	for h := range ch {
 		if h.Label == label {
 			f, err := os.Open(h.Path)
 			if err != nil {

@@ -68,7 +68,10 @@ func TestHeaderGenerator(t *testing.T) {
 			createTestAgeFile(t, tmpDir, fmt.Sprintf("file%d", i), h, identity)
 		}
 
-		gen := headerGenerator(tmpDir, privageId)
+		gen, err := headerGenerator(tmpDir, privageId)
+		if err != nil {
+			t.Fatalf("headerGenerator failed: %v", err)
+		}
 		count := 0
 		for h := range gen {
 			if h.Err != nil {
@@ -105,7 +108,10 @@ func TestHeaderGenerator(t *testing.T) {
 		}
 		createTestAgeFile(t, subDir, "sub_file", &header.Header{Label: "sub"}, identity)
 
-		gen := headerGenerator(tmpDir, privageId)
+		gen, err := headerGenerator(tmpDir, privageId)
+		if err != nil {
+			t.Fatalf("headerGenerator failed: %v", err)
+		}
 		count := 0
 		for h := range gen {
 			if h.Label != "root" {
@@ -135,7 +141,10 @@ func TestHeaderGenerator(t *testing.T) {
 		otherIdentity, _ := age.GenerateX25519Identity()
 		createTestAgeFile(t, tmpDir, "wrong_key", &header.Header{Label: "wrong"}, otherIdentity)
 
-		gen := headerGenerator(tmpDir, privageId)
+		gen, err := headerGenerator(tmpDir, privageId)
+		if err != nil {
+			t.Fatalf("headerGenerator failed: %v", err)
+		}
 
 		results := make(map[string]*header.Header)
 		for h := range gen {
@@ -173,7 +182,10 @@ func TestHeaderGenerator(t *testing.T) {
 			t.Fatalf("failed to write unreadable test file: %v", err)
 		}
 
-		gen := headerGenerator(tmpDir, privageId)
+		gen, err := headerGenerator(tmpDir, privageId)
+		if err != nil {
+			t.Fatalf("headerGenerator failed: %v", err)
+		}
 		h := <-gen
 		if h == nil {
 			t.Fatal("expected at least one result")
@@ -209,7 +221,10 @@ func TestHeaderGenerator(t *testing.T) {
 			t.Errorf("failed to close file: %v", err)
 		}
 
-		gen := headerGenerator(tmpDir, privageId)
+		gen, err := headerGenerator(tmpDir, privageId)
+		if err != nil {
+			t.Fatalf("headerGenerator failed: %v", err)
+		}
 		h := <-gen
 		
 		if h == nil {
@@ -250,7 +265,10 @@ func TestHeaderGenerator(t *testing.T) {
 			t.Errorf("failed to close file: %v", err)
 		}
 
-		gen := headerGenerator(tmpDir, privageId)
+		gen, err := headerGenerator(tmpDir, privageId)
+		if err != nil {
+			t.Fatalf("headerGenerator failed: %v", err)
+		}
 		h := <-gen
 		
 		if h == nil {

@@ -20,7 +20,11 @@ func decryptCommand(s *setup.Setup, label string, ui UI) (retErr error) {
 	}
 
 	found := false
-	for h := range headerGenerator(s.Repository, s.Id) {
+	ch, err := headerGenerator(s.Repository, s.Id)
+	if err != nil {
+		return err
+	}
+	for h := range ch {
 		if h.Label == label {
 			found = true
 			w, err := os.Create(filepath.Join(s.Repository, label))

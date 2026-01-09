@@ -62,8 +62,12 @@ func completeCommand(opts setup.Options, args []string, ui UI) error {
 			return nil, nil
 		}
 
+		ch, err := headerGenerator(s.Repository, s.Id)
+		if err != nil {
+			return nil, err
+		}
 		var headers []*header.Header
-		for h := range headerGenerator(s.Repository, s.Id) {
+		for h := range ch {
 			headers = append(headers, h)
 		}
 		return headers, nil
