@@ -35,6 +35,30 @@ You may want to use privage if:
   [here](https://github.com/FiloSottile/age#passphrase-protected-key-files).
   privage supports yubikeys to encrypt the age secret key.  
 
+- [Features](#features)
+- [Installation](#installation)
+  - [Migration from v0.30.0 or older](#migration-from-v0300-or-older)
+  - [Dependencies](#dependencies)
+  - [privage](#privage)
+    - [Build without Yubikey support](#build-without-yubikey-support)
+- [Usage](#usage)
+  - [Initialize a directory for your credentials and other encrypted files](#initialize-a-directory-for-your-credentials-and-other-encrypted-files)
+  - [Create a credentials file](#create-a-credentials-file)
+  - [Encrypt any file](#encrypt-any-file)
+  - [List the encrypted files](#list-the-encrypted-files)
+  - [Copy the password to the clipboard](#copy-the-password-to-the-clipboard)
+  - [Show the contents of a credentials file](#show-the-contents-of-a-credentials-file)
+  - [Show a specific field of a credentials file](#show-a-specific-field-of-a-credentials-file)
+  - [Cat the contents of an encrypted file](#cat-the-contents-of-an-encrypted-file)
+  - [Decrypt a file for manual edition](#decrypt-a-file-for-manual-edition)
+  - [Reencrypt edited files](#reencrypt-edited-files)
+  - [Delete a encrypted file](#delete-a-encrypted-file)
+  - [Get information about the configuration](#get-information-about-the-configuration)
+  - [Rotate](#rotate)
+- [Design](#design)
+- [Bash Completion](#bash-completion)
+- [Command line options](#command-line-options)
+
 
 # Features
 
@@ -53,6 +77,16 @@ You may want to use privage if:
 Pre-built binaries for multiple platforms (Linux, macOS, Windows, FreeBSD) and architectures (amd64, arm64, arm) are available on the [releases page](https://github.com/revelaction/privage/releases/).
 
 If your system has a supported version of Go, you can build from source.
+
+## Migration from v0.30.0 or older
+
+Version `v0.30.0` was the last version that allowed the `.age` suffix for encrypted files. Starting from `v0.31.0`, `privage` strictly enforces the `.privage` extension.
+
+If you are migrating from an older version, you must rename your existing `.age` files to `.privage`. You can use the following command in your secrets directory:
+
+```bash
+find . -maxdepth 1 -name "*.age" -type f -exec sh -c 'mv "$1" "${1%.age}.privage"' _ {} \;
+```
 
 ## Dependencies
 
