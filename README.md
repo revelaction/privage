@@ -24,7 +24,7 @@ any secret information (not even the file name) to those 3-party services.
 
 You may want to use privage if:
 
-- You want to keep your encrypted credentials and other secrets files in a directory managed by a revision control system (ex: git)
+- You want to keep your encrypted credentials and other secrets files in a directory (maybe managed by a revision control system (ex: git))
 - You want to have backups of this directory in untrusted 3 party services (github, gitlab, bitbucket)
 - You do not want to leak any information (not even the name of the files) in
   case of a breach of those 3 party services, which you otherwise should always assume.
