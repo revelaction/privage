@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"filippo.io/age"
 
@@ -56,9 +57,9 @@ func headerGenerator(repoDir string, identity id.Identity) (<-chan *header.Heade
 				return nil
 			}
 
-			// Only process .privage files
-			ext := filepath.Ext(d.Name())
-			if ext != PrivageExtension {
+			// Only process files that match the privage naming convention:
+			// Must end in .privage and start with 64 hex characters.
+			if !isPrivageFile(d.Name()) {
 				return nil
 			}
 
@@ -144,4 +145,39 @@ func contentReader(src io.Reader, identity id.Identity) (io.Reader, error) {
 	}
 
 	return age.Decrypt(src, identity.Id)
+}
+
+func isPrivageFile(name string) bool {
+    const hexLen = 64
+    
+    // 1. Check minimum length
+    if len(name) < hexLen+len(PrivageExtension) {
+        return false
+    }
+    
+    // 2. Check extension
+    if !strings.HasSuffix(name, PrivageExtension) {
+        return false
+    }
+    
+    // 3. Check Hex Prefix
+    // Iterate over bytes, not runes (avoids UTF-8 decoding overhead)
+    // We only check the first 64 bytes of the original string
+    for i := 0; i < hexLen; i++ {
+        c := name[i]
+        if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
+            return false
+        }
+    }
+    
+	// 4. No path separators allowed between prefix and extension (prevent
+	// directory traversal in filename)
+    for i := hexLen; i < len(name)-len(PrivageExtension); i++ {
+        c := name[i]
+        if c == '/' || c == '\\' {
+            return false
+        }
+    }
+    
+    return true
 }
