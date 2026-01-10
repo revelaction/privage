@@ -80,10 +80,9 @@ You may want to use privage if:
 
 Pre-built binaries for multiple platforms (Linux, macOS, Windows, FreeBSD) and architectures (amd64, arm64, arm) are available on the [releases page](https://github.com/revelaction/privage/releases/).
 
-If your system has a supported version of Go, you can build from source.
-
-
 ## Build
+
+If your system has a supported version of Go, you can build from source.
 
 ### Dependencies
 
