@@ -47,6 +47,7 @@ You may want to use privage if:
   - [Migration from v0.30.0 or older](#migration-from-v0300-or-older)
 - [Usage](#usage)
   - [Initialize a directory for your credentials and other encrypted files](#initialize-a-directory-for-your-credentials-and-other-encrypted-files)
+  - [Stateless usage (automation)](#stateless-usage-automation)
   - [Create a credentials file](#create-a-credentials-file)
   - [Encrypt any file](#encrypt-any-file)
   - [List the encrypted files](#list-the-encrypted-files)
@@ -166,6 +167,19 @@ privage init -p 86
 🔑 Generated encrypted age key file `/home/user/src/privage/privage-key.txt` with PIV slot 86 ✔️
 📒 Generated `/home/user/src/privage/.gitignore` file ✔️
 📑 Generated config file .privage.conf ✔️
+```
+
+## Stateless usage (automation)
+
+The `init` command is optional and primarily serves to set up a convenient environment. For automation or usage within scripts, `privage` can be used statelessly by explicitly providing the age key and the repository path using flags:
+
+- `-k`, `--key`: Path to the age secret key file.
+- `-r`, `--repository`: Path to the directory containing the `.privage` files.
+
+This allows you to use `privage` without a configuration file:
+
+```console
+privage -k /path/to/key.txt -r /path/to/secrets list
 ```
 
 ## Create a credentials file
