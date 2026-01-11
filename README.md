@@ -459,32 +459,31 @@ fi
 
 ```console
 ⤷ privage help
-NAME:
-privage - password manager/encryption tool based on age
+Usage: privage [global options] command [command options] [arguments...]
 
-USAGE:
-privage [global options] command [command options] [arguments...]
+Commands:
+  init       Add a .gitignore, age/yubikey key file to the current directory. Add a config file in the home directory.
+  key        Decrypt the age private key with the PIV key defined in the .privage.conf file.
+  status     Provide information about the current configuration.
+  add        Add a new encrypted file.
+  delete     Delete an encrypted file.
+  list       list metadata of all/some encrypted files.
+  show       Show the contents the an encripted file.
+  cat        Print the full contents of an encrypted file to stdout.
+  clipboard  Copy the credential password to the clipboard
+  decrypt    Decrypt a file and write its content in a file named after the label
+  reencrypt  Reencrypt all decrypted files that are already encrypted. (default is dry-run)
+  rotate     Create a new age key and reencrypt every file with the new key
+  bash       Dump bash complete script.
+  version    Show version information
+  help       Show help for a command.
 
-COMMANDS:
-init       Add a .gitignore, age/yubikey key file to the current directory. Add a config file in the home directory.
-key        Decrypt the age private key with the PIV key defined in the .privage.conf file.
-status     Provide information about the current configuration.
-add        Add a new encrypted file.
-delete     Delete an encrypted file.
-list       list metadata of all/some encrypted files.
-show       Show the contents the an encripted file.
-cat        Print the decrypted contents of an encrypted file to stdout.
-clipboard  Copy the credential password to the clipboard
-    decrypt    Decrypt a file and write its content in a file named after the label
-reencrypt  Reencrypt all decrypted files that are already encrypted. (default is dry-run)
-    rotate     Create a new age key and reencrypt every file with the new key
-    bash       Dump bash complete script.
-    help, h    Shows a list of commands or help for one command
+Global Options:
+  -h, --help             Show help for privage
+  -c, -conf string       Use file as privage configuration file
+  -k, -key string        Use file path for private key
+  -p, -piv-slot string   The PIV slot for decryption of the age key
+  -r, -repository string Use file path as path for the encrypted files
 
-    GLOBAL OPTIONS:
-    --conf value, -c value        Use file as privage configuration file
-    --key value, -k value         Use file path for private key
-    --piv-slot value, -p value    The PIV slot for decryption of the age key
-    --repository value, -r value  Use file path as path for the encrypted files
-    --help, -h                    show help
+Version: v0.31.1, commit b15c5a6, yubikey enabled
 ```
