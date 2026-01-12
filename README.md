@@ -117,6 +117,8 @@ If you are migrating from an older version, you must rename your existing `.age`
 find . -maxdepth 1 -name "*.age" -type f -exec sh -c 'mv "$1" "${1%.age}.privage"' _ {} \;
 ```
 
+If you use git, you also need to update your `.gitignore` file to replace `!*.age` with `!*.privage` and run `git add .` to stage the renamed files.
+
 # Usage
 
 ## Initialize a directory for your credentials and other encrypted files
