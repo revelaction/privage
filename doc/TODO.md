@@ -1,3 +1,4 @@
+- bug: complete with privage show domain.com@myemail@mail.com: does not complete at first @ if many
 - privage like git current dir or not for add. maybe not
 - MODERN HEADER => later
     what about 4. PROBLEM that would be future!!!!
