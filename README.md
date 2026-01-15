@@ -173,7 +173,7 @@ privage init -p 86
 
 ## Stateless usage (automation)
 
-The `init` command is optional and primarily serves to set up a convenient environment. For automation or usage within scripts, `privage` can be used statelessly by explicitly providing the age key and the repository path using flags:
+The `init` command is optional and primarily serves to set up a convenient environment. For automation or usage within scripts, `privage` can be used statelessly by explicitly providing the age key and the directory path using flags:
 
 - `-k`, `--key`: Path to the age secret key file.
 - `-r`, `--repository`: Path to the directory containing the `.privage` files.
