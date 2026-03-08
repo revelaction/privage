@@ -19,9 +19,6 @@ The main goal of privage is to have your secrets (credentials and other
 files) securely backed up in untrusted 3-party locations whitout revealing
 any secret information (not even the file name) to those 3-party services.
 
-
-**WARNING: The author is not a cryptographer, and the code has not been reviewed. Use at your own risk.**
-
 You may want to use privage if:
 
 - You want to keep your encrypted credentials and other secrets files in a directory (maybe managed by a revision control system (ex: git))
