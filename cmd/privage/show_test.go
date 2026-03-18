@@ -7,6 +7,27 @@ import (
 	"testing"
 )
 
+func TestShow_AmbiguousLabel(t *testing.T) {
+	th := NewTestHelper(t)
+	// Create two files that share a common substring in their labels
+	th.AddEncryptedFile("service_prod", "credential", "password=\"prod\"")
+	th.AddEncryptedFile("service_test", "credential", "password=\"test\"")
+
+	var outBuf bytes.Buffer
+	ui := UI{Out: &outBuf, Err: &bytes.Buffer{}}
+
+	// "service" matches both "service_prod" and "service_test"
+	err := showCommand(th.Setup, "service", "", ui)
+
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	if !errors.Is(err, ErrAmbiguousLabel) {
+		t.Errorf("expected error %v, got %v", ErrAmbiguousLabel, err)
+	}
+}
+
 func TestShow_FullContent(t *testing.T) {
 	th := NewTestHelper(t)
 	content := "login = \"user123\"\npassword = \"supersecret\"\n"

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/revelaction/privage/credential"
 	"github.com/revelaction/privage/header"
@@ -20,46 +21,58 @@ func showCommand(s *setup.Setup, label string, fieldName string, ui UI) (err err
 	if err != nil {
 		return err
 	}
+	var match *header.Header
 	for h := range ch {
 		if h.Label == label {
-			f, err := os.Open(h.Path)
-			if err != nil {
-				return err
+			match = h
+			break
+		}
+		if strings.Contains(h.Label, label) {
+			if match != nil {
+				return fmt.Errorf("%w: %q", ErrAmbiguousLabel, label)
 			}
-			defer func() {
-				if cerr := f.Close(); cerr != nil && err == nil {
-					err = cerr
-				}
-			}()
-
-			r, err := contentReader(f, s.Id)
-			if err != nil {
-				return err
-			}
-
-			if h.Category != header.CategoryCredential {
-				return fmt.Errorf("%w: file '%s' is not a credential. Use 'privage cat %s' to view its contents", ErrNotCredential, label, label)
-			}
-
-			cred, err := credential.Decode(r)
-			if err != nil {
-				return err
-			}
-
-			if fieldName != "" {
-				val, ok := cred.GetField(fieldName)
-				if !ok {
-					return fmt.Errorf("%w: field '%s' not found in credential '%s'", ErrFieldNotFound, fieldName, label)
-				}
-				if _, err := fmt.Fprint(ui.Out, val); err != nil {
-					return err
-				}
-				return nil
-			}
-
-			return cred.FprintBasic(ui.Out)
+			match = h
 		}
 	}
 
-	return fmt.Errorf("%w: %q", ErrFileNotFound, label)
+	if match == nil {
+		return fmt.Errorf("%w: %q", ErrFileNotFound, label)
+	}
+
+	f, err := os.Open(match.Path)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if cerr := f.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}()
+
+	r, err := contentReader(f, s.Id)
+	if err != nil {
+		return err
+	}
+
+	if match.Category != header.CategoryCredential {
+		return fmt.Errorf("%w: file '%s' is not a credential. Use 'privage cat %s' to view its contents", ErrNotCredential, label, label)
+	}
+
+	cred, err := credential.Decode(r)
+	if err != nil {
+		return err
+	}
+
+	if fieldName != "" {
+		val, ok := cred.GetField(fieldName)
+		if !ok {
+			return fmt.Errorf("%w: field '%s' not found in credential '%s'", ErrFieldNotFound, fieldName, label)
+		}
+		if _, err := fmt.Fprint(ui.Out, val); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	return cred.FprintBasic(ui.Out)
 }

@@ -14,4 +14,7 @@ var (
 
 	// ErrNoIdentity is returned when the private key cannot be loaded.
 	ErrNoIdentity = errors.New("found no privage key file")
+
+	// ErrAmbiguousLabel is returned when multiple files match a requested label.
+	ErrAmbiguousLabel = errors.New("multiple files match label")
 )
