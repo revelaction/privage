@@ -1,18 +1,25 @@
 name: sloc
 
 on:
-  push:
-    branches: [main]
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:
   sloc-badge:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
+        # During a release event, GitHub Actions check out the release tag,
+        # which leads to a "detached HEAD" state. To commit and push changes back
+        # to the repository (e.g., updating the SLOC badge), we must explicitly
+        # check out the persistent target branch.
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
 
       - name: Set up Go
         uses: actions/setup-go@v5
