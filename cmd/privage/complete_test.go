@@ -29,6 +29,28 @@ func TestCompleteCommand(t *testing.T) {
 			contains:  []string{"version"},
 		},
 		{
+			name:      "Command completion (rename)",
+			setupData: func(th *TestHelper) {},
+			args:      []string{"--", "privage", "ren"},
+			contains:  []string{"rename"},
+		},
+		{
+			name: "Rename Label",
+			setupData: func(th *TestHelper) {
+				th.AddEncryptedFile("mycred", "credential", "pass")
+			},
+			args:     []string{"--", "privage", "rename", "my"},
+			contains: []string{"mycred"},
+		},
+		{
+			name: "Rename Target (should not suggest labels)",
+			setupData: func(th *TestHelper) {
+				th.AddEncryptedFile("mycred", "credential", "pass")
+			},
+			args:     []string{"--", "privage", "rename", "mycred", ""},
+			contains: []string{},
+		},
+		{
 			name: "Show Label",
 			setupData: func(th *TestHelper) {
 				th.AddEncryptedFile("mycred", "credential", "pass")
