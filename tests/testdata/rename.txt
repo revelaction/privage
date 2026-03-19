@@ -1,0 +1,44 @@
+# Setup environment
+exec privage init
+
+# Create a source file with known content
+cp input.txt secret.txt
+
+# Add (encrypt) the file
+exec privage add customcat secret.txt
+stderr 'Added file'
+
+# Verify the file exists in the list
+exec privage list
+stdout 'secret.txt'
+
+# Rename the file
+exec privage rename secret.txt renamed.txt
+stderr 'Renamed'
+
+# Verify the old name is gone and new name exists in the list
+exec privage list
+! stdout 'secret.txt'
+stdout 'renamed.txt'
+
+# Verify the content is preserved
+exec privage cat renamed.txt
+stdout 'secret data'
+
+# Error case: Rename non-existent file
+! exec privage rename missing.txt target.txt
+stderr 'not found'
+
+# Error case: Rename to existing file
+exec privage add othercat other.txt
+! exec privage rename renamed.txt other.txt
+stderr 'already exists'
+
+# Error case: Rename to same name
+! exec privage rename renamed.txt renamed.txt
+stderr 'identical'
+
+-- input.txt --
+secret data
+-- other.txt --
+other secret data
