@@ -188,6 +188,40 @@ func parseDeleteArgs(args []string, ui UI) (string, error) {
 	return deleteArgs[0], nil
 }
 
+func parseRenameArgs(args []string, ui UI) (string, string, error) {
+	fs := flag.NewFlagSet("rename", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	fs.Usage = func() {
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s rename [source] [destination]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  Rename an encrypted file.\n")
+		_, _ = fmt.Fprintf(fs.Output(), "\nArguments:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  source       The current label of the file\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  destination  The new label for the file\n")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			fs.SetOutput(ui.Out)
+			fs.Usage()
+			return "", "", err
+		}
+		fs.SetOutput(ui.Err)
+		FprintErr(ui.Err, err)
+		fs.Usage()
+		return "", "", err
+	}
+
+	renameArgs := fs.Args()
+	if len(renameArgs) != 2 {
+		fs.SetOutput(ui.Err)
+		fs.Usage()
+		return "", "", errors.New("rename command needs two arguments: <source> <destination>")
+	}
+
+	return renameArgs[0], renameArgs[1], nil
+}
+
 func parseKeyArgs(args []string, ui UI) error {
 	fs := flag.NewFlagSet("key", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
