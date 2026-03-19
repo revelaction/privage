@@ -24,7 +24,7 @@ func TestRenameCommand(t *testing.T) {
 		foundOld := false
 		foundNew := false
 		
-		ch, err := headerGenerator(th.Root, th.Setup.Id)
+		ch, err := headerGenerator(th.Root, th.Id)
 		if err != nil {
 			t.Fatal(err)
 		}
