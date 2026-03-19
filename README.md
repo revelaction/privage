@@ -53,6 +53,7 @@ You may want to use privage if:
   - [Show a specific field of a credentials file](#show-a-specific-field-of-a-credentials-file)
   - [Cat the contents of an encrypted file](#cat-the-contents-of-an-encrypted-file)
   - [Decrypt a file for manual edition](#decrypt-a-file-for-manual-edition)
+  - [Rename an encrypted file](#rename-an-encrypted-file)
   - [Reencrypt edited files](#reencrypt-edited-files)
   - [Delete an encrypted file](#delete-an-encrypted-file)
   - [Get information about the configuration](#get-information-about-the-configuration)

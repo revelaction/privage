@@ -585,3 +585,41 @@ func TestParseBashArgs(t *testing.T) {
 		}
 	})
 }
+
+func TestParseRenameArgs(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		src, dest, err := parseRenameArgs([]string{"old", "new"}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if src != "old" || dest != "new" {
+			t.Errorf("got %q/%q, want %q/%q", src, dest, "old", "new")
+		}
+	})
+
+	t.Run("Help", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, _, err := parseRenameArgs([]string{"--help"}, ui)
+		if !errors.Is(err, flag.ErrHelp) {
+			t.Fatalf("expected flag.ErrHelp, got %v", err)
+		}
+		if outBuf.Len() == 0 {
+			t.Error("expected usage output in Out buffer")
+		}
+	})
+
+	t.Run("MissingArgs", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, _, err := parseRenameArgs([]string{"old"}, ui)
+		if err == nil {
+			t.Fatal("expected error for missing argument")
+		}
+		if errBuf.Len() == 0 {
+			t.Error("expected error message in Err buffer")
+		}
+	})
+}
