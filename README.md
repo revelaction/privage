@@ -347,6 +347,16 @@ vim somewebsite.com@loginname
 
 After manually changing the file, you have to reencrypt the file...
 
+## Rename an encrypted file
+
+The command `rename` renames an encrypted file:
+
+```console
+privage rename somewebsite.com@loginname somewebsite.com@newloginname
+```
+
+Renaming is done by decrypting the file and re-encrypting it with the new label. The original file is then deleted.
+
 ## Reencrypt edited files
 
 Use the `reencrypt` command to reencrypt `all` files that were decrypted and are present in
