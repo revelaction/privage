@@ -16,13 +16,13 @@ jobs:
         # which leads to a "detached HEAD" state. To commit and push changes back
         # to the repository (e.g., updating the SLOC badge), we must explicitly
         # check out the persistent target branch.
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: main
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: '1.24'
 
