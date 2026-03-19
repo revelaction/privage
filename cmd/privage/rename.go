@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -17,7 +18,7 @@ import (
 //
 //  1. Write the new encrypted file (encryptSave is itself atomic via .tmp + rename).
 //  2. Remove the source file.
-func renameCommand(s *setup.Setup, srcLabel string, destLabel string, ui UI) error {
+func renameCommand(s *setup.Setup, srcLabel string, destLabel string, ui UI) (err error) {
 	if s.Id.Id == nil {
 		return fmt.Errorf("found no privage key file: %w", s.Id.Err)
 	}
@@ -28,9 +29,9 @@ func renameCommand(s *setup.Setup, srcLabel string, destLabel string, ui UI) err
 
 	// Single pass: locate source and check destination does not already exist.
 	var srcHeader *header.Header
-	ch, err := headerGenerator(s.Repository, s.Id)
-	if err != nil {
-		return err
+	ch, genErr := headerGenerator(s.Repository, s.Id)
+	if genErr != nil {
+		return genErr
 	}
 	for h := range ch {
 		if h.Label == srcLabel {
@@ -47,15 +48,19 @@ func renameCommand(s *setup.Setup, srcLabel string, destLabel string, ui UI) err
 
 	// Open the source file; contentReader skips the encrypted header block
 	// and returns a reader over the decrypted content.
-	srcFile, err := os.Open(srcHeader.Path)
-	if err != nil {
-		return fmt.Errorf("could not open source file: %w", err)
+	srcFile, openErr := os.Open(srcHeader.Path)
+	if openErr != nil {
+		return fmt.Errorf("could not open source file: %w", openErr)
 	}
-	defer srcFile.Close()
+	defer func() {
+		if cerr := srcFile.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("could not close source file: %w", cerr))
+		}
+	}()
 
-	contentR, err := contentReader(srcFile, s.Id)
-	if err != nil {
-		return fmt.Errorf("could not decrypt source content: %w", err)
+	contentR, crErr := contentReader(srcFile, s.Id)
+	if crErr != nil {
+		return fmt.Errorf("could not decrypt source content: %w", crErr)
 	}
 
 	// Build the new header: same category, new label.
@@ -66,13 +71,13 @@ func renameCommand(s *setup.Setup, srcLabel string, destLabel string, ui UI) err
 
 	// Step 1: Write new encrypted file (atomic: .tmp then rename).
 	// From this point forward the data is safe regardless of what happens next.
-	if err := encryptSave(newH, "", contentR, s); err != nil {
-		return fmt.Errorf("could not write destination file: %w", err)
+	if saveErr := encryptSave(newH, "", contentR, s); saveErr != nil {
+		return fmt.Errorf("could not write destination file: %w", saveErr)
 	}
 
 	// Step 2: Remove the source file.
-	if err := os.Remove(srcHeader.Path); err != nil {
-		return fmt.Errorf("could not remove source file %s: %w", srcHeader.Path, err)
+	if remErr := os.Remove(srcHeader.Path); remErr != nil {
+		return fmt.Errorf("could not remove source file %s: %w", srcHeader.Path, remErr)
 	}
 
 	_, _ = fmt.Fprintf(ui.Err, "Renamed '%s' to '%s' ✔️\n", srcLabel, destLabel)
