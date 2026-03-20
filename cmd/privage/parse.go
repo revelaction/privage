@@ -12,7 +12,7 @@ func parseCatArgs(args []string, ui UI) (string, error) {
 	fs := flag.NewFlagSet("cat", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
-		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s cat [label]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s cat <label>\n", os.Args[0])
 		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
 		_, _ = fmt.Fprintf(fs.Output(), "  Print the full contents of an encrypted file to stdout.\n")
 		_, _ = fmt.Fprintf(fs.Output(), "\nArguments:\n")
@@ -74,7 +74,7 @@ func parseAddArgs(args []string, ui UI) (string, string, error) {
 	fs := flag.NewFlagSet("add", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
-		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s add [category] [label]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s add <category> <label>\n", os.Args[0])
 		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
 		_, _ = fmt.Fprintf(fs.Output(), "  Add a new encrypted file.\n")
 		_, _ = fmt.Fprintf(fs.Output(), "\nArguments:\n")
@@ -118,7 +118,7 @@ func parseShowArgs(args []string, ui UI) (string, string, error) {
 	fs := flag.NewFlagSet("show", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
-		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s show [label] [field]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s show <label> [field]\n", os.Args[0])
 		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
 		_, _ = fmt.Fprintf(fs.Output(), "  Show the contents of an encrypted file (formatted if it's a credential).\n")
 		_, _ = fmt.Fprintf(fs.Output(), "  If a field name is provided, only that field's value is printed.\n")
@@ -159,7 +159,7 @@ func parseDeleteArgs(args []string, ui UI) (string, error) {
 	fs := flag.NewFlagSet("delete", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
-		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s delete [label]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s delete <label>\n", os.Args[0])
 		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
 		_, _ = fmt.Fprintf(fs.Output(), "  Delete an encrypted file.\n")
 		_, _ = fmt.Fprintf(fs.Output(), "\nArguments:\n")
@@ -192,7 +192,7 @@ func parseRenameArgs(args []string, ui UI) (string, string, error) {
 	fs := flag.NewFlagSet("rename", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
-		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s rename [source] [destination]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s rename <source> <destination>\n", os.Args[0])
 		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
 		_, _ = fmt.Fprintf(fs.Output(), "  Rename an encrypted file.\n")
 		_, _ = fmt.Fprintf(fs.Output(), "\nArguments:\n")
@@ -226,7 +226,7 @@ func parseRenameCatArgs(args []string, ui UI) (string, string, error) {
 	fs := flag.NewFlagSet("rename-cat", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
-		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s rename-cat [label] [category]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s rename-cat <label> <category>\n", os.Args[0])
 		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
 		_, _ = fmt.Fprintf(fs.Output(), "  Rename the category of an encrypted file.\n")
 		_, _ = fmt.Fprintf(fs.Output(), "\nArguments:\n")
@@ -337,7 +337,7 @@ func parseClipboardArgs(args []string, ui UI) (string, error) {
 	fs := flag.NewFlagSet("clipboard", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
-		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s clipboard [options] [label]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s clipboard [options] <label>\n", os.Args[0])
 		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
 		_, _ = fmt.Fprintf(fs.Output(), "  Copy the credential password to the clipboard.\n")
 		_, _ = fmt.Fprintf(fs.Output(), "\nOptions:\n")
@@ -371,7 +371,7 @@ func parseDecryptArgs(args []string, ui UI) (string, error) {
 	fs := flag.NewFlagSet("decrypt", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
-		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s decrypt [label]\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s decrypt <label>\n", os.Args[0])
 		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
 		_, _ = fmt.Fprintf(fs.Output(), "  Decrypt a file and write its content in a file named after the label\n")
 		_, _ = fmt.Fprintf(fs.Output(), "\nArguments:\n")
