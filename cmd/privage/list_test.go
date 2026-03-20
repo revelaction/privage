@@ -152,3 +152,59 @@ func TestList_Error(t *testing.T) {
 		t.Errorf("expected ErrNoIdentity, got %v", err)
 	}
 }
+
+func TestList_Ordering(t *testing.T) {
+	th := NewTestHelper(t)
+
+	// 'archive' comes before 'credential' alphabetically
+	th.AddEncryptedFile("report", "archive", "content")
+	// 'work' comes after 'credential' alphabetically
+	th.AddEncryptedFile("project", "work", "content")
+
+	// Multiple credentials to check internal ordering
+	th.AddEncryptedFile("z-cred", "credential", "content")
+	th.AddEncryptedFile("a-cred", "credential", "content")
+
+	var outBuf bytes.Buffer
+	ui := UI{Out: &outBuf, Err: &bytes.Buffer{}}
+
+	err := listCommand(th.Setup, "", ui)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	output := outBuf.String()
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+
+	// Filter for lines containing the category marker
+	var resultLines []string
+	for _, line := range lines {
+		if strings.Contains(line, "🔖") {
+			resultLines = append(resultLines, strings.TrimSpace(line))
+		}
+	}
+
+	// EXPECTED ORDER:
+	// 1. credential / a-cred (Priority + Label Sort)
+	// 2. credential / z-cred (Priority + Label Sort)
+	// 3. archive / report    (Alphabetical Category Sort)
+	// 4. work / project      (Alphabetical Category Sort)
+
+	expected := []string{
+		"📝 a-cred  🔖credential",
+		"📝 z-cred  🔖credential",
+		"💼 report  🔖archive",
+		"💼 project  🔖work",
+	}
+
+	if len(resultLines) != len(expected) {
+		t.Fatalf("expected %d entries, got %d. Output:\n%s", len(expected), len(resultLines), output)
+	}
+
+	for i, exp := range expected {
+		if resultLines[i] != exp {
+			t.Errorf("at index %d:\n  expected: %q\n  got:      %q", i, exp, resultLines[i])
+		}
+	}
+}
+

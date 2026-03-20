@@ -85,21 +85,27 @@ func listCommand(s *setup.Setup, filter string, ui UI) error {
 
 func sortList(s []*header.Header) []*header.Header {
 	sort.Slice(s, func(i, j int) bool {
-		// Counter sorting
-		if s[i].Category > s[j].Category {
+		// 1. Priority to credentials
+		isICred := s[i].Category == header.CategoryCredential
+		isJCred := s[j].Category == header.CategoryCredential
+
+		if isICred && !isJCred {
+			return true
+		}
+		if !isICred && isJCred {
 			return false
 		}
+
+		// 2. Sort by category
 		if s[i].Category < s[j].Category {
 			return true
 		}
-		if s[i].Label > s[j].Label {
+		if s[i].Category > s[j].Category {
 			return false
 		}
-		if s[i].Label < s[j].Label {
-			return true
-		}
 
-		return false
+		// 3. Sort by label
+		return s[i].Label < s[j].Label
 	})
 
 	return s
