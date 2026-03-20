@@ -2,6 +2,7 @@ name: Build
 on:
   release:
     types: [published]
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -65,7 +66,7 @@ jobs:
           GOARCH: ${{ matrix.GOARCH }}
           GOARM: ${{ matrix.GOARM }}
       - name: Upload workflow artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: privage-${{ github.ref_name }}-${{ matrix.GOOS }}-${{ matrix.GOARCH }}
           path: |
@@ -80,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download workflow artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           pattern: privage-${{ github.ref_name }}-*
           merge-multiple: true
