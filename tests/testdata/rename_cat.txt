@@ -1,0 +1,40 @@
+# Setup environment
+exec privage init
+
+# Create a source file with known content
+cp input.txt secret.txt
+
+# Add (encrypt) the file
+exec privage add customcat secret.txt
+stderr 'Added file'
+
+# Verify the file exists with old category
+exec privage list customcat
+stdout 'secret.txt'
+
+# Rename the category
+exec privage rename-cat secret.txt newcat
+stderr 'Renamed category'
+
+# Verify the file exists with new category
+exec privage list newcat
+stdout 'secret.txt'
+
+# Verify the file does not exist with old category
+exec privage list customcat
+! stdout 'secret.txt'
+
+# Verify the content is preserved
+exec privage cat secret.txt
+stdout 'secret data'
+
+# Error case: Rename category of non-existent file
+! exec privage rename-cat missing.txt targetcat
+stderr 'not found'
+
+# Error case: Rename to same category
+! exec privage rename-cat secret.txt newcat
+stderr 'identical'
+
+-- input.txt --
+secret data

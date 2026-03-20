@@ -623,3 +623,41 @@ func TestParseRenameArgs(t *testing.T) {
 		}
 	})
 }
+
+func TestParseRenameCatArgs(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		label, cat, err := parseRenameCatArgs([]string{"label", "new_cat"}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if label != "label" || cat != "new_cat" {
+			t.Errorf("got %q/%q, want %q/%q", label, cat, "label", "new_cat")
+		}
+	})
+
+	t.Run("Help", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, _, err := parseRenameCatArgs([]string{"--help"}, ui)
+		if !errors.Is(err, flag.ErrHelp) {
+			t.Fatalf("expected flag.ErrHelp, got %v", err)
+		}
+		if outBuf.Len() == 0 {
+			t.Error("expected usage output in Out buffer")
+		}
+	})
+
+	t.Run("MissingArgs", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		_, _, err := parseRenameCatArgs([]string{"label"}, ui)
+		if err == nil {
+			t.Fatal("expected error for missing argument")
+		}
+		if errBuf.Len() == 0 {
+			t.Error("expected error message in Err buffer")
+		}
+	})
+}

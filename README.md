@@ -54,6 +54,7 @@ You may want to use privage if:
   - [Cat the contents of an encrypted file](#cat-the-contents-of-an-encrypted-file)
   - [Decrypt a file for manual edition](#decrypt-a-file-for-manual-edition)
   - [Rename an encrypted file](#rename-an-encrypted-file)
+  - [Rename the category of an encrypted file](#rename-the-category-of-an-encrypted-file)
   - [Reencrypt edited files](#reencrypt-edited-files)
   - [Delete an encrypted file](#delete-an-encrypted-file)
   - [Get information about the configuration](#get-information-about-the-configuration)
@@ -356,6 +357,16 @@ privage rename somewebsite.com@loginname somewebsite.com@newloginname
 ```
 
 Renaming is done by decrypting the file and re-encrypting it with the new label. The original file is then deleted.
+
+## Rename the category of an encrypted file
+
+The command `rename-cat` renames the category of an encrypted file:
+
+```console
+privage rename-cat somewebsite.com@loginname newcategory
+```
+
+This operation decrypts the file and re-encrypts it with the same label but a new category.
 
 ## Reencrypt edited files
 

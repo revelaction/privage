@@ -23,6 +23,7 @@ var commands = []string{
 	"clipboard",
 	"decrypt",
 	"rename",
+	"rename-cat",
 	"reencrypt",
 	"rotate",
 	"bash",
@@ -153,7 +154,7 @@ func getCompletions(args []string, listHeaders func() ([]*header.Header, error),
 				return nil, nil
 			}
 			return completeLabels(headers, lastWord), nil
-		case "rename":
+		case "rename", "rename-cat":
 			headers, err := listHeaders()
 			if err != nil {
 				return nil, nil

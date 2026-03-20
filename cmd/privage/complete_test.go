@@ -32,7 +32,7 @@ func TestCompleteCommand(t *testing.T) {
 			name:      "Command completion (rename)",
 			setupData: func(th *TestHelper) {},
 			args:      []string{"--", "privage", "ren"},
-			contains:  []string{"rename"},
+			contains:  []string{"rename", "rename-cat"},
 		},
 		{
 			name: "Rename Label",
@@ -48,6 +48,22 @@ func TestCompleteCommand(t *testing.T) {
 				th.AddEncryptedFile("mycred", "credential", "pass")
 			},
 			args:     []string{"--", "privage", "rename", "mycred", ""},
+			contains: []string{},
+		},
+		{
+			name: "Rename Cat Label",
+			setupData: func(th *TestHelper) {
+				th.AddEncryptedFile("mycred", "credential", "pass")
+			},
+			args:     []string{"--", "privage", "rename-cat", "my"},
+			contains: []string{"mycred"},
+		},
+		{
+			name: "Rename Cat Target (should not suggest labels)",
+			setupData: func(th *TestHelper) {
+				th.AddEncryptedFile("mycred", "credential", "pass")
+			},
+			args:     []string{"--", "privage", "rename-cat", "mycred", ""},
 			contains: []string{},
 		},
 		{

@@ -275,6 +275,20 @@ func runCommand(cmd string, args []string, opts setup.Options, ui UI) error {
 		}
 		return renameCommand(s, src, dest, ui)
 
+	case "rename-cat":
+		label, cat, err := parseRenameCatArgs(args, ui)
+		if err != nil {
+			if errors.Is(err, flag.ErrHelp) {
+				return nil
+			}
+			return err
+		}
+		s, setupErr := setupEnv(opts)
+		if setupErr != nil {
+			return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
+		}
+		return renameCategoryCommand(s, label, cat, ui)
+
 	case "reencrypt":
 		force, clean, err := parseReencryptArgs(args, ui)
 		if err != nil {
@@ -323,6 +337,7 @@ func setupUsage(fs *flag.FlagSet) {
 		_, _ = fmt.Fprintf(output, "  clipboard  Copy the credential password to the clipboard\n")
 		_, _ = fmt.Fprintf(output, "  decrypt    Decrypt a file and write its content in a file named after the label\n")
 		_, _ = fmt.Fprintf(output, "  rename     Rename an encrypted file.\n")
+		_, _ = fmt.Fprintf(output, "  rename-cat Rename the category of an encrypted file.\n")
 		_, _ = fmt.Fprintf(output, "  reencrypt  Reencrypt all decrypted files that are already encrypted. (default is dry-run)\n")
 		_, _ = fmt.Fprintf(output, "  rotate     Create a new age key and reencrypt every file with the new key\n")
 		_, _ = fmt.Fprintf(output, "  bash       Dump bash complete script.\n")
