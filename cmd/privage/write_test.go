@@ -21,7 +21,7 @@ import (
 //
 // TESTED ERROR PATHS:
 // ✓ File creation failure (invalid repository)
-// ✓ File creation failure (read-only repository) 
+// ✓ File creation failure (read-only repository)
 // ✓ File open failure (read-only existing file)
 // ✓ Content reader failure (failingReader)
 // ✓ Content copy failure (via failingReader)
@@ -31,7 +31,7 @@ import (
 // • Nil header (panics at h.Pad())
 // • Nil setup (panics at various points)
 //
-// We trust the internal caller has validated the inputs
+// # We trust the internal caller has validated the inputs
 //
 // DIFFICULT TO TEST WITHOUT MOCKING:
 // • age.Encrypt() failure for header (requires mocking age library)
@@ -45,18 +45,19 @@ import (
 // PANICS:
 // We trust the internal caller has validated the inputs
 // If you want to prevent panics with nil inputs, add validation at the start:
-//   if h == nil {
-//       return fmt.Errorf("header cannot be nil")
-//   }
-//   if s == nil || s.Id.Id == nil {
-//       return fmt.Errorf("setup or identity cannot be nil")
-//   }
+//
+//	if h == nil {
+//	    return fmt.Errorf("header cannot be nil")
+//	}
+//	if s == nil || s.Id.Id == nil {
+//	    return fmt.Errorf("setup or identity cannot be nil")
+//	}
 //
 // These untestable paths exist for defensive programming and would be
 // covered by integration tests or real failure scenarios (disk full, etc.).
 func TestEncryptSave_ErrorPathCoverage(t *testing.T) {
 	t.Log("See function documentation for error path coverage analysis")
-	
+
 	// Show current coverage percentage
 	// The truly untestable paths (memory operations failing, age library internals)
 	// represent edge cases that are defensive programming rather than realistic failures
@@ -128,7 +129,7 @@ func TestEncryptSave_HappyPath(t *testing.T) {
 	// The file contains: [padded encrypted header][encrypted content]
 	// We need to skip the header part and decrypt the content
 	// Header size after padding is known (from header.PadEncrypted)
-	
+
 	// For this test, we just verify the file exists and has content
 	// A more thorough test would decrypt and verify the content matches
 	t.Logf("Successfully created encrypted file: %s (%d bytes)", filePath, len(encryptedData))
@@ -456,9 +457,9 @@ func TestFileName(t *testing.T) {
 	testID := id.Identity{Id: identity}
 
 	tests := []struct {
-		name     string
-		header   *header.Header
-		suffix   string
+		name   string
+		header *header.Header
+		suffix string
 	}{
 		{
 			name: "simple header",
@@ -651,12 +652,12 @@ func TestEncryptSave_DifferentHeaders(t *testing.T) {
 // typically doesn't fail. This test documents the limitation.
 func TestEncryptSave_HeaderWriteError(t *testing.T) {
 	t.Skip("Skipping: ageWr.Write() to memory buffer rarely fails - difficult to test this path")
-	
+
 	// To properly test this, we would need:
 	// 1. A way to inject a failing writer into age.Encrypt()
 	// 2. Or a way to make the memory buffer fail (not possible with standard bytes.Buffer)
 	// 3. Or use dependency injection to mock the age encryptor
-	
+
 	// This error path exists for defensive programming but is hard to trigger in practice.
 }
 
@@ -664,12 +665,12 @@ func TestEncryptSave_HeaderWriteError(t *testing.T) {
 // Note: This is also difficult to trigger with in-memory encryption.
 func TestEncryptSave_HeaderCloseError(t *testing.T) {
 	t.Skip("Skipping: ageWr.Close() on memory buffer rarely fails - difficult to test this path")
-	
+
 	// Similar to above, age.Close() on a memory-backed writer typically succeeds.
 	// To test this we would need to:
 	// 1. Mock the age encryption library
 	// 2. Or inject a failing writer
-	
+
 	// This error path exists for robustness but is hard to test without mocking.
 }
 
@@ -678,18 +679,19 @@ func TestEncryptSave_HeaderCloseError(t *testing.T) {
 func TestEncryptSave_PadEncryptedError(t *testing.T) {
 	// This test depends on the implementation of header.PadEncrypted()
 	// If that function can fail (e.g., with malformed input), we should test it.
-	
+
 	// Example approach if PadEncrypted fails on certain inputs:
 	t.Skip("Skipping: Requires knowledge of header.PadEncrypted() failure modes")
-	
+
 	// If header.PadEncrypted() can return errors for certain encrypted data,
 	// we would need to:
 	// 1. Understand what inputs cause it to fail
 	// 2. Craft a scenario that produces such inputs
 	// 3. Verify the error is properly wrapped and returned
-	
+
 	// Without seeing the header package implementation, this is difficult to test.
 }
+
 // TestEncryptSave_NilIdentity tests behavior with nil identity.
 // Currently this panics rather than returning an error - documenting actual behavior.
 func TestEncryptSave_NilIdentity(t *testing.T) {
@@ -722,7 +724,7 @@ func TestEncryptSave_NilIdentity(t *testing.T) {
 	}()
 
 	err := encryptSave(h, "", content, s)
-	
+
 	// If we reach here without panic, check for error
 	if err == nil {
 		t.Fatal("expected error with nil identity, got nil")
@@ -757,7 +759,7 @@ func TestEncryptSave_NilHeader(t *testing.T) {
 	}()
 
 	err = encryptSave(nil, "", content, s)
-	
+
 	if err == nil {
 		t.Fatal("expected error with nil header, got nil")
 	}

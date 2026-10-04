@@ -248,12 +248,12 @@ func TestHeaderGenerator(t *testing.T) {
 		tmpDir := t.TempDir()
 		name := validHexName("standard")
 		path := filepath.Join(tmpDir, name+PrivageExtension)
-		
+
 		f, err := os.Create(path)
 		if err != nil {
 			t.Fatalf("failed to create standard age file: %v", err)
 		}
-		
+
 		aw, err := age.Encrypt(f, identity.Recipient())
 		if err != nil {
 			_ = f.Close()
@@ -267,11 +267,11 @@ func TestHeaderGenerator(t *testing.T) {
 			t.Fatalf("headerGenerator failed: %v", err)
 		}
 		h := <-gen
-		
+
 		if h == nil {
 			t.Fatal("expected result for standard age file")
 		}
-		
+
 		// We expect an error because it's not a valid privage file
 		if h.Err == nil {
 			t.Errorf("expected error for standard age file, got success. Parsed header: %+v", h)
@@ -284,12 +284,12 @@ func TestHeaderGenerator(t *testing.T) {
 		tmpDir := t.TempDir()
 		name := validHexName("large")
 		path := filepath.Join(tmpDir, name+PrivageExtension)
-		
+
 		f, err := os.Create(path)
 		if err != nil {
 			t.Fatalf("failed to create standard age file: %v", err)
 		}
-		
+
 		aw, err := age.Encrypt(f, identity.Recipient())
 		if err != nil {
 			_ = f.Close()
@@ -312,11 +312,11 @@ func TestHeaderGenerator(t *testing.T) {
 			t.Fatalf("headerGenerator failed: %v", err)
 		}
 		h := <-gen
-		
+
 		if h == nil {
 			t.Fatal("expected result for large standard age file")
 		}
-		
+
 		if h.Err == nil {
 			t.Errorf("expected error for large standard age file, got success")
 		} else {

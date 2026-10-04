@@ -76,57 +76,57 @@ func (h *Header) String() string {
 // to maintain backward compatibility with existing files.
 // It returns an error if any field exceeds its maximum allowed byte length.
 func (h *Header) Pad() ([]byte, error) {
-    buf := new(bytes.Buffer)
+	buf := new(bytes.Buffer)
 
-    // 1. Version
-    vBytes := []byte(version)
-    padLen := maxLenghtVersion - len(vBytes)
-    if padLen < 0 {
-        return nil, fmt.Errorf("version constant exceeds maximum length of %d bytes", maxLenghtVersion)
-    }
-    buf.Write(bytes.Repeat([]byte{paddingChar}, padLen))
-    buf.Write(vBytes)
+	// 1. Version
+	vBytes := []byte(version)
+	padLen := maxLenghtVersion - len(vBytes)
+	if padLen < 0 {
+		return nil, fmt.Errorf("version constant exceeds maximum length of %d bytes", maxLenghtVersion)
+	}
+	buf.Write(bytes.Repeat([]byte{paddingChar}, padLen))
+	buf.Write(vBytes)
 
-    // 2. Category
-    catBytes := []byte(h.Category)
-    padLen = MaxLenghtCategory - len(catBytes)
-    if padLen < 0 {
-        return nil, fmt.Errorf("category exceeds maximum length of %d bytes", MaxLenghtCategory)
-    }
-    buf.Write(bytes.Repeat([]byte{paddingChar}, padLen))
-    buf.Write(catBytes)
+	// 2. Category
+	catBytes := []byte(h.Category)
+	padLen = MaxLenghtCategory - len(catBytes)
+	if padLen < 0 {
+		return nil, fmt.Errorf("category exceeds maximum length of %d bytes", MaxLenghtCategory)
+	}
+	buf.Write(bytes.Repeat([]byte{paddingChar}, padLen))
+	buf.Write(catBytes)
 
-    // 3. Label
-    labelBytes := []byte(h.Label)
-    padLen = MaxLenghtLabel - len(labelBytes)
-    if padLen < 0 {
-        return nil, fmt.Errorf("label exceeds maximum length of %d bytes", MaxLenghtLabel)
-    }
-    buf.Write(bytes.Repeat([]byte{paddingChar}, padLen))
-    buf.Write(labelBytes)
+	// 3. Label
+	labelBytes := []byte(h.Label)
+	padLen = MaxLenghtLabel - len(labelBytes)
+	if padLen < 0 {
+		return nil, fmt.Errorf("label exceeds maximum length of %d bytes", MaxLenghtLabel)
+	}
+	buf.Write(bytes.Repeat([]byte{paddingChar}, padLen))
+	buf.Write(labelBytes)
 
-    // 4. Safety Check
-    if buf.Len() > BlockSize {
-        return nil, fmt.Errorf("internal error: padded header size %d exceeds BlockSize %d", buf.Len(), BlockSize)
-    }
+	// 4. Safety Check
+	if buf.Len() > BlockSize {
+		return nil, fmt.Errorf("internal error: padded header size %d exceeds BlockSize %d", buf.Len(), BlockSize)
+	}
 
-    return buf.Bytes(), nil
+	return buf.Bytes(), nil
 }
 
 // Parse parses a serialized version of a header.
 func Parse(h []byte) *Header {
-    res := &Header{}
+	res := &Header{}
 
-    // Slice strictly by byte offsets
-    res.Version = string(bytes.TrimLeft(h[:maxLenghtVersion], string(paddingChar)))
+	// Slice strictly by byte offsets
+	res.Version = string(bytes.TrimLeft(h[:maxLenghtVersion], string(paddingChar)))
 
-    offset := maxLenghtVersion
-    res.Category = string(bytes.TrimLeft(h[offset:offset+MaxLenghtCategory], string(paddingChar)))
+	offset := maxLenghtVersion
+	res.Category = string(bytes.TrimLeft(h[offset:offset+MaxLenghtCategory], string(paddingChar)))
 
-    offset += MaxLenghtCategory
-    res.Label = string(bytes.TrimLeft(h[offset:], string(paddingChar)))
+	offset += MaxLenghtCategory
+	res.Label = string(bytes.TrimLeft(h[offset:], string(paddingChar)))
 
-    return res
+	return res
 }
 
 // PadEncrypted fills the encrypted (with age) header up to BlockSize with paddingChar

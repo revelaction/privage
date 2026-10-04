@@ -22,7 +22,7 @@ func TestRenameCategoryCommand(t *testing.T) {
 		// Verify old category is gone and new one exists for the label
 		foundOld := false
 		foundNew := false
-		
+
 		ch, err := headerGenerator(th.Root, th.Id)
 		if err != nil {
 			t.Fatal(err)
@@ -37,7 +37,7 @@ func TestRenameCategoryCommand(t *testing.T) {
 				}
 			}
 		}
-		
+
 		if foundOld {
 			t.Error("old category still exists after rename-cat")
 		}

@@ -23,7 +23,7 @@ func TestRenameCommand(t *testing.T) {
 		// We use headerGenerator to scan the repository as filenames are hashed
 		foundOld := false
 		foundNew := false
-		
+
 		ch, err := headerGenerator(th.Root, th.Id)
 		if err != nil {
 			t.Fatal(err)
@@ -36,7 +36,7 @@ func TestRenameCommand(t *testing.T) {
 				foundNew = true
 			}
 		}
-		
+
 		if foundOld {
 			t.Error("old_label still exists after rename")
 		}

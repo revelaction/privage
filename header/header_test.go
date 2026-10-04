@@ -132,7 +132,7 @@ func TestHeader_Hash(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Hash() failed: %v", err)
 	}
-	
+
 	hash2, err := h.Hash(ageIdentity)
 	if err != nil {
 		t.Fatalf("Hash() failed second time: %v", err)
@@ -262,12 +262,12 @@ func TestHeader_Pad_UTF8_Overflow(t *testing.T) {
 	// Calculate how many 3-byte characters fit in Category (Max 40 bytes)
 	// 13 chars * 3 bytes = 39 bytes (Fits)
 	// 14 chars * 3 bytes = 42 bytes (Overflows)
-	// Note: 14 chars would fit if we counted characters (length 14 < 40), 
+	// Note: 14 chars would fit if we counted characters (length 14 < 40),
 	// but fails correctly because we count bytes.
-	
+
 	overflowCategory := strings.Repeat("字", 14) // 14 Chinese chars
-	
-h := &Header{
+
+	h := &Header{
 		Version:  "v1",
 		Category: overflowCategory,
 		Label:    "test",
@@ -287,12 +287,12 @@ h := &Header{
 func TestHeader_Pad_Emoji_Boundary(t *testing.T) {
 	// Test a label that is exactly the max length in bytes using emojis
 	// MaxLenghtLabel = 200
-	// 🔒 is 4 bytes. 
+	// 🔒 is 4 bytes.
 	// 50 * 4 = 200 bytes.
-	
+
 	exactLabel := strings.Repeat("🔒", 50)
-	
-h := &Header{
+
+	h := &Header{
 		Version:  "v1",
 		Category: "boundary",
 		Label:    exactLabel,
@@ -301,7 +301,7 @@ h := &Header{
 	if err != nil {
 		t.Fatalf("Header.Pad() failed on exact boundary: %v", err)
 	}
-	
+
 	parsed := Parse(padded)
 	if parsed.Label != exactLabel {
 		t.Errorf("Label mismatch on boundary.\nGot length: %d\nWant length: %d", len(parsed.Label), len(exactLabel))

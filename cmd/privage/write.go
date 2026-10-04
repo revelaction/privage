@@ -20,7 +20,7 @@ import (
 // concatenates both encrypted payloads.
 //
 // It saves the concatenated encrypted payloads on an age file atomically.
-// The name of the file is a hash of the header (label and category) and the 
+// The name of the file is a hash of the header (label and category) and the
 // public age key.
 //
 // Uses atomic write pattern: writes to temp file, then renames on success.
