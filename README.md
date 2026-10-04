@@ -408,6 +408,13 @@ privage delete somewebsite.com@loginname
 🔐  Found 13 encrypted files for the age key /home/user/mysecrets/privage-key.txt
 ```
 
+The flag `-r` (`-repository`) prints only the repository directory, so a script can read it directly:
+
+```console
+⤷ privage status -r
+/home/user/mysecrets
+```
+
 
 ## Rotate 
 

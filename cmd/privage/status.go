@@ -8,8 +8,16 @@ import (
 )
 
 // statusCommand prints on the terminal a status of the privage command
-// configuration
-func statusCommand(s *setup.Setup, ui UI) error {
+// configuration.
+//
+// When repository is true it prints only the repository directory, one line
+// and nothing else.
+func statusCommand(s *setup.Setup, repository bool, ui UI) error {
+	if repository {
+		_, _ = fmt.Fprintln(ui.Out, s.Repository)
+		return nil
+	}
+
 	_, _ = fmt.Fprintln(ui.Out)
 
 	if s.Id.Id != nil {

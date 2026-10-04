@@ -207,7 +207,8 @@ func runCommand(cmd string, args []string, opts setup.Options, ui UI) error {
 		return keyCommand(s, ui)
 
 	case "status":
-		if err := parseStatusArgs(args, ui); err != nil {
+		repository, err := parseStatusArgs(args, ui)
+		if err != nil {
 			if errors.Is(err, flag.ErrHelp) {
 				return nil
 			}
@@ -217,7 +218,7 @@ func runCommand(cmd string, args []string, opts setup.Options, ui UI) error {
 		if setupErr != nil {
 			return fmt.Errorf("unable to setup environment configuration: %w", setupErr)
 		}
-		return statusCommand(s, ui)
+		return statusCommand(s, repository, ui)
 
 	case "list":
 		filter, err := parseListArgs(args, ui)

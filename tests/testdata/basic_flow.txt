@@ -13,3 +13,9 @@ exists .gitignore
 exec privage status
 stdout 'Found age key file'
 stdout 'Found config file'
+
+# Test status -r prints only the repository directory
+mkdir repo_dir
+exec privage -k privage-key.txt -r repo_dir status -r
+stdout '^repo_dir'
+! stdout 'Found'

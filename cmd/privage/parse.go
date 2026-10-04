@@ -279,27 +279,32 @@ func parseKeyArgs(args []string, ui UI) error {
 	return nil
 }
 
-func parseStatusArgs(args []string, ui UI) error {
+func parseStatusArgs(args []string, ui UI) (bool, error) {
 	fs := flag.NewFlagSet("status", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
+	var repository bool
+	fs.BoolVar(&repository, "repository", false, "Print only the repository directory")
+	fs.BoolVar(&repository, "r", false, "alias for -repository")
 	fs.Usage = func() {
-		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s status\n", os.Args[0])
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: %s status [options]\n", os.Args[0])
 		_, _ = fmt.Fprintf(fs.Output(), "\nDescription:\n")
 		_, _ = fmt.Fprintf(fs.Output(), "  Provide information about the current configuration.\n")
+		_, _ = fmt.Fprintf(fs.Output(), "\nOptions:\n")
+		_, _ = fmt.Fprintf(fs.Output(), "  -r, -repository  Print only the repository directory\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			fs.SetOutput(ui.Out)
 			fs.Usage()
-			return err
+			return false, err
 		}
 		fs.SetOutput(ui.Err)
 		_, _ = fmt.Fprintf(ui.Err, "Error: %v\n", err)
 		fs.Usage()
-		return err
+		return false, err
 	}
-	return nil
+	return repository, nil
 }
 
 func parseListArgs(args []string, ui UI) (string, error) {

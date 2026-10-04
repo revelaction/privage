@@ -441,16 +441,43 @@ func TestParseStatusArgs(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		var outBuf, errBuf bytes.Buffer
 		ui := UI{Out: &outBuf, Err: &errBuf}
-		err := parseStatusArgs([]string{}, ui)
+		repository, err := parseStatusArgs([]string{}, ui)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
+		}
+		if repository {
+			t.Error("expected repository flag to be false")
+		}
+	})
+
+	t.Run("RepositoryLong", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		repository, err := parseStatusArgs([]string{"-repository"}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if !repository {
+			t.Error("expected repository flag to be true")
+		}
+	})
+
+	t.Run("RepositoryShort", func(t *testing.T) {
+		var outBuf, errBuf bytes.Buffer
+		ui := UI{Out: &outBuf, Err: &errBuf}
+		repository, err := parseStatusArgs([]string{"-r"}, ui)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if !repository {
+			t.Error("expected repository flag to be true")
 		}
 	})
 
 	t.Run("Help", func(t *testing.T) {
 		var outBuf, errBuf bytes.Buffer
 		ui := UI{Out: &outBuf, Err: &errBuf}
-		err := parseStatusArgs([]string{"--help"}, ui)
+		_, err := parseStatusArgs([]string{"--help"}, ui)
 		if !errors.Is(err, flag.ErrHelp) {
 			t.Fatalf("expected flag.ErrHelp, got %v", err)
 		}
@@ -462,7 +489,7 @@ func TestParseStatusArgs(t *testing.T) {
 	t.Run("UnknownFlag", func(t *testing.T) {
 		var outBuf, errBuf bytes.Buffer
 		ui := UI{Out: &outBuf, Err: &errBuf}
-		err := parseStatusArgs([]string{"--foo"}, ui)
+		_, err := parseStatusArgs([]string{"--foo"}, ui)
 		if err == nil {
 			t.Fatal("expected error for unknown flag")
 		}
